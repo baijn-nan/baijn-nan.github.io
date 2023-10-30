@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20221125，存档如下  KMP 真的一看就懂一做就错三天全忘 好像青年痴呆 遂烂笔头之">
+<meta property="og:type" content="article">
+<meta property="og:title" content="模式匹配：从 BF 到 KMP（图解 + 代码）">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20221125-summary-patternmatchKMP/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20221125，存档如下  KMP 真的一看就懂一做就错三天全忘 好像青年痴呆 遂烂笔头之">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122110562.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122201463.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122240961.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122311871.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122346802.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122432117.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122527022.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122609376.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122643608.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122803363.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:53.181Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="算法基础">
+<meta property="article:tag" content="模式匹配">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122110562.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20221125-summary-patternmatchKMP/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20221125-summary-patternmatchKMP/","path":"2023/10/30/20221125-summary-patternmatchKMP/","title":"模式匹配：从 BF 到 KMP（图解 + 代码）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>模式匹配：从 BF 到 KMP（图解 + 代码） | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E6%A8%A1%E5%BC%8F%E5%8C%B9%E9%85%8D"><span class="nav-text">1. 模式匹配</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Brute-Force-%E7%AE%97%E6%B3%95"><span class="nav-text">2.Brute-Force 算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E6%80%9D%E8%B7%AF"><span class="nav-text">2.1 思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="nav-text">2.2 代码示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-KMP-%E7%AE%97%E6%B3%95"><span class="nav-text">3. KMP 算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E6%95%B4%E4%BD%93%E6%80%9D%E8%B7%AF"><span class="nav-text">3.1 整体思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E8%AE%A1%E7%AE%97-next-i"><span class="nav-text">3.2 计算 next[i]</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-1-%E5%9F%BA%E6%9C%AC%E6%80%9D%E8%B7%AF"><span class="nav-text">3.2.1 基本思路</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-2-%E6%95%B4%E7%90%86"><span class="nav-text">3.2.2. 整理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E6%95%B4%E4%BD%93%E4%BB%A3%E7%A0%81"><span class="nav-text">3.3 整体代码</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20221125-summary-patternmatchKMP/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="模式匹配：从 BF 到 KMP（图解 + 代码） | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          模式匹配：从 BF 到 KMP（图解 + 代码）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%9F%BA%E7%A1%80%E6%95%B4%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">基础整理</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%9F%BA%E7%A1%80%E6%95%B4%E7%90%86/%E7%AE%97%E6%B3%95%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">算法基础</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>3.3k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>12 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20221125，存档如下</p>
+<blockquote>
+<p>KMP 真的一看就懂一做就错三天全忘 好像青年痴呆</p>
+<p>遂烂笔头之</p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-模式匹配">1. 模式匹配</h2>
+<p>这里考察的是模式匹配问题</p>
+<p>也就是我给定一个字符串 s，和一个子串 t，我想要找到 s 的一个子串 = t，也就是（在 s 中找到 t 进行匹配的任务）</p>
+<p>此时将 s 称为目标串，子串 t 称为模式串</p>
+<p>以下主要考虑两种方法：</p>
+<ul>
+<li>朴素模式匹配，也就是暴力法，BF 算法</li>
+<li>大名鼎鼎 KMP</li>
+</ul>
+<p>看完可以在这里练手：</p>
+<p><span class="exturl" data-url="aHR0cHM6Ly9sZWV0Y29kZS5jbi9wcm9ibGVtcy9zaG9ydGVzdC1wYWxpbmRyb21lLw==">214. 最短回文串<i class="fa fa-external-link-alt"></i></span></p>
+<p><span class="exturl" data-url="aHR0cHM6Ly9sZWV0Y29kZS5jbi9wcm9ibGVtcy9sb25nZXN0LWhhcHB5LXByZWZpeC8=">1392. 最长快乐前缀<i class="fa fa-external-link-alt"></i></span></p>
+<p><span class="exturl" data-url="aHR0cHM6Ly9sZWV0Y29kZS5jbi9wcm9ibGVtcy9maW5kLXRoZS1pbmRleC1vZi10aGUtZmlyc3Qtb2NjdXJyZW5jZS1pbi1hLXN0cmluZy8=">28. 找出字符串中第一个匹配项的下标<i class="fa fa-external-link-alt"></i></span></p>
+<br>
+<br>
+<hr>
+<h2 id="2-Brute-Force-算法">2.Brute-Force 算法</h2>
+<p>也就是暴力 = BF 方法</p>
+<h3 id="2-1-思路">2.1 思路</h3>
+<p>考虑 s 目标串从第 i 个位置开始和 模式串 t 可以匹配上，则我枚举这里的起点 i：</p>
+<ul>
+<li>从第一个位置 s[0] 开始，检查 s[0] == t[0]? s[1] == t[1]? ... 直到匹配结束或者出现不匹配为止</li>
+<li>从第二个为止 s[1] 开始，和 t 从头匹配，也就是 s[1] == t[0] ?   s[2] == t[1]? ...</li>
+<li>循环到匹配上为止；或者当前的位置 i 后面已经没 t 这么长的剩余了，则返回 -1 表示 s 中不存在 t</li>
+</ul>
+<p>一般使用的时候用双指针，i 表示当前匹配到 s 的第 i 位；j 表示匹配到 t 的第 j 位；当 s[i] ≠ t[j] 的时候说明匹配失败，j 回到 0，i 回到上一轮匹配开头位置的下一个</p>
+<br>
+<h3 id="2-2-代码示例">2.2 代码示例</h3>
+<p>提供一个 python 代码，基于 <span class="exturl" data-url="aHR0cHM6Ly9sZWV0Y29kZS5jbi9wcm9ibGVtcy9maW5kLXRoZS1pbmRleC1vZi10aGUtZmlyc3Qtb2NjdXJyZW5jZS1pbi1hLXN0cmluZy8=">28. 找出字符串中第一个匹配项的下标<i class="fa fa-external-link-alt"></i></span></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">strStr</span>(<span class="params">self, s: <span class="built_in">str</span>, t: <span class="built_in">str</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    	<span class="comment"># 这里的 s 是主串 = 目标串，t 为子串 = 模式串</span></span><br><span class="line">        <span class="keyword">for</span> start <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(s)-<span class="built_in">len</span>(t)+<span class="number">1</span>):</span><br><span class="line">            <span class="comment"># start 表示从 s 的 start 位置开始匹配 t</span></span><br><span class="line">            i,j = start,<span class="number">0</span> <span class="comment"># 双指针，指示当前匹配到 s 和 t 的哪一个位置了</span></span><br><span class="line">            <span class="keyword">while</span> s[i] == t[j]:</span><br><span class="line">                i += <span class="number">1</span>; j += <span class="number">1</span></span><br><span class="line">                <span class="keyword">if</span> j == <span class="built_in">len</span>(t): <span class="keyword">return</span> start  <span class="comment"># 匹配成功</span></span><br><span class="line">        <span class="keyword">return</span> -<span class="number">1</span></span><br></pre></td></tr></table></figure>
+<p>这里的 s 的长度为 m，t 的长度为 n，最坏的情况我每一轮匹配都是到最后才发现匹配不上（则每一轮匹配复杂度为 O(n)），同时真的匹配上要到 s 的最末尾（进行 O(m) 次匹配）</p>
+<p>则此时的算法复杂度 = O(mn)</p>
+<br>
+<br>
+<hr>
+<h2 id="3-KMP-算法">3. KMP 算法</h2>
+<p>考虑传统暴力方法：也就是我这一轮匹配从 s 的 start 位置开始，如果匹配失败了，我就从 s 的 start + 1 位置开始尝试下一次；</p>
+<p>所以说这里的复杂度会是 mn，最坏的情况我要把 （s 的每一个字符）都当作和 t 的一轮匹配的开头来尝试一次，会很麻烦</p>
+<p>KMP 的思路即：我如果以 start 为开头，匹配到了 start + k 才发现 start + k + 1 匹配不上了，但是我这轮已知了 s 的 start → start + k 和 t 的前 k + 1 个字符是一样的，则我想要利用这个信息快速筛选掉一些我已知不可能的 s 的 start，也就是不再需要将 s 的每一个字符都作为可能的开头来尝试一次了</p>
+<h3 id="3-1-整体思路">3.1 整体思路</h3>
+<p>假设此时我对下面的 s 和 t 进行匹配；一开始以 s 的第一个元素作为匹配的开头进行匹配：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122110562.png" alt="image-20231023122110562" style="zoom:30%;" />
+<p>匹匹匹匹到 a vs c 的时候发现不匹配了，如果是 BF 方法，则此时下一个 start 设置为 s 的第二个字符（也就是 b)，t 回到开头，重新开始尝试匹配</p>
+<p>但是本轮匹配的时候，我已经发现了 t 的前四个和 s 的前四个是一样的，则我考虑能不能跳过一部分的开头</p>
+<p>假设我还是以 s 的第二个元素为新的 start，t 也回到开头，重新开始匹配</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122201463.png" alt="image-20231023122201463" style="zoom:50%;" />
+<p>匹配顺序如图，但是注意 s 的绿色部分和 t 的绿色部分是相等的，s 的绿色的部分的信息我已知；则这里的第二轮匹配的前几个检查，其实也就是在检查下图的蓝色部分是否是一模一样的：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122240961.png" alt="image-20231023122240961" style="zoom:45%;" />
+<p>而这里的黑框的部分，也就是 t 的绿色部分的前三个元素 和 后三个元素，这一轮的匹配要是能成功，就要求 t 的绿色部分的 （前三个元素 = 后三个元素）</p>
+<p>当然是不行的（。我不用看 s 只用看 t 就知道，这三个元素不相等，则以 s 的下标 1 的元素（=b） 作为 start 来进行匹配肯定不行，这个 start 尝试都不用尝试；</p>
+<p>则此时尝试按照 BF ，再把 t 后移一位</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122311871.png" alt="image-20231023122311871" style="zoom:45%;" />
+<p>同理，这里如果要匹配成功，则 t 的绿色部分的（前两个字符）和 t 的绿色部分的（后两个字符）需要一样；注意到这里还真的是一样的，说明以 s 的下标为 2 的字符（=a)作为 start 来匹配可能有戏</p>
+<p>综上，我考虑：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122346802.png" alt="image-20231023122346802" style="zoom:60%;" />
+<ul>
+<li>我在第 x 轮匹配中，t 和 s 的 start 位置对齐，检查到 k 位置的时候发现 t 和 s 匹配不上，这轮匹配失败</li>
+<li>但是我通过这轮匹配知道了 s 的（ start → start + k-1） 和 t 的（0 → k-1）是一样的，这里的匹配上了的长度为 k 的区域就是上面的绿色部分</li>
+<li>下一轮，如果我将 t 后移 x 个，则这轮匹配可行需要（t 的绿色部分的倒数 k-x 个 = 蓝色黑框部分）和（t 的绿色部分的开头 k-x 个 = 蓝色黑框部分）相同才行</li>
+</ul>
+<p>综上，我从 start 开始对齐匹配失败了，则 start = start + 1 开始新的一轮匹配要成功，则需要绿色部分的倒数 k-1 个 = 开头的 k-1 个才行；同理，从 start = start + 1 开始新的一轮匹配要成功，则需要绿色部分的倒数 k-2 个 = 开头的 k-2 个才行 ...</p>
+<p>那我只要知道最大的一个 k0，使得（t 的前 k 个元素 = 绿色部分）的（倒数 k0 个）=（开头 k0 个） 就行了？因为这里的 k0 是最大的，则 k-1 → k-2 → ... → k-k0+1 的这些检查一定不成功，也就是说 start + 1 / + 2 / + ... / + k0-1 这些新的 start 都一定不会成功，只要跳过就行；</p>
+<p>为了实现上面的判断，我对于任意的一个 k（任意长度的绿色部分）都要知道对应的最大的 k0，使得这个绿色部分的倒数 k0 个 = 开头 k0 个，我用一个数组 next[i] 来进行记录；同时注意这里的 k0 当然不能 = k，否则自己等于自己没有意义；即：</p>
+<p>$$next[i] = max {k_0| t[i-k_0: i] == t[:k_0], k_0 &lt; k}$$</p>
+<p>注意这里的绿色部分是不包括 t 的第 k 个元素的</p>
+<p>综上，得到 next[i] 后，我的匹配算法可以精简为：</p>
+<ul>
+<li>t 和 s 的 start 位置对齐，进行匹配；到 t[k] 的时候发现匹配不成功</li>
+<li>start += k-next[k];</li>
+<li>主串 s 的指针：i  = max(start, i)
+<ul>
+<li>其实这里的 i 是可以不动的，只是要处理一下被 start 超过的情况</li>
+</ul>
+</li>
+<li>模式串 t 的指针：j = max(next[k], 0)
+<ul>
+<li>只是处理一下 k = 0，一个都没匹配上的情况，此时 next[0] = -1</li>
+</ul>
+</li>
+<li>继续尝试匹配</li>
+</ul>
+<br>
+<h3 id="3-2-计算-next-i">3.2 计算 next[i]</h3>
+<p>那么现在问题就是怎么得到 next[i]</p>
+<p>注意到 next[i] 和 s 是无关的，它是针对 t 做的预处理</p>
+<h4 id="3-2-1-基本思路">3.2.1 基本思路</h4>
+<p>再搬下来一遍 $$next[i] = max {k_0| t[i-k_0+1: i+1] == t[:k_0+1], k_0 &lt; k}$$</p>
+<p>规定 next[0] = -1，k = 0 的时候绿色部分为 0啥也没有 ；同理 next[1] = 0，这里的绿色部分只有一个字符，如果和自己相等了就是全匹配了，自己等于自己没意义；设置为 0</p>
+<p>考虑如果我已知了 next[i]，想要知道 next[i+1]</p>
+<p>则分成两种情况：</p>
+<ul>
+<li>情况一：t[i] == t[next[i-1]]  也就是说相较于 i-1，此时新加入的元素刚好可以顺着往下匹配，则这里的 next[i] = next[i-1] + 1</li>
+</ul>
+<p>比如这里的 next[3] 考察的是黄色部分，此时倒数的一个（a) 和开头的一个（a）是相等的，我已知 next[3] = 1，则 next[4]?</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122432117.png" alt="image-20231023122432117" style="zoom:45%;" />
+<p>注意到对于 next[4]，t[3] 加入黄色部分，而 t[3] 和上一个 next[3] 匹配后的下一个位置接着匹配（也就是深色的两个 b），则此时 next[4] = next[3] + 1 = 2</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122527022.png" alt="image-20231023122527022" style="zoom:50%;" />
+<ul>
+<li>情况二：此时两个深色位置不相等，也就是 t[i] != t[next[i-1]]</li>
+</ul>
+<p>直观理解就是这里的新的 next[i+1] 不能再顺着 next[i] 匹配的成果下去了，比如下图：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122609376.png" alt="image-20231023122609376" style="zoom:45%;" />
+<p>这里的蓝色部分是 next[9] 匹配好的，但是对于 next[10] 来说因为 a！= c 无法接下去了；</p>
+<p>则我这里的目标找到哪里可以继续匹配我 t[9] 位置的这个 a，且匹配上的位置尽量靠后（则可以保证 k0 尽量长），那也就是 t[9] 这个 a 前面的 abab 尽量也匹配上，则此时问题转移为蓝色的部分的倒数 k1 个能否和 t 开头的 k1 个匹配上，注意到了嘛，这个 t0 就存在 next[4] = next[next[i]]，也就是关注蓝色部分的匹配情况的那个 next 存储着这里我要的 k1</p>
+<p>则我一开始是在 next[9] 的基础上继续算 next[10]，发现匹配不上，则我下一个就在 next[4] 的基础上继续匹配，也就是下图：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122643608.png" alt="image-20231023122643608" style="zoom:50%;" />
+<p>这下匹配上了！则 next[10] 也就是 next[4] + 1</p>
+<p>当然也会有很刁钻的情况，就是匹配不上，比如：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023122803363.png" alt="image-20231023122803363" style="zoom:45%;" />
+<p>这个 z 哪里都没有啊，则我还是不断考虑蓝色部分的最大的 k1，也就是 next[next[4]] = next[2]，此时变成 0</p>
+<p>则此时变成 t[9] 和 开头 t[0] 匹配，还是不行，直接返回 0</p>
+<br>
+<h4 id="3-2-2-整理">3.2.2. 整理</h4>
+<p>综上，计算 next[i] 按照下述步骤：</p>
+<ul>
+<li>初始化，next[0] = 0,  next[1] = 1</li>
+<li>对于 next[i+1]
+<ul>
+<li>prek0 = next[i-1]  标记上面蓝色部分的末尾</li>
+<li>先看 next[i] == t[prek0]</li>
+<li>如果成立，则 next[i] = prek0 + 1</li>
+<li>如果不成立，prek0 = next[prek0]，继续检查</li>
+<li>直到这里的 prek0 = 0，但是还是 next[i] != t[0]，则 next[i] = 1</li>
+</ul>
+</li>
+</ul>
+<p>一个基础的 python 代码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">nxt = [<span class="number">0</span>]*(<span class="built_in">len</span>(t)+<span class="number">1</span>)  <span class="comment"># 这里多计算一位，在某些任务有用（比如 lc 214）</span></span><br><span class="line">nxt[<span class="number">0</span>], nxt[<span class="number">1</span>] = -<span class="number">1</span>, <span class="number">0</span></span><br><span class="line">i = <span class="number">2</span></span><br><span class="line">prek0 = nxt[<span class="number">1</span>]</span><br><span class="line"><span class="keyword">while</span> i &lt; <span class="built_in">len</span>(t)+<span class="number">1</span>:</span><br><span class="line">    <span class="keyword">if</span> t[prek0] == t[i-<span class="number">1</span>]:    nxt[i] = prek0 + <span class="number">1</span>; prek0 += <span class="number">1</span>; i += <span class="number">1</span></span><br><span class="line">        <span class="comment"># 表示跟着 next[i-1] 匹配上了</span></span><br><span class="line">    <span class="keyword">elif</span> prek0 &lt;= <span class="number">0</span>:    nxt[i] = <span class="number">0</span>; prek0 = <span class="number">0</span>; i+=<span class="number">1</span></span><br><span class="line">        <span class="comment"># 表示 prek0 已经为 0 了但是还是匹配不上；则 nxt 为 0，下一个</span></span><br><span class="line">    <span class="keyword">else</span>:   prek0 = nxt[prek0]</span><br><span class="line">        <span class="comment"># 表示当前的 i 还有救，不断缩短蓝色部分尝试匹配它</span></span><br></pre></td></tr></table></figure>
+<br>
+<h3 id="3-3-整体代码">3.3 整体代码</h3>
+<p>综上，此时匹配的思路为：</p>
+<ul>
+<li>先预处理得到 next</li>
+<li>开始匹配，第一轮 start = 0，将 t 和 s 的 start 位置对齐尝试匹配
+<ul>
+<li>匹配成功，返回 start 就是匹配成功的起始位置</li>
+<li>匹配到 t[k] 的时候失败，
+<ul>
+<li>则取出 next[k]，这里的 start = start + k-next[k]</li>
+<li>主串 s 的指针：i  = max(start, i)</li>
+<li>模式串 t 的指针：j = max(next[k], 0)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>如果当前从 s 的 start 位置开始剩下的部分不足 len(t)，匹配失败，此时 s 中不存在 t 子串</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">strStr</span>(<span class="params">self, s: <span class="built_in">str</span>, t: <span class="built_in">str</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">        <span class="comment"># 预处理 计算 next</span></span><br><span class="line">        nxt = [<span class="number">0</span>] * (<span class="built_in">len</span>(t) + <span class="number">1</span>)</span><br><span class="line">        nxt[<span class="number">0</span>], nxt[<span class="number">1</span>] = -<span class="number">1</span>, <span class="number">0</span></span><br><span class="line">        i = <span class="number">2</span>; prek0 = <span class="number">0</span></span><br><span class="line">        <span class="keyword">while</span> i &lt; <span class="built_in">len</span>(t)+<span class="number">1</span>:</span><br><span class="line">            <span class="keyword">if</span> t[i-<span class="number">1</span>] == t[prek0]:  nxt[i] = prek0 + <span class="number">1</span>; prek0 += <span class="number">1</span>; i += <span class="number">1</span></span><br><span class="line">            <span class="keyword">elif</span> prek0 == <span class="number">0</span>:    nxt[i] = <span class="number">0</span>; i += <span class="number">1</span></span><br><span class="line">            <span class="keyword">else</span>:   prek0 = nxt[prek0]</span><br><span class="line">        <span class="comment"># 进行匹配</span></span><br><span class="line">        start = <span class="number">0</span></span><br><span class="line">        i,j = <span class="number">0</span>,<span class="number">0</span></span><br><span class="line">        <span class="keyword">while</span> start + <span class="built_in">len</span>(t) &lt;= <span class="built_in">len</span>(s):</span><br><span class="line">            <span class="keyword">while</span> s[i] == t[j]: </span><br><span class="line">                i+=<span class="number">1</span>; j+=<span class="number">1</span></span><br><span class="line">                <span class="keyword">if</span> j == <span class="built_in">len</span>(t): <span class="keyword">return</span> start  <span class="comment"># 匹配成功，返回起始位置</span></span><br><span class="line">            k = j </span><br><span class="line">            start += k - nxt[k]</span><br><span class="line">            i = <span class="built_in">max</span>(i, start)  <span class="comment"># 注意处理一个都匹配不上，start 直接 + 1 超过了 i 的情况</span></span><br><span class="line">            j = <span class="built_in">max</span>(nxt[k], <span class="number">0</span>)  <span class="comment"># 小心 k = 0 的情况</span></span><br><span class="line">        <span class="keyword">return</span> -<span class="number">1</span>  <span class="comment"># 匹配失败</span></span><br></pre></td></tr></table></figure>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20221125-summary-patternmatchKMP/" title="模式匹配：从 BF 到 KMP（图解 + 代码）">https://baijn-nan.github.io/2023/10/30/20221125-summary-patternmatchKMP/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E7%AE%97%E6%B3%95%E5%9F%BA%E7%A1%80/" rel="tag"><i class="fa fa-tag"></i> 算法基础</a>
+              <a href="/tags/%E6%A8%A1%E5%BC%8F%E5%8C%B9%E9%85%8D/" rel="tag"><i class="fa fa-tag"></i> 模式匹配</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20221125-summary-patternmatchKMP/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

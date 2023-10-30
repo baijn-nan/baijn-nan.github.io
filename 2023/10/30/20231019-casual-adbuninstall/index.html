@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="找工焦虑，转移注意力嚯嚯！  年初三桑更新多了预装游戏助推器，会跟着所有 google play 注册的游戏自启动，本来不太在意的但 pjsk 三周年更新后老是打歌途中反复跳通知 ... 断了第二次 fc 后痛定思痛，今天白刀子必须见血（舔 target：以 (相对) 安全 &#x2F; 不root留保修&#x2F; 可恢复 的方式清理不需要的预装app 系统：三星s21国行 &#x2F; OneUI5.1 &#x2F; 安卓 13">
+<meta property="og:type" content="article">
+<meta property="og:title" content="adb 调试清理安卓系统预装 (附三星禁用list - OneUI5.1 + 安卓13)">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20231019-casual-adbuninstall/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="找工焦虑，转移注意力嚯嚯！  年初三桑更新多了预装游戏助推器，会跟着所有 google play 注册的游戏自启动，本来不太在意的但 pjsk 三周年更新后老是打歌途中反复跳通知 ... 断了第二次 fc 后痛定思痛，今天白刀子必须见血（舔 target：以 (相对) 安全 &#x2F; 不root留保修&#x2F; 可恢复 的方式清理不需要的预装app 系统：三星s21国行 &#x2F; OneUI5.1 &#x2F; 安卓 13">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:07:34.499Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="friends日常">
+<meta property="article:tag" content="安卓">
+<meta property="article:tag" content="我和我的三桑">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20231019-casual-adbuninstall/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20231019-casual-adbuninstall/","path":"2023/10/30/20231019-casual-adbuninstall/","title":"adb 调试清理安卓系统预装 (附三星禁用list - OneUI5.1 + 安卓13)"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>adb 调试清理安卓系统预装 (附三星禁用list - OneUI5.1 + 安卓13) | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#step-0%EF%BC%9A%E7%A1%AE%E8%AE%A4%E5%B7%A5%E5%85%B7"><span class="nav-text">step 0：确认工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#adb-%E6%93%8D%E4%BD%9C"><span class="nav-text">adb 操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%86%E5%A4%87"><span class="nav-text">准备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%8B%E6%9C%BA%E8%BF%9B%E5%BC%80%E5%8F%91%E8%80%85%E6%A8%A1%E5%BC%8F"><span class="nav-text">手机进开发者模式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%B7%A5%E5%85%B7"><span class="nav-text">命令行工具</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A3%80%E6%9F%A5%E8%AE%BE%E5%A4%87%E4%BF%A1%E6%81%AF"><span class="nav-text">检查设备信息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%93%E5%BC%80-shell-%E4%BA%A4%E4%BA%92%E5%BC%8F"><span class="nav-text">打开 shell 交互式</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E5%91%BD%E4%BB%A4"><span class="nav-text">基本命令</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%A0%E9%99%A4"><span class="nav-text">删除</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A6%81%E7%94%A8"><span class="nav-text">禁用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%81%A2%E5%A4%8D"><span class="nav-text">恢复</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E7%94%A8%E7%A6%81%E7%94%A8%E5%88%97%E8%A1%A8"><span class="nav-text">自用禁用列表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-text">参考</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20231019-casual-adbuninstall/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="adb 调试清理安卓系统预装 (附三星禁用list - OneUI5.1 + 安卓13) | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          adb 调试清理安卓系统预装 (附三星禁用list - OneUI5.1 + 安卓13)
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/friends%E6%97%A5%E5%B8%B8/" itemprop="url" rel="index"><span itemprop="name">friends日常</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/friends%E6%97%A5%E5%B8%B8/%E6%88%91%E5%92%8C%E6%88%91%E7%9A%84%E4%B8%89%E6%A1%91/" itemprop="url" rel="index"><span itemprop="name">我和我的三桑</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>1.4k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>5 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><blockquote>
+<p>找工焦虑，转移注意力嚯嚯！</p>
+</blockquote>
+<p>年初三桑更新多了预装游戏助推器，会跟着所有 google play 注册的游戏自启动，本来不太在意的但 pjsk 三周年更新后老是打歌途中反复跳通知 ... 断了第二次 fc 后痛定思痛，今天白刀子必须见血（舔</p>
+<p>target：以 (相对) 安全 / 不root留保修/ 可恢复 的方式清理不需要的预装app</p>
+<p>系统：三星s21国行 / OneUI5.1 / 安卓 13 + win10</p>
+<span id="more"></span>
+<br/>
+<br/>
+<hr>
+<h2 id="step-0：确认工具">step 0：确认工具</h2>
+<p>其实三桑预装算是比较多的，但到手几个月就出国了加之 nhv 烂村子没地方修，一直没敢直接上手杀，日常使用也还是以 sd 女仆小修小补为主，即使这次起意要做还是希望回国前以相对保守的方式处理；</p>
+<p>个人考虑 adb 特点如下：</p>
+<ul>
+<li>方便，免 root，像我这种手滑砸来砸去的未来还能去店里换个屏；</li>
+<li>说是 uninstall 但本质不是全卸载，所有命令都是在 user 层面进行的，也就是说恢复比较方便（保守；希望株连九族的朋友可能不合适这个）</li>
+<li>简单干净不需要装别的东西，还是不要那种装大流氓管小流氓把，我感觉好像被 ntr ... 且三桑 Bixby 老是和三方软件冲突（比如和酷安老哥最喜欢的冰箱）装机的前两周有吃够苦头；</li>
+</ul>
+<p>个人设备系统：</p>
+<ul>
+<li>三星 galaxy s21 国行，SM-G9910</li>
+<li>安卓13，One UI 5.1，20230701 安全补丁</li>
+<li>google play 20230501 更新</li>
+</ul>
+<br/>
+<br/>
+<hr>
+<h2 id="adb-操作">adb 操作</h2>
+<p>上手，准备数据线和电脑（以下命令基于 win10</p>
+<br/>
+<h3 id="准备">准备</h3>
+<blockquote>
+<p>先备份，先备份，先备份，玩机有风险，先备份</p>
+</blockquote>
+<p>备份建议 <strong>s 换机助手</strong>；傻瓜式操作；</p>
+<ul>
+<li>pc 端下载 <span class="exturl" data-url="aHR0cHM6Ly93d3cuc2Ftc3VuZy5jb20vY24vYXBwcy9zbWFydC1zd2l0Y2gv">官网链接<i class="fa fa-external-link-alt"></i></span> ，上面是安卓端，往下滑有 pc 端；</li>
+<li>手机直接应用市场 / google play</li>
+<li>注意这里如果中途切断是会有大量 cache 占手机空间的（... 很坑），可以手机端重装卸载再来</li>
+</ul>
+<p>等待备份的时候准备 <strong>adb</strong>：</p>
+<ul>
+<li>建议不要用任何三方界面，adb 有什么好用三方的不就是套壳 ... <span class="exturl" data-url="aHR0cHM6Ly9kZXZlbG9wZXIuYW5kcm9pZC5jb20vdG9vbHMvcmVsZWFzZXMvcGxhdGZvcm0tdG9vbHM/aGw9emgtY24=">官网下载<i class="fa fa-external-link-alt"></i></span>，普通用用直接命令行工具就行；</li>
+<li>打开 SDK-platform-tools，确认文件夹下有 adb.exe</li>
+</ul>
+<br/>
+<h3 id="手机进开发者模式">手机进开发者模式</h3>
+<p>设置 → 关于手机 → 软件信息 → 找到编译编号</p>
+<p>连击七下，输入密码确认</p>
+<p>返回设置，找到开发者选项 → usb 调试，打开；</p>
+<p>数据线连接电脑</p>
+<br/>
+<h3 id="命令行工具">命令行工具</h3>
+<p>打开刚刚下载的 sdk 工具，文件夹 SDK-platform-tools，确认文件夹下有 adb.exe</p>
+<p>在当前目录下打开命令行工具</p>
+<ul>
+<li>直接在当前文件夹目录行输入 cmd，回车</li>
+<li>或者 win+R，输入 cmd 启动后，再 cd 到当前文件夹</li>
+</ul>
+<h4 id="检查设备信息">检查设备信息</h4>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb devices</span><br></pre></td></tr></table></figure>
+<p>看手机，跳出窗口询问是否允许，授权；</p>
+<h4 id="打开-shell-交互式">打开 shell 交互式</h4>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell</span><br></pre></td></tr></table></figure>
+<p>注意这里的命令行的开头变成 <code>o1q:/ $ </code> ，表示进入交互式命令</p>
+<p>同时检查当前的软件列表：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pm list package</span><br></pre></td></tr></table></figure>
+<p>最好找个记事本把这里的输出复制粘贴记下来，到时候可以用关键字查找搜索包名删除</p>
+<br/>
+<h3 id="基本命令">基本命令</h3>
+<p>以下都是在 shell 下，如果普通命令行记得加上 <code>adb shell</code></p>
+<h4 id="删除">删除</h4>
+<p>本质是为当前用户删除，不是直接移除；</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pm uninstall -k --user 0 package-name</span><br></pre></td></tr></table></figure>
+<p>这里的 package-name 在上面输出的 list 里面找，比如</p>
+<p><code>package:/system/priv-app/GameTools_Dream/GameTools_Dream.apk=com.samsung.android.game.gametools</code></p>
+<p>找到最后的 <code>apk=</code> 后 <code>.com</code> 的部分就是包名 <code>com.samsung.android.game.gametools</code></p>
+<p>这里的 <code>-k</code> 是保存用户数据信息和缓存文件</p>
+<p>比如删除游戏助推器：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pm uninstall -k --user 0 com.samsung.android.game.gametools</span><br></pre></td></tr></table></figure>
+<p>出现 Success 就是删除成功；如果是 Failure 一般是包名错误，注意大家版本都不太一样包名可能不一样，最好还是从自己的 list 里面找；</p>
+<br/>
+<h4 id="禁用">禁用</h4>
+<p>直接 uninstall 换成 disable</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pm disable-user package-name</span><br></pre></td></tr></table></figure>
+<p>package-name 和上面一样</p>
+<br/>
+<h4 id="恢复">恢复</h4>
+<p>也就是 uninstall 换成 enable （所以说其实没有删除 ...</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pm enable package-name</span><br></pre></td></tr></table></figure>
+<br/>
+<br/>
+<hr>
+<h3 id="自用禁用列表">自用禁用列表</h3>
+<p>还是看个人使用习惯，比如我不用 bixby 但希望保留完整的 google play 套件</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">adb devices</span><br><span class="line">adb shell</span><br><span class="line"></span><br><span class="line"><span class="comment"># AR Zone</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.arzone</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.ardrawing.zh</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.aremoji</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.aremojieditor</span><br><span class="line"><span class="comment"># 游戏助推器</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.game.gametools</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.game.gos</span><br><span class="line"><span class="comment"># 相机贴纸</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.app.camera.sticker.facearavatar.preload</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.autodoodle.service <span class="comment"># 费流量大户 ...</span></span><br><span class="line"><span class="comment"># 三星浏览器（注意装好替代）</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.app.sbrowser</span><br><span class="line"><span class="comment"># Dex</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.desktopmode.uiservice  <span class="comment"># Dex</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.app.desktoplauncher  <span class="comment"># Dex 主屏幕</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.dexsystemui</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.app.dexonpc</span><br><span class="line"><span class="comment"># bixby 套件</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixby.service</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixbytouch</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixby.agent</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixby.wakeup</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixbyvision.framework</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.app.settings.bixby</span><br><span class="line"><span class="comment"># 其他</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.kidsinstaller  <span class="comment"># 儿童模式</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.hongbaoassistant <span class="comment"># 红包助手</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.mhs.smarttethering  <span class="comment"># 自动开启热点</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.mdecservice  <span class="comment"># 其他设备上打电话发短信</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.mdx  <span class="comment"># 连接到 windows</span></span><br></pre></td></tr></table></figure>
+<br/>
+<br/>
+<hr>
+<h3 id="参考">参考</h3>
+<p><span class="exturl" data-url="aHR0cHM6Ly90aWViYS5iYWlkdS5jb20vcC82OTA3MDQ5MDg1">adb禁用列表<i class="fa fa-external-link-alt"></i></span>  贴吧老哥补充很全，有些包名字变了，可以关键字在自己的 list 里面搜索</p>
+<p><span class="exturl" data-url="aHR0cHM6Ly9tYWFqaWFhLndvcmRwcmVzcy5jb20vMjAyMS8wNi8xMi9zYW1zdW5nLWJsb2F0d2FyZS1yZW1vdmFsLXdpdGhvdXQtcm9vdC8=">s10 原厂app 卸载笔记<i class="fa fa-external-link-alt"></i></span> 原作者建了 google doc，有记录一些大家删了出问题的包，可以先在这里check（当然个人建议是如果你不知道它是干嘛的，要么搞明白要么就别删 ...）</p>
+<br/>
+<br/>
+<br/>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20231019-casual-adbuninstall/" title="adb 调试清理安卓系统预装 (附三星禁用list - OneUI5.1 + 安卓13)">https://baijn-nan.github.io/2023/10/30/20231019-casual-adbuninstall/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/friends%E6%97%A5%E5%B8%B8/" rel="tag"><i class="fa fa-tag"></i> friends日常</a>
+              <a href="/tags/%E5%AE%89%E5%8D%93/" rel="tag"><i class="fa fa-tag"></i> 安卓</a>
+              <a href="/tags/%E6%88%91%E5%92%8C%E6%88%91%E7%9A%84%E4%B8%89%E6%A1%91/" rel="tag"><i class="fa fa-tag"></i> 我和我的三桑</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20231019-casual-adbuninstall/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

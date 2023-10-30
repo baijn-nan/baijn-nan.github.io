@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210922，存档如下 时隔两年再读到会小小叹气唉 ...  HopRetriever:Retrieve Hops over Wikipedia to Answer Complex Questions ; Shaobo Li, Xiaoguang Li, Lifeng Shang, Xin Jiang, Qun Liu, Chengjie Sun, Zhenzhou Ji, Bing">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HopRetriever: 通过 Hop 检索回答开放领域的复杂多跳问题">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210922-paper-note-HopRetriever/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210922，存档如下 时隔两年再读到会小小叹气唉 ...  HopRetriever:Retrieve Hops over Wikipedia to Answer Complex Questions ; Shaobo Li, Xiaoguang Li, Lifeng Shang, Xin Jiang, Qun Liu, Chengjie Sun, Zhenzhou Ji, Bing">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023112617930.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023112702952.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023112738537.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113144858.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113333277.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113656895.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113746181.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113820430.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113843027.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113901172.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113925518.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:45.965Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器阅读理解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210922-paper-note-HopRetriever/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210922-paper-note-HopRetriever/","path":"2023/10/30/20210922-paper-note-HopRetriever/","title":"HopRetriever: 通过 Hop 检索回答开放领域的复杂多跳问题"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>HopRetriever: 通过 Hop 检索回答开放领域的复杂多跳问题 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-background"><span class="nav-text">1. background</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-%E5%BC%80%E6%94%BE%E9%A2%86%E5%9F%9F%E9%97%AE%E7%AD%94%EF%BC%88open-domain-question-answering%EF%BC%89"><span class="nav-text">1.1 开放领域问答（open-domain question answering）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-%E5%A4%9A%E8%B7%B3%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3%E9%97%AE%E9%A2%98%EF%BC%88multi-hop-complex-question%EF%BC%89"><span class="nav-text">1.2 多跳阅读理解问题（multi-hop &#x2F; complex question）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-introduction"><span class="nav-text">2 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Method"><span class="nav-text">3 Method</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-Overview"><span class="nav-text">3.1 Overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Hop-encoding"><span class="nav-text">3.2 Hop encoding</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-1-mention-embedding"><span class="nav-text">3.2.1 mention embedding</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-2-document-embedding"><span class="nav-text">3.2.2 document embedding</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-3-knowledge-fusion"><span class="nav-text">3.2.3 knowledge fusion</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-Iterative-Retrieval-of-Hops"><span class="nav-text">3.3  Iterative Retrieval of Hops</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-Fine-Grained-Sentence-Level-Retrieval"><span class="nav-text">3.4 Fine-Grained Sentence-Level Retrieval</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-5-objective-functions"><span class="nav-text">3.5 objective functions</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-experiment"><span class="nav-text">4 experiment</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-HotpotQA"><span class="nav-text">4.1 HotpotQA</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-results"><span class="nav-text">4.2 results</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-analysis"><span class="nav-text">4.3 analysis</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#4-3-1-for-different-question-types"><span class="nav-text">4.3.1 for different question types</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-3-2-ablation-experiment"><span class="nav-text">4.3.2  ablation experiment</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210922-paper-note-HopRetriever/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="HopRetriever: 通过 Hop 检索回答开放领域的复杂多跳问题 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          HopRetriever: 通过 Hop 检索回答开放领域的复杂多跳问题
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3-MRC/" itemprop="url" rel="index"><span itemprop="name">机器阅读理解(MRC)</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>6k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>22 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210922，存档如下</p>
+<p>时隔两年再读到会小小叹气唉 ...</p>
+<blockquote>
+<p><strong>HopRetriever:Retrieve Hops over Wikipedia to Answer Complex Questions</strong> ; Shaobo Li, Xiaoguang Li, Lifeng Shang, Xin Jiang,<br>
+Qun Liu, Chengjie Sun, Zhenzhou Ji, Bingquan Liu; Harbin Institute of Technology; Huawei Noah’s Ark Lab</p>
+<p>原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzIwMTIuMTU1MzR2MS5wZGY=">https://arxiv.org/pdf/2012.15534v1.pdf<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-background">1. background</h2>
+<p>一开始先明确这篇问题针对的问题：开放领域问答中的多跳问题回答</p>
+<h3 id="1-1-开放领域问答（open-domain-question-answering）">1.1 开放领域问答（open-domain question answering）</h3>
+<p>开放领域问答，应当分类为机器问答中的一种，可以简单解释为 <strong>于开放领域中（例如维基百科全体信息，此时问题可以是各种领域的各种问题）利用机器回答人类以自然语言形式提出的问题</strong>，同其他几种机器问答系统不同在于此时是针对开放领域提问的，可以理解为此时的问题可以涉及不同的各式的领域，也可以理解为此时回答问题所需要的知识领域是很广阔的，例如：</p>
+<ul>
+<li>传统机器阅读理解问题：给定一篇 / 多篇拜登 / 美国相关的文章，再提问美国总统是谁</li>
+<li>开放领域问答问题：提问美国总统是谁？让子弹飞的导演是谁？北京是哪里的城市？所有问题都需要在庞大的知识库中（例如维基百科）寻找答案</li>
+</ul>
+<p>同理，相较于传统机器阅读理解问题的数据集会给定文章的形式，对应大部分开放领域问答数据集会将允许的答案检索文段设定为维基百科全部词条。对应的<strong>知识库的形式</strong>，可以为以下三种：</p>
+<ul>
+<li>1）结构化的，例如构造好的知识图谱的形式；</li>
+<li>2）半结构化的，表格等；</li>
+<li>3）非结构化的，如维基百科的自然语言形式的词条，本文所使用的为第三种形式（即问题与所依赖的知识库都是自然语言的形式）</li>
+</ul>
+<p>对应开放领域问答的任务形式，一般针对此类问题的回答分为两个步骤：</p>
+<ul>
+<li><strong>信息检索（information Retrieval， IR）</strong>：比如美国总统是谁的问题，此时需要机器先从知识库中得到美国相关的词条信息</li>
+<li><strong>机器阅读理解（Machine Reading Comprehension， MRC）</strong>：也就是根据检索出的文段回答问题，类似传统的机器阅读理解形式</li>
+</ul>
+<br>
+<h3 id="1-2-多跳阅读理解问题（multi-hop-complex-question）">1.2 多跳阅读理解问题（multi-hop / complex question）</h3>
+<p>可以直观地理解为 <strong>需要多次跳转，将不同的信息进行进一步整合才能得到答案的阅读理解问题</strong>，举个例子（例子来自 CogQA）：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png" alt="image-20231021084007009" style="zoom: 80%;" />
+<p>这个问题本身问的是导演，但是没有给出电影的名字，首先需要后面的信息去推断是哪一部电影，才能进一步去寻找该电影的导演。也就是说相较于传统的简单问题形式，多跳阅读理解问题需要机器掌握一定推理的能力，能够依据问题信息多步寻找所需要的信息并不断更新证据链，最终得到需要的答案。</p>
+<br>
+<br/>
+<hr>
+<h2 id="2-introduction">2 introduction</h2>
+<p>针对开放领域的多跳阅读理解问题，当前主流模型大多为 Retriever + Reader 的结构：</p>
+<ul>
+<li>$D_q = Retriever(q,K)$：负责从知识库 K 中，依据问题 q 搜索可能的证据</li>
+<li>$a = Reader(q, D_q)$：利用检索得到的证据 Dq 再结合问题 q 得到最后的答案</li>
+</ul>
+<p>此时如何收集所需要的信息或成为整个问题流程中最大的挑战，考虑此时知识库内存有大量信息，而为回答多跳问题同时需要从多个相关信息词条中收集所需要的信息并聚合，对于上述 retriever + reader 结构形式的模型而言，此时相较于传统的简单阅读理解问题，信息收集部分模型的能力十分重要。</p>
+<p>最近主流的方法是将<strong>多跳证据收集作为迭代文档检索问题</strong>来处理，也就是将一个复杂问题的分步搜索求解的，从整个知识源中检索证据链的过程，分解成多个单步文档检索。而本文的作者认为，在这样检索的过程中需要同时利用结构化信息和非结构化信息；举个例子来解释这里的结构化和非结构化：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023112617930.png" alt="image-20231023112617930" style="zoom:67%;" />
+<ul>
+<li>结构化信息：也就是提及关系，例如左图中通过 spawned 关系提及了对应的三首歌，spawn 同时符合问题中的 song of 关系，故此时能够提示模型三首歌的信息是所需要的信息；</li>
+<li>非结构化信息：也就是外来知识，比如此时可以通过对应歌名的超链接跳转到新的链接对应得到新的信息。注意此时三首歌中只有第一首是符合合作要求的，故此时模型需要探索三首歌对应的外部链接对应词条的信息，才能从三个选项中得到正确答案；</li>
+</ul>
+<p>综上，对于开放领域的问答，此时需要同时关注</p>
+<ul>
+<li>1）当前文档中对于下一跳实体的提及信息  = 结构化信息 = 关系证据；</li>
+<li>2）下一跳实体本身链接对应的新的外部信息 = 非结构化信息 = 事实证据</li>
+</ul>
+<p>本文重点即在于将上述两种类型的信息结合起来，为此，作者定义了 <strong>跃点 = hop</strong> 为 <strong>超链接 + 链接对应外部词条内容的组合</strong>，此时可以认为 超链接 记录了当前实体和前序实体的关系（也就是新的实体是怎样在前一个实体的文档中被提及的），而超链接对应的外部词条内容扩充了被提及实体的信息。同时，本文着重研究了如何 <strong>有选择地提取需要的非结构化信息</strong>，同时将 <strong>结构化信息与非结构化信息作融合</strong></p>
+<p>其实个人觉得这里的结构化信息 = mention 也就是 KGQA 中的实体关系的部分；而非结构化信息也就是其中尾结点的 embedding 的部分，对于 KGQA 而言本文的思路是十分常见的（也就是寻找在知识图谱上推理的路径的思路），只是在自然语言形式的文本下，实体的信息与各自的关系结构不像知识图谱中这么显式，需要一定的抽取整合工作</p>
+<br>
+<br>
+<hr>
+<h2 id="3-Method">3 Method</h2>
+<br>
+<h3 id="3-1-Overview">3.1 Overview</h3>
+<p>先看看模型整体结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023112702952.png" alt="image-20231023112702952" style="zoom:50%;" />
+<p>这里通过一个示例问题来展示模型流程：</p>
+<ul>
+<li>首先从问题中可以获取 Big Stone Gap 的实体</li>
+<li>以该实体作为出发点，可以在其相关的文档中发现提及实体 Adriana 和 Donna；注意此时超链接对应的上下文中包含了 （directed by）和（produced by）的信息，这些信息 = 上述的结构化信息 = 提示了电影和两个人名之间的关系；</li>
+<li>以 Adriana 的提及为例，此时其超链接对应上下文的信息（蓝色部分）作为 mention，而超链接对应的外部词条（也就是 Adriana 词条）作为 document，分别提供关系信息和事实信息，模型将这两种类型的信息作融合，作为 跃点 = hop 的信息；</li>
+<li>由上步骤，同理可以从被提及的实体（例如上面的 Adriana）再出发寻找下一跳的实体，由此不断生成证据链，且注意到证据链中的每一跳 = 每一个跃点 = hop 都是存在自己的表示的（由 document 和 mention 两方面的信息组成）</li>
+<li>以一定的条件结束检索，得到证据链与最终答案</li>
+</ul>
+<br>
+<h3 id="3-2-Hop-encoding">3.2 Hop encoding</h3>
+<p>首先考察如何得到跃点 = hop 的 embedding 信息，也就是<strong>同时得到 mention 和 document 的信息，并将其作融合</strong>（也就是同时融合结构化信息和非结构化信息 = 同时融合证据信息和事实信息的过程）</p>
+<h4 id="3-2-1-mention-embedding">3.2.1 mention embedding</h4>
+<p>设此时在实体 $e_i$ 的文档 $d_I$ 中提到了实体 $e_j$，提及部分的语句为  $m_{i,j}$</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023112738537.png" alt="image-20231023112738537" style="zoom:67%;" />
+<p>以 the album spawned three singles <em>On My Mind</em> , ... 这样的一句话为例，这句话标志了从实体 ei = album 提及了 single 实体 ej = On My Mind，则这句话本身作为 $m_{i,j}$，本文采用的方法为在这句话的提及实体（也就是 On My Mind）的前后各加入一个特殊的 $[MARKER]$ 的token，将 原问题 + mention 部分的这一句话作拼接 → 再扔进 BERT，并取第一个 $[MARKER]$ 对应的 embedding 作为 mention 部分的 embedding</p>
+<p>如果此时文档中没有直接提及实体 ej（例如相关词条的形式，在逛 ei 的词条的时候可能相关词条中出现了 ej 但是并没有一个明确的 mention 的一句话提到 ej）则用一个固定的向量 $m_p$ 作为 mention 部分的 embedding；注意 $m_p$ 是可学习的<br>
+也就是由下式获得提及 $m_{i,j}$​ 的 embedding：<br>
+$$<br>
+m _{i,j} =<br>
+\begin{cases}<br>
+\text{BERT} _{[M-j]} (q; d_i), &amp;\text{if } m _{i, j} \in M \\<br>
+m_p, &amp;\text{otherwise}<br>
+\end{cases}<br>
+$$</p>
+<p>这个做法似乎是借鉴了 <span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvYWJzLzE5MDYuMDMxNTh2MQ==">ACL2019 的文章：Matching the Blanks: Distributional Similarity for Relation Learning<i class="fa fa-external-link-alt"></i></span>，具体有效性和理由可能需要读读这篇</p>
+<h4 id="3-2-2-document-embedding">3.2.2 document embedding</h4>
+<p>这部分比较简单粗暴，也就是将被提及实体 $e_j$ 对应的外部词条的整个内容 $d_j$ 同问题 $q$ 拼接后，整个扔进 BERT，取 $[CLS]$ 对应 token 的 embedding 作为外部文档的 embedding，记作 $u_j$​<br>
+$$<br>
+u_j = \text{BERT} _{[CLS]} (q; d_j)<br>
+$$</p>
+<h4 id="3-2-3-knowledge-fusion">3.2.3 knowledge fusion</h4>
+<p>再考虑如何将提及 = mention embedding 和外部文档 = document embedding 两部分的信息作融合<br>
+记 mention embedding 为 $m_{i,j}$，而 document embedding 为 $u_j$，此时目标为得到对应的跃点的 embedding，记为 $hop_{i,j}$，这里通过注意力机制将信息作融合：<br>
+$$<br>
+\begin{align}<br>
+a_m &amp;= hW_k m _{i, j} \\<br>
+a_u &amp;= h W_k u_j \\<br>
+{w_m, w_u} &amp;= \text{softmax} ({a_m, a_u}) \\<br>
+\text{hop} _{i, j} &amp;= w_m \cdot W_v m _{i, j} + w_u \cdot W_v u_j<br>
+\end{align}<br>
+$$</p>
+<p>其中 h 为过去检索的历史信息，具体是通过不断检索不断更新的（也就是每每从一个实体向下一个实体跳跃的过程中都会不断丰富 h 的信息，具体计算方式会在下面提及），这里的 h 实际上是作为注意力机制中的 query vector，而 $m_{i,j}$ 和 $u_j$ 作为 key vector，从中选出所需要的信息，并通过 softmax 获取 mention embedding 和 document embedding 相对的权重信息 $\omega_m, \omega_u$​，再结合得到对应跃点 = hop 的 embedding 信息</p>
+<p>从直观的角度来说，这里的 h 也就是我当前已经推理完成得到的信息；例如问题：让子弹飞的导演家乡哪里？在初始面对问题的时候关注点应该在让子弹飞，但是已经推出导演名后关注点应该在家乡，此时不同的推理步骤对应的关注点是不同的</p>
+<br>
+<h3 id="3-3-Iterative-Retrieval-of-Hops">3.3  Iterative Retrieval of Hops</h3>
+<p>注意到此时推理链的形成是通过不断跳跃不断寻找下一个 hop 来完成的，此时采用如下的形式完成接连的 hop 获取：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113144858.png" alt="image-20231023113144858" style="zoom:60%;" />
+<p>首先，初始的实体 $e_s$ 来自问题，在从 $e_s$ 跳跃至下一个提及实体 $e_i$ 的过程中使用一个初始的隐藏状态 $h_s$，获得这一 hop 的对应 embedding = $hop_{s,i}$ 后，将其和我初始的隐藏状态 $h_s$ 一同作为输入加入 RNN 网络， 并得到下一个 hop embedding 计算需要的隐藏状态 $h_2$，由此不断循环</p>
+<p>也就是说，假设此时第 t-1 跳结束后我们来到实体 $e_i$，并期望得到实体 $e_i$ 到实体 $e_j$ 的 $hop_{i,j}$ 的信息，则此时需要用到的 $h_i$ 隐藏状态通过如下的方式计算：<br>
+$$<br>
+h_t =<br>
+\begin{cases}<br>
+h_s, &amp;t=1 \\<br>
+\text{RNN} (h _{t-1}, \text{hop} _{k, i}), &amp;t\geq2<br>
+\end{cases}<br>
+$$</p>
+<p>同时注意到，一个实体 $e_i$ 下可能有多个提及 $e_j$，为从中选择出下一步确实需要移动的实体，我们计算每一个可能的 $hop_{i,j}$ 确实为推理链中的一环的概率（通过对应第 t hop 的隐藏状态 ht 和该 hop 的 embedding 的点乘再 sigmoid）<br>
+$$<br>
+p(d_j) = \text{sigmoid} (h_t^T \text{hop} _{i, j})<br>
+$$</p>
+<p>为了标记何时结束跳跃，此时定义一个表示结束状态的 hop，记作 $hop_e$，其对应为 mention embedding $m_p$（也就是前面如果我们的 ei 实体中没有直接提及 ej 的时候使用的 mention embedding)和一个虚拟的 document embedding $u_e$ 的结合；如果此时 $hop_e$​​ 被选中，则停止 hop 的生成。</p>
+<p>※ 整理一下上面提到的所有可能的 hop embedding：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113333277.png" alt="image-20231023113333277" style="zoom:67%;" />
+<br>
+<h3 id="3-4-Fine-Grained-Sentence-Level-Retrieval">3.4 Fine-Grained Sentence-Level Retrieval</h3>
+<p>注意到很多多跳阅读理解问题的数据集同时是要求给出当前答案所利用的证据的，故此时需要作支持句子检索 = 检索到底是哪些句子作为我推理链的证据</p>
+<p>注意证据句子单使用 mention 的句子是不足的，也就是前面提到了 “mention 的信息只是结构化信息 = 标记了前后两个实体之间的关系信息”，但无法展示被提及实体本身的事实信息 = 非结构化信息。也就是说我的证据句子同时存在于被提及实体 ej 对应的外部词条 dj 中；</p>
+<p>注意此时证据句子的检索和上述 hop 的迭代是同时进行的；假设此时经过 t 步的 hop 操作，我们位于实体 ei，想要从 ei 对应的文档 di 中寻找证据句子</p>
+<p>di 文档中的第 $l$ 个句子为证据句子的概率为：<br>
+$$<br>
+\begin{align}<br>
+s _{i, l} &amp;= \text{BERT} _{[SM-l]} (q;d_i) \\<br>
+p(s_i, l) &amp;= \text{sigmoid} (h_t W_s s _{i, l})<br>
+\end{align}<br>
+$$</p>
+<p>首先在文档 $d_i$ 的第 $l$ 个句子后加入一个特殊的 token $[SM-l]$，再将文档 di 和问题 q 拼起来扔进 BERT，将得到的 $[SM-l]$​ 的 embedding 取出（类似于 mention embedding 的获取方式），再用 (9) 式计算该句子为证据句子的概率；若此时的概率 &gt; 0.5，该句子将被认定为证据句子（因为一个文档中可能存在多句作为证据句子的所以并不是扔进 softmax 中取最大）</p>
+<br>
+<h3 id="3-5-objective-functions">3.5 objective functions</h3>
+<p>综上，来定义最终的目标函数：</p>
+<p>这里用交叉熵损失函数来处理，回忆一下，假设此时经过了 t-1 步的 hop，我们希望从当前的实体 ei 跳到下一个 ej，则我最终一通操作得到的是实体 ej 确实为下一跳实体的概率 $p(d_j)$<br>
+这里令 $d_j$ 为正确推理链需要用到的文档（注意本文使用的 HotpotQA 等都是提供了解决问题的推理链的证据句子的，也就是提供了解决多跳问题的中间步骤的 bridge entity 的信息），则 hop 检索部分的损失函数定义为：<br>
+$$<br>
+\log p(d_j) + \sum _{\bar{d} _j \in D, \bar{d} _j \neq d_j} {\log (1-p(\bar{d}_j))}<br>
+$$</p>
+<p>对于证据句子检索部分，令 $s_{i,l}$​​ 表示确实为证据的句子（ ei 实体对应的词条 di 中的第 l 个句子），则损失函数同理用交叉熵定义为：<br>
+$$<br>
+\sum _{l \in L_i} \log p(s _{i, l}) + \sum _{l \notin L_i} \log (1-p(s _{i, l}))<br>
+$$</p>
+<p>在训练中需要同时最大化以上两个损失函数</p>
+<br>
+<br>
+<hr>
+<h2 id="4-experiment">4 experiment</h2>
+<p>这里利用 <strong>HotpotQA</strong> 数据集作模型测试</p>
+<br>
+<h3 id="4-1-HotpotQA">4.1 HotpotQA</h3>
+<p>先简单说说数据集</p>
+<p>考虑到传统的机器阅读理解数据集存在一定的缺陷，将模型的能力仅仅限制在了简单的模式匹配，而不是真正的理解问题与顺次推理，这里为展现模型在需要一定的理解推理能力的更为复杂的多跳阅读理解问题上的优势，采用 HotpotQA 来进行测试</p>
+<p>HotpotQA 为专为复杂问题 = 多跳阅读理解问题设计的数据集，其中的问题至少为两跳（也就是根本不存在简单问题，这也是其和传统机器阅读理解数据集的主要区别），分为 distractor 和 full wiki 两个赛道；前者固定为问题提供了几篇用于解答来源的文章，而后者是在整个维基百科上进行，也就是典型的开放领域的多跳问题解答任务，相较于 distractor 赛道更具挑战；</p>
+<p>数据集基本包括：</p>
+<ul>
+<li><code>id</code> 唯一标识</li>
+<li><code>question</code> 问题字符串</li>
+<li><code>answer</code> 正确答案字符串，注意这里的答案是有多种类别的，有些答案只是 yes / no 类型，仅仅从文中进行 answer span 的划分不能完全满足需要</li>
+<li><code>supporting_fact</code> 包含所有解答这个问题所需要的事实推理证据，每一个证据包括 title 所在段落标题和 sent_id = 具体提供了事实证据的句子的下标，也就是说这里给出的证据是精确到句子的</li>
+<li><code>context</code> 参考段落内容</li>
+</ul>
+<p>HotpotQA 对应传统机器阅读理解的数据集（例如 CoQA,SQuAD 一类）提出了新的挑战：</p>
+<ul>
+<li>1）要求模型能够有从多个文档中综合收集信息的能力，也就是多个来源筛选可能的支撑性事实</li>
+<li>2）不再是简单的模式匹配，本身需要模型自己具有一定的推理能力，真正理解问题并结合信息进行推理，得到最后答案</li>
+<li>3）一并给出最终答案的支持证据，支持句子的正确与否同样会打分，也就是同时考察了模型的可解释性</li>
+</ul>
+<p>本文即在 HotpotQA 的 full wiki 赛道上测试模型，当前为排行榜 #3（2021.09.22）</p>
+<br>
+<h3 id="4-2-results">4.2 results</h3>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113656895.png" alt="image-20231023113656895" style="zoom:60%;" />
+<p>注意其中用于对比的几个模型</p>
+<ul>
+<li>CogQA 是典型的仅利用结构化信息的模型（基本思路是将提及的实体都收集起来构造认知图，再在图上进行 embedding 的传播和更新，很类似于一些推荐系统的思路，但可以说影响了后面很大一批做多跳阅读理解的论文，带着大家都去构造图去了 ...）；</li>
+<li>Semantic Retrieval 是典型的仅利用非结构化信息的模型，同时检索支持文档和支持句子</li>
+<li>PathRetriever 是典型的路径检索类的多跳阅读理解模型，同理是检索推理链的形式，但是仅关注了非结构化信息</li>
+</ul>
+<p>可以看到在 Ans = 提取答案 和 Sup = 找到支持证据的句子 两个任务上的提升都是比较明显的</p>
+<p>同时，考虑到 HopRetriever 本身是针对检索部分作一定提升，在此特别考察其检索能力，主要和 PathRetriever 作对比（这里是考虑 topK 的击中率</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113746181.png" alt="image-20231023113746181" style="zoom:55%;" />
+<p>检索能力确实是大大增强了</p>
+<br>
+<h3 id="4-3-analysis">4.3 analysis</h3>
+<p>以下进一步考察模型的特点与优势方面：</p>
+<h4 id="4-3-1-for-different-question-types">4.3.1 for different question types</h4>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113820430.png" alt="image-20231023113820430" style="zoom:55%;" />
+<p>这里将 HotpotQA 中的问题分为两个类别：</p>
+<ul>
+<li>comparison 比较类，例如 A 和 B 谁年龄大，此时需要同时收集 A 和 B 的信息，再作比较，再给出答案</li>
+<li>bridging 中间实体类，例如 1999年在 A 地拍摄的电影的导演是谁，此时需要先找到电影是哪一部（也就是中间步骤的 bridge entity）才能回答问题</li>
+</ul>
+<p>本身 hop 检索的方式就直观上更适应 bridging 类型问题的思路模式，最终结果也是在 bridging 问题上有所提升，而比较类问题表现较差；</p>
+<p>可以理解，此时比较类问题更多关注的是非结构化信息；比如提问：A 和 B 谁的年龄更大，此时需要去寻找 A 和 B 的信息，再分别比较，关注的是 A 和 B 各自的信息 = 非结构化信息 = 事实证据，而不是 A 和 B 的信息之间的关系 = 结构化信息；故在比较类问题上，仅关注非结构化信息的 PathRetriever 和本文的模型效果差距不大</p>
+<p>但是在 bridging 类型的问题上，此时我选择下一跳为哪一个实体等等子任务都是需要把握实体之间的关系的，也就是说相较于比较类问题会更关注结构化信息，因此本文模型于 bridging 类问题上有更好的提升</p>
+<p>这里作者也确实去数据集检查了两类问题中的 mention 和 document 的比例：（这里也就是 mention embedding 和 document embedding 结合的部分的两个权重的比值（对应上面的 $\omega_1, \omega_2$）</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113843027.png" alt="image-20231023113843027" style="zoom:67%;" />
+<p>再来几个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113901172.png" alt="image-20231023113901172" style="zoom:60%;" />
+<p>可以看到确实在 Case1 中，mention 本身便已经足够帮助解答问题（已经点明了 directed by），此时非结构化信息对于（选择导演 Adriana 作为下一跳的实体）是没有帮助的；</p>
+<p>但是对于 Case 2，此时 mention 提及的实体是模糊的（同时存在两个），此时需要两个实体对应的非结构化信息，结合题目中的限制，来帮助确定下一跳的实体该是哪一个；</p>
+<p>对于 Case 3 此时则不需要 mention 的信息（比较类问题），此时只是需要回答两个简单问题（分别 located in？）再作比较即可；并不需要关注实体之间的关系证据</p>
+<p>综上，此时为解决多样的问题形式，结构化信息和非结构化信息均需要重视，本文提升点亦在此</p>
+<h4 id="4-3-2-ablation-experiment">4.3.2  ablation experiment</h4>
+<p>为检验模型各部分各自的效果，作者同理进行了消融实验：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023113925518.png" alt="image-20231023113925518" style="zoom: 60%;" />
+<p>可以看到此时结构化信息对于模型是十分重要的；这也是模型相较于大多只关注非结构化信息的模型能够有所提升的原因</p>
+<p>weighting 部分表示去除了结构化信息和非结构化信息各自的权重（也就是公式 (5) 中的两个权重 $\omega_m = \omega_u  = 1$，可以看到对于模型存在一定影响；例如上面的三个不同的 Case 情况，不同类型的问题对于 结构化信息和非结构化信息的关注度不是相同的，需要以一定的偏重进行结合；</p>
+<p>sentence prediction 也就是证据句子的预测，一开始就是为了某些数据集的挑战要求而设计的，去掉本身不会影响模型效果。</p>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210922-paper-note-HopRetriever/" title="HopRetriever: 通过 Hop 检索回答开放领域的复杂多跳问题">https://baijn-nan.github.io/2023/10/30/20210922-paper-note-HopRetriever/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3/" rel="tag"><i class="fa fa-tag"></i> 机器阅读理解</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210922-paper-note-HopRetriever/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

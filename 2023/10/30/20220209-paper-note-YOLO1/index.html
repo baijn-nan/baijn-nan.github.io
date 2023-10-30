@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20220209，存档如下  You Only Look Once: Unified, Real-Time Object Detection ; Joseph Redmon, Santosh Divvala, Ross Girshick, Ali Farhadi; University of Washington, Allen Institute for AI, Facebook AI">
+<meta property="og:type" content="article">
+<meta property="og:title" content="You Only Look Once（一）: YOLO 原论文笔记">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20220209-paper-note-YOLO1/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20220209，存档如下  You Only Look Once: Unified, Real-Time Object Detection ; Joseph Redmon, Santosh Divvala, Ross Girshick, Ali Farhadi; University of Washington, Allen Institute for AI, Facebook AI">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023120058589.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023120131783.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023121054167.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:49.313Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="CV">
+<meta property="article:tag" content="YOLO">
+<meta property="article:tag" content="目标检测">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023120058589.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20220209-paper-note-YOLO1/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20220209-paper-note-YOLO1/","path":"2023/10/30/20220209-paper-note-YOLO1/","title":"You Only Look Once（一）: YOLO 原论文笔记"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>You Only Look Once（一）: YOLO 原论文笔记 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-Background"><span class="nav-text">1. Background</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Model-Structure"><span class="nav-text">2. Model Structure</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-overview-%E4%B8%BB%E8%A6%81%E6%80%9D%E8%B7%AF"><span class="nav-text">2.1 overview 主要思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-Network-Design-%E7%BD%91%E7%BB%9C%E8%AE%BE%E8%AE%A1"><span class="nav-text">2.2 Network Design 网络设计</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Training-%E8%AE%AD%E7%BB%83%E5%92%8C%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0"><span class="nav-text">3 Training 训练和损失函数</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E9%A2%84%E8%AE%AD%E7%BB%83"><span class="nav-text">3.1 预训练</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0"><span class="nav-text">3.2 损失函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-1-%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82%E9%97%AE%E9%A2%98%EF%BC%9A"><span class="nav-text">3.2.1 几个细节问题：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-2-%E8%A7%A3%E9%87%8A%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0"><span class="nav-text">3.2.2 解释损失函数</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E8%AE%AD%E7%BB%83%E5%8F%82%E6%95%B0%E8%AE%BE%E7%BD%AE"><span class="nav-text">3.3 训练参数设置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-Inference-%E6%8E%A8%E7%90%86"><span class="nav-text">4 Inference 推理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86"><span class="nav-text">4.1 模型推理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-NMS-%E6%96%B9%E6%B3%95%EF%BC%88Non-Maximal-Suppression-%E9%9D%9E%E6%9E%81%E5%A4%A7%E5%80%BC%E6%8A%91%E5%88%B6%EF%BC%89"><span class="nav-text">4.2 NMS 方法（Non-Maximal Suppression &#x2F; 非极大值抑制）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-summary"><span class="nav-text">5 summary</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-YOLO-%E6%AD%A5%E9%AA%A4%E6%80%BB%E7%BB%93"><span class="nav-text">5.1 YOLO 步骤总结</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-YOLO-%E7%9A%84%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="nav-text">5.2 YOLO 的优缺点</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20220209-paper-note-YOLO1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="You Only Look Once（一）: YOLO 原论文笔记 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          You Only Look Once（一）: YOLO 原论文笔记
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/CV/" itemprop="url" rel="index"><span itemprop="name">CV</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/CV/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B/" itemprop="url" rel="index"><span itemprop="name">目标检测</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>6.1k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>22 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20220209，存档如下</p>
+<blockquote>
+<p><strong>You Only Look Once:<br>
+Unified, Real-Time Object Detection</strong> ; Joseph Redmon, Santosh Divvala, Ross Girshick, Ali Farhadi; University of Washington, Allen Institute for AI, Facebook AI Research</p>
+<p>原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE1MDYuMDI2NDAucGRm">https://arxiv.org/pdf/1506.02640.pdf<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<p>我：和 YOLO 小打小闹半年了</p>
+<p>也是我：这是什么 → 看博客看源码 → 这是什么 → 看博客看源码 → 这是什么 → 看博客看源码 → 这是什么</p>
+<p>脑子不好使就得记下来 ...</p>
+<br>
+<br>
+<hr>
+<h2 id="1-Background">1. Background</h2>
+<p>YOLO 本身是目标检测算法，简单来说就是分成两个部分，先<strong>找到图像中的物体</strong>的位置 → 再进行<strong>图像分类确认它是什么</strong></p>
+<p>在 YOLO 之前也有几个常用的方法：</p>
+<ul>
+<li>
+<p><strong>deformable parts models (DPM)</strong></p>
+<ul>
+<li>利用滑动窗口的思路，可以直观地理解为通过一个窗口在图片上滑动来一步一步爬着检测（虽然更多关于 DPM 的重点在优化 / 启发式算法 etc 上，这里就不过多涉及了）</li>
+<li>直观，但缺陷也十分明显（注意到物体在图中的位置和大小本身都是不确定的）：此时移动的步长，起始位置，框的大小等都有很多的可能，不注意就是巨大的计算量（所以一般会配合启发式算法）</li>
+</ul>
+</li>
+<li>
+<p><strong>R-CNN 类</strong></p>
+<ul>
+<li>总体思路：
+<ul>
+<li>先生成多个候选区域（这里主要是通过相邻区域合并的方式生成的，也就是说此时生成的区域的大小并不是一定的，而后续的模型需要固定大小的输入，故这里再通过一个 CNN 来提取特征转化为固定大小的输入）</li>
+<li>扔进 SVM 里做分类（注意这里如果是 N 分类也就存在 N 个 SVM 的分类器）</li>
+<li>经过 NMS（非最大抑制，这个机制在 YOLO 里也有，后续介绍，简单来说就是将重合度比较大的框来进行合并）</li>
+<li>rescore：通过 box regressor 进行修正</li>
+</ul>
+</li>
+<li>缺点：慢！超慢！本身 SVM 分类的速度就很慢了，本身候选区域较多的时候带来的大量的特征数据还会很占存储，并且本身的优化是比较难做的（这里分为多个模块进行，比如生成候选区域是一个部分，后续的分类又是另外一个部分</li>
+</ul>
+</li>
+</ul>
+<p>而 <strong>YOLO 的思路</strong>很简单：<strong>将目标检测问题转化为一个回归问题进行求解</strong>，也就是说将图像作为输入（像素数据），直接输出物体的位置和所属于的类别的置信度（是以一个向量的形式表示的，后续会介绍），属于端到端的模型形式。</p>
+<p>这种特点的模型存在几个优势：</p>
+<ul>
+<li>很快，YOLO 的训练和最后 inference 的速度较前面的几个思路都是快很多的</li>
+<li>不同于一般的滑动窗口的方式或事先筛选出候选区域的方式，YOLO 在处理图片的时候是直接输入整张图，也就是说较于上面的两种方式会有更多的上下文信息。也就是说 YOLO 在类似于 background error（也就是错误地将背景上的某一个东西当作目标切下来了） 的问题上会表现更好</li>
+<li>更容易学习到物体的泛化表示（也就是在这张图片上训练认识了狗，能够以更好的泛化性能同时认出来别的图片里的不太一样的狗）也就是说作为模型的泛化性能加强了</li>
+</ul>
+<br>
+<br>
+<hr>
+<h2 id="2-Model-Structure">2. Model Structure</h2>
+<br>
+<p>YOLO 是通过一个统一的神经网络来直接处理一张图片的，也就是说即使这个图片中存在多个目标，每一个目标还都是多分类问题，都是统一处理的；因此 YOLO 才能有比较好的速度；</p>
+<br>
+<h3 id="2-1-overview-主要思路">2.1 overview 主要思路</h3>
+<ul>
+<li>
+<p>将<strong>整个图片分为 S*S 的小区域</strong>，这里的 S 自己指定；注意到每一个目标 → 假设都存在一个 true answer 也就是针对这个目标的最好的检测框 → 则每一个目标的检测框的中心点一定是落在某一个小区域内的；如果此时的中心点落在 x 框内，则 x 小区域就负责搞定这个目标；注意此时可能多个目标落在同一个区域<br>
+<br/></p>
+</li>
+<li>
+<p>每一个<strong>小区域设定 B 个可能的候选框，并计算每一个可能的候选框的得分</strong> = 置信度，是一个（该候选框和真实的目标检测框的重合程度）和（这个框里确实框住了某一个物体）的综合度量指标，计算方式如下：</p>
+<p>$$confidence = Pr(Object) * IOU_{pred}^{truth}$$</p>
+<ul>
+<li>这里的 IOU 也就是：$$IOU = \frac{truth 的检测框 \cap pred 的检测框}{truth 的检测框 \cup pred 的检测框}$$，也就是真实的框和我预测的框的交并比</li>
+<li>同时注意这里为什么要同时考虑两个指标：
+<ul>
+<li>考虑 IOU：想象此时有一个很大的狗，A 框只框住了狗头，B 框住了狗和一点点背景，此时 A 的Pr 为 0.999 而 B 的 Pr 为 0.998，但是本质上我宁愿选 B（A没全）；也就是说还通过计算 IOU 考虑到一个是否框准了的问题</li>
+<li>考虑 Pr：比如狗后面有个树，本身树不是我们的识别目标，如果此时的 pred 的框 A 本身命中的是树，则可能和 狗 的 true answer 的 IOU 也是很高的，但是对应的 Pr 部分会比框住狗的预测框 B 更低，则此时通过 Pr 在前面控制，保证在后续的 NMS 部分会优先留下 B 而不是 A</li>
+</ul>
+</li>
+</ul>
+<br/>
+</li>
+<li>
+<p><strong>每一个小区域（共 $S^2$ 个小区域）计算 B 个候选框，共 $S<em>S</em>B$ 个，每一个预测是一个长度为 5 的向量，记作 $(x,y,w,h,conf)$</strong></p>
+<ul>
+<li>(x, y) 表示当前预测的检测框的中心相对于我的小区域的位置（共 $S^2$ 个小区域），这里的 x 和 y 都是 0-1 之间的，也就是说是相对于当前小区域的左上角的偏移值</li>
+<li>(w,h) 表示检测框的宽度和高度，一般是处理到 0-1 之间，标记当前的预测框和整个图片的宽度/高度的比例</li>
+<li><code>conf</code> 为上述的置信度，可以看作是当前的框的可信度的综合指标，由（是否框准了 = 是否和真实的预测框有较好的重合）和（是否框里确实框住了物体）两个部分影响</li>
+</ul>
+<br/>
+</li>
+<li>
+<p><strong>同时计算每一个小区域（注意是小区域，一开始 S*S 的那个，不是预测框）对应为第 i 个类别的概率，记作 $Pr(Class_i|Object)$；也就是说这里作者前提假设了同一个小区域内只有同一种物体的中心落在里面</strong></p>
+<ul>
+<li>在测试的时候，则该区域内的所有的 B 个预测框都对应乘上这个 Pr 值得到：<br>
+$$confidence = Pr(Class_i|Object) * Pr(Object) * IOU_{pred}^{truth} = Pr(Class_i) * IOU_{pred}^{truth}$$，也就是说每一个小区域内对应的 B 个预测框的分类的 i 对应的条件概率（以确实框到了东西为条件）是一样的</li>
+<li>上面计算得到的 conf 也就是每一个预测框框住的是分类 i 的物体的一个综合置信度得分</li>
+</ul>
+</li>
+</ul>
+<br>
+<p><strong>举个例子：</strong></p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023120058589.png" alt="image-20231023120058589" style="zoom:67%;" />
+<p>这里的 S 是 7，也就是将整个图片分为 49 个小区域，对应的每一个小区域设定考虑 B 个不同的候选框（注意这里设定的 B 的主要目的是保证如果多个目标的中心都在同一个小区域内也可以抓得比较全）→ 计算共 S*S*B 个框的预测信息，每一个预测框都对应一个五维的向量作为预测值，包括：</p>
+<ul>
+<li>1）预测框的中心对应当前的小区域的相对位置；</li>
+<li>2）预测框的大小相对于整个图片的相对比值；</li>
+<li>3）置信得分 = P(确实框到东西了) * IOU → 同时对于一个 C 分类问题，则每一个小区域都有一个长度为 C 的向量，表示该小区域对应的预测框是 i 分类的概率</li>
+</ul>
+<p>综上，此时整个模型的输出应该是大小为 S*S*(B*5 + C) 大小的一个向量</p>
+<br>
+<h3 id="2-2-Network-Design-网络设计">2.2 Network Design 网络设计</h3>
+<p>整体的网络设计依赖卷积神经网络的思路，也就是一大串卷积（共 24 层）后面跟着全连接层（两层全连接）输出需要的预测的向量，也就是传统的（卷积先提取特征）再（扔进全连接层进行预测）的思路</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023120131783.png" alt="image-20231023120131783" style="zoom:60%;" />
+<p>举例还是上面的 S = 7 的情况，设原图大小为 448*448*3（三通道 RGB 表示色彩）；假设这里的 B = 2，C = 20，一开始冲上来扫的卷积大小为 7 ；则对应的最后的输出应该是 7*7*(2*5 + 20), 本身是三维的，最后一个为 30（最后一维输出的大小 = B*5 + C）</p>
+<br>
+<br>
+<hr>
+<h2 id="3-Training-训练和损失函数">3 Training 训练和损失函数</h2>
+<br>
+<h3 id="3-1-预训练">3.1 预训练</h3>
+<p>首先进行预训练，在 ImageNet 1000-class competition dataset 上面进行，将前面的 20 层卷积拿出来，后面跟上一个平均方法的池化层 + 一个全连接层，来进行预训练（原论文表示大概训了一周）</p>
+<p>后续 fine tune 的时候最后的四层卷积和两个全连接层都是随机初始化权重的，也就是说这里的预训练知识针对最前面的 20 层卷积</p>
+<p>注意这里最后输出的五维向量中，对应的 x,y 和 w,h 都是 0-1 之间的值（标准化过的结果）；</p>
+<br>
+<br>
+<h3 id="3-2-损失函数">3.2 损失函数</h3>
+<p>至于<strong>损失函数部分，这里利用平方误差和（sum-squared error）来衡量</strong>（因为比较方便优化），先把这个巨大无敌的损失函数摆过来：<br>
+$$<br>
+\begin{align}<br>
+&amp; \lambda _{coord} \sum _{i=1} ^{S^2} \sum _{j=1} ^B \mathbb{1} _{ij} ^{obj} [(x_i - \hat{x} _i) ^2 + (y_i - \hat{y} _i)^2] \\<br>
++&amp; \lambda _{coord} \sum _{i =0} ^{S^2} \sum _{j=0} ^B \mathbb {1} _{ij} ^{obj} [(\sqrt{w_i} -\sqrt{\hat{w}_i}) ^2 + (\sqrt{h_i} -\sqrt{\hat{h}_i}) ^2] \\<br>
++&amp; \sum _{i =0} ^{S^2} \sum _{j=0} ^B \mathbb {1} _{ij} ^{obj} (C_i - \hat{C}_i)^2 \\<br>
++&amp; \lambda _{noobj} \sum _{i =0} ^{S^2} \sum _{j=0} ^B \mathbb {1} _{ij} ^{noobj} (C_i - \hat{C}_i)^2 \\<br>
++&amp; \sum _{i=0} ^{S^2} \mathbb {1} _{ij} ^{noobj} \sum _{c\in \text{classes}} (p_i(c) - \hat{p}_i(c))^2<br>
+\end{align}<br>
+$$</p>
+<p>这里的 $1_{i}^{obj}$ 标记对于第 i 个小区域（共 S*S 个小区域）内是否出现了某一个目标的中心点；而 $1_{ij}^{obj}$ 标记第 i 个小区域内的第 j 个预测框（共 B 个 预测框)是否框住了某一个目标</p>
+<br>
+<h4 id="3-2-1-几个细节问题：">3.2.1 几个细节问题：</h4>
+<ul>
+<li>
+<p><strong>Q1</strong>：我们的目标是想要使得平均精度最佳，也就是既要分类分得准，同时预测框的标记也需要准，但是如果直接用最后输出的五维向量来处理，此时对于（预测框的标记是否准确  = localization error）和（分类是否准确 = classification error）是同等重要来衡量的，不太对（）</p>
+<ul>
+<li><strong>A1</strong>：引入超参数 $\lambda_{coord}$ 控制（预测框的标记是否准）和（分类的结果是否对）两个部分在损失函数中对应的权重，设置 &gt; 1</li>
+</ul>
+<br/>
+</li>
+<li>
+<p><strong>Q2</strong>：同时注意到大部分的小区域都是不含有我想要检测的目标的，也就是说真实的 conf 应该为 0，这部分的区域过多，可能会导致那些含有目标的小区域对于损失函数的影响被吞掉（也就是说如果模型学会对所有的 conf 都预测为 0，则只是损失了几个少数的含有目标的小区域，但大部分的区域都是超准的；这种情况显然会导致模型跑走）</p>
+<ul>
+<li><strong>A2</strong>：引入超参数 $\lambda_{noobj}$ 控制不含有检测目标的框在损失函数中的贡献，设置 &lt; 1</li>
+</ul>
+<br/>
+</li>
+<li>
+<p><strong>Q3</strong>：在衡量我的预测框和真实的框之间的误差的时候（针对框的大小，也就是 w 和 h 两个参数），注意到如果我本身框大小为 10 相差1，和本身框大小为 1 但相差 1 完全是两个不同的概念（后者会更加严重）；也就是说对于相同的真实值与预测值之间的差值，如果对应的框越小，则对于损失函数的影响应该越大</p>
+<ul>
+<li>
+<p><strong>A3</strong>：不用 真实值 - 预测值 来衡量，而是用 √真实值 - √预测值，（注意这里的方法解决这个问题的效果是很有限的 ...）具体原理见下：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023121054167.png" alt="image-20231023121054167" style="zoom:45%;" />
+<p>注意这里的 x 轴为原值，y 轴为根号后的值，原来的 x 越小的时候，等距离的 x1 和 x2 对应的 y 轴的值 $\sqrt{x_1}$ 和 $\sqrt{x_2}$ 之间的差距会越大（也就是 x 每次都稳步增加，对应的 y 会增长飞快），也就对于损失函数的影响越大</p>
+</li>
+</ul>
+</li>
+</ul>
+<br>
+<h4 id="3-2-2-解释损失函数">3.2.2 解释损失函数</h4>
+<p>现在再回头来重新解释一下损失函数（再摆一遍<br>
+$$<br>
+\begin{align}<br>
+&amp; \lambda _{coord} \sum _{i=1} ^{S^2} \sum _{j=1} ^B \mathbb{1} _{ij} ^{obj} [(x_i - \hat{x} _i) ^2 + (y_i - \hat{y} _i)^2] \\<br>
++&amp; \lambda _{coord} \sum _{i =0} ^{S^2} \sum _{j=0} ^B \mathbb {1} _{ij} ^{obj} [(\sqrt{w_i} -\sqrt{\hat{w}_i}) ^2 + (\sqrt{h_i} -\sqrt{\hat{h}_i}) ^2] \\<br>
++&amp; \sum _{i =0} ^{S^2} \sum _{j=0} ^B \mathbb {1} _{ij} ^{obj} (C_i - \hat{C}_i)^2 \\<br>
++&amp; \lambda _{noobj} \sum _{i =0} ^{S^2} \sum _{j=0} ^B \mathbb {1} _{ij} ^{noobj} (C_i - \hat{C}_i)^2 \\<br>
++&amp; \sum _{i=0} ^{S^2} \mathbb {1} _{ij} ^{noobj} \sum _{c\in \text{classes}} (p_i(c) - \hat{p}_i(c))^2<br>
+\end{align}<br>
+$$<br>
+一行一行来：</p>
+<ul>
+<li>① 控制中心点 x 和 y 的预测，注意这里的 x 和 y 都是中心化到 0-1 之间的，不做上面的 Q3 的处理；注意如果示性函数 1 对应的为 0 ，也就是说当前的预测框里就没有物体，则对损失函数不影响；注意前面有 λcoord 存在，控制此时 localization error 的惩罚的权重；</li>
+<li>② 同理，控制框的大小的预测，这里按 Q3 的解释做开根处理后再相减，同理注意如果当前预测框内没有物体，则全部置为 0；同理存在 λcoord；</li>
+<li>③ 存在目标的预测框的 C 值（置信度）的误差惩罚；</li>
+<li>④ 不存在目标的预测框的 C 值（置信度）的误差惩罚，注意前面带有 λ noobj，这个超参数加入主要是因为进入 ④ 的框比进入 ③ 的框要多得多，对于单个的框来说没有哪个更重要的说法；</li>
+<li>⑤ 对于分类准确性的惩罚，注意这里是基于小区域（S*S 个）进行的，不是针对每一个预测框（否则三连乘会超多）；只集中于存在目标的小区域；</li>
+</ul>
+<p>同时注意，假设一个小区域内同时存在目标 ABC，对应它有预测框 abc，可能一开始 a 预测框就是离 A 目标最近（也就是 IOU 最大），则后续梯度下降的时候，它比起去贴本来离得远的 B 目标，a 预测框会越来越贴近 A 目标；也就是说随着训练的进行会出现某一个预测框就针对某一个目标开始优化的情况，算是一定程度上的专门性</p>
+<br>
+<h3 id="3-3-训练参数设置">3.3 训练参数设置</h3>
+<p>几个原论文给出的炼丹参考：</p>
+<p><strong>学习率处理：</strong></p>
+<ul>
+<li>第一个 epoch 先从 $10^{-3}$ 逐渐上升到 $10^{-2}$，注意不是一开始用大学习率，会很容易一把子发散</li>
+<li>原论文保持 $10^{-2}$ 又训了 75 epoch，再 $10^{-3}$ 30 epoch，再 $10^{-4}$ 30 epoch</li>
+<li>※ 原论文手动调了学习率可能还是有一定影响的，可能后续炼丹的时候也可以试试不要直接交给 decay 而是手动一下</li>
+</ul>
+<p><strong>缓解过拟合</strong></p>
+<p>这里为了缓解过拟合用了 dropout，参数打 0.5</p>
+<p>同时可以配合数据增强的方法，原论文用了  random scaling and translations （大概到 20% 的原图大小）</p>
+<br>
+<br>
+<hr>
+<h2 id="4-Inference-推理">4 Inference 推理</h2>
+<br>
+<h3 id="4-1-模型推理">4.1 模型推理</h3>
+<p>和训练的部分同理，推理的时候也只需要走一次模型。具体会给出 S*S*B 每一个框的对应的置信度 conf，同时通过 (x,y,w,h) 标记好框的位置</p>
+<p>注意到会一并计算每一个小区域的对应的各个类别的概率（同上所述，注意这里作者假设了每一个小区域负责检测到的目标 = 中心点落在该小区域内的目标都是属于同一个类别的；则也可以得到对应的每一个预测框的预测的类别</p>
+<p>最后输出的时候可以通过控制阈值的方法输出（后续在源码部分详细说说），比如最简单的就是控制置信度，大于 xx 的预测框才能够输出</p>
+<br>
+<h3 id="4-2-NMS-方法（Non-Maximal-Suppression-非极大值抑制）">4.2 NMS 方法（Non-Maximal Suppression / 非极大值抑制）</h3>
+<p>※原文表示是可以用这个，但是感觉为了好点的效果是必要组成部分（？）</p>
+<p>考虑有些很大的物品 / 或者这个目标的中心值刚好在边界上，则可能会导致多个小区域都给出了比较好的预测框，也就是说对于同一个目标，会出现几个较好的预测框。此时需要从它们中选择一个，否则会出现冗余</p>
+<p>这里使用 NMS 方法 = Non-Maximal Suppression / 非极大值抑制，将多余的 / 冗余的预测框去掉。本身这个方法从 R-CNN 开始就已经用起来了（不如说对于滑动窗的方法反而是最容易出现这样的重复的冗余预测框的），简单来说步骤如下：</p>
+<ul>
+<li>将可能在定位同一个目标的所有候选框搞出来 → 设定为备选框</li>
+<li>按照置信度从大大小排序备选框</li>
+<li>取置信度最大的框作为基准，计算和其他余下的框的 IOU，对应大于某一个阈值的其他框都全部扔掉</li>
+<li>重复步骤直到筛选结束</li>
+</ul>
+<p>也就是说 NMS 本身是一个局部最大的搜索方法。注意在实现的时候是必须一张图一张图来进行的，也就是说会出现在当前 batch 内遍历每一张图再一个一个来 NMS 的情况（源码里再说）</p>
+<p>对于 YOLO 来说，一般是先根据置信度扔掉大部分的框（也就是设定阈值，conf &lt; 阈值的预测框直接 pass），再进行 NMS 进行进一步的缩减。注意这里 NMS 的候选框也就是所有被留下的预测框，这里的 IOU 的计算量是 $n^2$ 级别的，所以一开始先根据置信度把大部分扔掉。</p>
+<br>
+<br>
+<hr>
+<h2 id="5-summary">5 summary</h2>
+<br>
+<h3 id="5-1-YOLO-步骤总结">5.1 YOLO 步骤总结</h3>
+<p>细节的东西比较多，以下来整体梳理一下 YOLO 的思路：</p>
+<ul>
+<li>固定图像输入大小，这里假设为 448*448*3；设定存在 C = 20 种不同类别的目标</li>
+<li>将整张图片分为 S*S 的小区域（grid cell），假设 S = 7</li>
+<li>每一个小区域设定搜索 B 个预测框（bounding box），假设 B = 2
+<ul>
+<li>每一个预测框给出一个五维向量 $(x,y,w,h,conf)$ 作为预测输出
+<ul>
+<li>xy 表示预测框中心点相对于当前的小区域（grid cell）的位置</li>
+<li>wh 表示预测框的宽高相对于整张图片大小的比例</li>
+<li>conf 为该搜索框的置信度，由 Pr(是否包含 obj) * IOU(预测框和真实框的交并比)计算
+<ul>
+<li>多啰嗦一句 ... 一个预测框的置信度是通过模型输出的，通过全连接层劈里啪啦一顿操作预测出一个值；而我的 ground truth = 该预测框的真实的置信度 → 是通过上面的式子计算的，此时真实的 bonding box 的坐标都有，则中心位置可以计算 → 若中心位置在这个小区域内，则 Pr(是否包含 obj) = 1；得到 ground truth 后就是训练模型劈里啪啦出来的那个值不断接近我计算的真实值；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>所以这里最后的输出大小为 S*S*(B*5 + C) = 7*7*30 ，注意是三维的</li>
+</ul>
+</li>
+<li>每一个小区域（grid cell）都给定 C 个可能的概率，表示该小区域内的预测框对应的目标为第 c 类目标的概率；注意这里假设了中心落在同一个小区域内的目标都是同类别的。</li>
+<li>训练 training →
+<ul>
+<li>通过上面的那个巨大无敌的损失函数，包括 localization error（也就是对目标框的 xywh 的惩罚）+ 对每一个预测框的 C 置信度的惩罚 + 对当前小区域的 classification error 分类</li>
+</ul>
+</li>
+<li>推理 inference →
+<ul>
+<li>计算得到 S*S*B 个候选框的位置大小 + 置信度（直接通过模型吐出来的，含义 = Pr*IOU），先设定置信度阈值将特别小的框扔掉，再通过 NMS 去掉冗余，对应框住的东西的分类 = 该框所在的小区域（grid cell）对应的各类概率最大的那个分类，也就是说每一个小区域内的框都是同一类的东西；</li>
+</ul>
+</li>
+</ul>
+<br>
+<h3 id="5-2-YOLO-的优缺点">5.2 YOLO 的优缺点</h3>
+<p><strong>优点</strong>：</p>
+<ul>
+<li><strong>快，YOLO 的检测速度比往常的模型快很多</strong>，这也是 YOLO 最大的优点之一，使得它在实时监测上基本能把别的模型按着打（比如输入是实时的视频流）。实验表示即使是精简版的 YOLO fast 在 FPS155 的速度下也能达到不错的精度；</li>
+<li><strong>更少出现背景误检的问题，也就是更低的 background error</strong>；也就是说 YOLO 更少将啥也没有的背景误检测出来作为目标。前面也提到，因为 YOLO 的输入是整张图直接扔进去，也就是说会有更多的上下文信息，故相较于其他模型不容易从局部上将背景作误判；</li>
+<li>**泛化能力比往常的模型要好。**原文用的是Picasso Dataset 和 People-Art Dataset 来作（艺术作品种的人的检测）的实验，YOLO 的效果会好很多，展现出一定的泛化能力。</li>
+</ul>
+<p><strong>缺点</strong> ：</p>
+<ul>
+<li>假设强，此时假设了每一个小区域内的目标不超过 B 个（原文 B = 2），同时假设了中心点落在同一个小区域内的所有目标都是同一类的物体
+<ul>
+<li>也就是说如果出现<strong>很多的目标密集挤在一起，此时 YOLO 的效果不一定会很好</strong>（会识别不全）算是 YOLO 不擅长的一个场景；</li>
+</ul>
+</li>
+<li><strong>泛化能力还是有限，主要对于长宽比不太一样的情况会表现不佳</strong> → 比如2：1的瘦狗看多了会认不出1：1的胖狗；原作者将原因归结于提取的用于预测的特征还是比较粗糙，因为本身存在对原图像多次下采样的结构；</li>
+<li>损失函数部分<strong>不同大小的框对于损失函数的贡献的区分不明显</strong>。相同的差值，大小不同的框对于损失函数的贡献应当是不同的 → 也就是前面提到了在 localization error 的部分（针对 w 和 h），如果是一个大小为 10 的框预测误差为 1 还好，但是大小为 1 的框预测误差为 1 要出事，上述操作是开根号后再进行差值计算，但是实验表示这样的处理效果还是有限。</li>
+</ul>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20220209-paper-note-YOLO1/" title="You Only Look Once（一）: YOLO 原论文笔记">https://baijn-nan.github.io/2023/10/30/20220209-paper-note-YOLO1/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/CV/" rel="tag"><i class="fa fa-tag"></i> CV</a>
+              <a href="/tags/YOLO/" rel="tag"><i class="fa fa-tag"></i> YOLO</a>
+              <a href="/tags/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B/" rel="tag"><i class="fa fa-tag"></i> 目标检测</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20220209-paper-note-YOLO1/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

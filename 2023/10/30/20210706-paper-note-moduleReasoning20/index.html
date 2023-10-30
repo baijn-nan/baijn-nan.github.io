@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210706，存档如下  Neural Module Networks for Reasoning over Text ; Nitish Gupta, Kevin Lin, Dan Roth, Sameer Singh &amp; Matt Gardner; University of Pennsylvania, Philadelphia, University of Califor">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Neural Module Networks + NLP + Reasoning: 可用于文本推理的模块神经网络">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210706-paper-note-moduleReasoning20/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210706，存档如下  Neural Module Networks for Reasoning over Text ; Nitish Gupta, Kevin Lin, Dan Roth, Sameer Singh &amp; Matt Gardner; University of Pennsylvania, Philadelphia, University of Califor">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023110700618.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023110727182.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111119568.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111235267.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111452907.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111705218.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111725347.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111748733.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:43.565Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器推理Reasoning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210706-paper-note-moduleReasoning20/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210706-paper-note-moduleReasoning20/","path":"2023/10/30/20210706-paper-note-moduleReasoning20/","title":"Neural Module Networks + NLP + Reasoning: 可用于文本推理的模块神经网络"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Neural Module Networks + NLP + Reasoning: 可用于文本推理的模块神经网络 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%A8%A1%E5%9D%97%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-Neural-Module-Networks"><span class="nav-text">2  模块神经网络 Neural Module Networks</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%95%B4%E4%BD%93%E6%A8%A1%E5%9E%8B"><span class="nav-text">3 整体模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E9%97%AE%E9%A2%98%E5%88%86%E8%A7%A3-question-parser"><span class="nav-text">3.1 问题分解 question parser</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E5%AE%9A%E4%B9%89%E6%A8%A1%E5%9D%97-module"><span class="nav-text">3.1 定义模块 module</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83"><span class="nav-text">3.3 模型训练</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-experiment-%E5%AE%9E%E9%AA%8C%E9%83%A8%E5%88%86"><span class="nav-text">4 experiment 实验部分</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210706-paper-note-moduleReasoning20/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Neural Module Networks + NLP + Reasoning: 可用于文本推理的模块神经网络 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Neural Module Networks + NLP + Reasoning: 可用于文本推理的模块神经网络
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E6%8E%A8%E7%90%86Reasoning/" itemprop="url" rel="index"><span itemprop="name">机器推理Reasoning</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>4.4k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>16 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210706，存档如下</p>
+<blockquote>
+<p><strong>Neural Module Networks for Reasoning over Text</strong> ; Nitish Gupta, Kevin Lin, Dan Roth, Sameer Singh &amp; Matt Gardner; University of Pennsylvania, Philadelphia, University of California, Berkeley, University of California, Irvine, Allen Institute for AI</p>
+<p>原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MTIuMDQ5NzF2Mi5wZGY=">https://arxiv.org/pdf/1912.04971v2.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL25pdGlzaGd1cHRhL25tbi1kcm9w">official，基于 AllenNLP<i class="fa fa-external-link-alt"></i></span> ** <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL0NPTVA2MjQ4LVJlcHJvZHVjYWJpbGl0eS1DaGFsbGVuZ2UvQ09NUDYyNDgtUmVwcm9kdWNhYmlsaXR5LUNoYWxsZW5nZS1OTU4tRHJvcC1mb3ItUmVhc29uaW5nLU92ZXItVGV4dA==">pytorch 实现<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<p>本文同理针对需要多跳推理的问题；这里首先解释一下几个概念：</p>
+<ul>
+<li><strong>KBQA</strong>：基于知识图谱的问答(KBQA) = knowledge base question answering，也就是在三元组上进行推理和查找最后得到答案</li>
+<li><strong>机器阅读理解</strong>：多针对自然语言形式的文章，而非已经提取的三元组的形式</li>
+<li><strong>多跳推理问题</strong>：可以直观地理解为需要多次跳转，将不同的信息进行进一步整合才能得到答案的问题（多跳阅读理解也就是基于自然语言形式的文章，同理知识图谱领域也存在多跳推理）。这里还是用 CogQA 的图举个例子：</li>
+</ul>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png" alt="image-20231021084007009" style="zoom: 80%;" />
+<p>这个问题本身问的是导演，但是没有给出电影的名字，首先需要后面的信息去推断是哪一部电影，才能进一步去寻找该电影的导演。也就是说这里问题的解决需要一个中间的推理步骤（也就是得到 //电影名称// 的中间步骤，这里的电影名称也可以称为 bridge entity）才能得到最终的答案</p>
+<p>然而，除去上面此类需要查找中间实体来进行类似于 “多步搜索” 的问题，多跳阅读理解问题同时涉及符号推理问题（例如排序 / 数数问题<br>
+举个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023110700618.png" alt="image-20231023110700618" style="zoom:60%;" />
+<p>这里不仅是需要寻找对应的 bridge entity，不仅是需要得到一条连接初始实体和最后的答案实体的推理链，而是需要进行信息提取 + 排序 再得到最终的答案。</p>
+<p>由此总结，多跳推理问题的解决主要包括以下几个步骤：</p>
+<ul>
+<li><strong>理解复杂问题的结构</strong>：考虑上面的例子，此时问题 = 谁 + 第二季度（限定） + 最长，首先需要模型理解这个问题的结构 → 也就是（先找到第二季度限定）下的所有得分 → 再比较 → 得到最长</li>
+<li><strong>从问题精确提取信息</strong>：还是上面的例子，这里需要模型能够精确提取到 lengths / kickers / filed goal 等词汇，并从文中确实地找到相关信息</li>
+<li><strong>执行符号推理</strong>：上面的问题也就是需要对提取到的数字作排序操作 + 得到最长的 → 对应得到最后的答案</li>
+</ul>
+<p>综上，本文尝试将 <strong>模块化的神经网络 Neural module networks (NMNs; Andreas et al., 2016)</strong> 用于解决多跳推理问题。（实际上 NMNs 已经在 VQA（视觉问答）领域取得了一定的成果（例如 CLEVR），但是针对 nlp 领域的应用还十分有限</p>
+<br>
+<br>
+<hr>
+<h2 id="2-模块神经网络-Neural-Module-Networks">2  模块神经网络 Neural Module Networks</h2>
+<p>先说说所谓的模块神经网络</p>
+<p>还是考虑上面给出的问题：</p>
+<blockquote>
+<p><strong>Who kicked the longest field goal in the second quarter?</strong></p>
+</blockquote>
+<p>按照正常人类的思维，读到问题后需要的步骤为：</p>
+<ul>
+<li>先找出所有的 field goal 的实例</li>
+<li>再找出其中符合限定 in second quarter 的</li>
+<li>找到它们的 lengths（来自于 longest）</li>
+<li>再比较得到其中最长的（比较 / 排序</li>
+<li>找到谁踢的作为最终答案</li>
+</ul>
+<p>而 NMNs 读到上述问题后，会将问题拆解为几个<strong>可执行的模块</strong>，比如上面的问题可以拆解为：$$relocate(find-max-num(filter(find())))$$<br>
+先执行最内部的 find = 找到所有的 field goal 的示例，再 filter（符合 in second quarter 的限定）再 find-max-num 取最大值，再找到是谁踢的（relocate）</p>
+<p>综上，将 NMN 应用于推理问答，需要：</p>
+<ul>
+<li>
+<p>定义 <strong>Modules 模块</strong>，这里可能的模块限定于预先定义好的几种，具体的功能在后面介绍：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023110727182.png" alt="image-20231023110727182" style="zoom:60%;" />
+</li>
+<li>
+<p>得到<strong>上下文表示</strong>：这里采用 预训练模型 + embedding 的形式得到问题和上下文的 embedding，分别用 BERT 和 双向 GRU 两种方式实现</p>
+</li>
+<li>
+<p>实现 <strong>问题分解 Question Parser</strong>：也就是将问题分解为上述定义好的可执行模块，这里同时利用到了 encoder-decoder 和注意力机制</p>
+</li>
+<li>
+<p>训练 <strong>模块执行器</strong>：也就是训练得到每一个模块，以实现将规定各式的输入给定时（比如给定数字，给定文本，给定日期形式的输入），可以得到我想要找到的输出</p>
+</li>
+</ul>
+<br>
+<br>
+<hr>
+<h2 id="3-整体模型">3 整体模型</h2>
+<br>
+<h3 id="3-1-问题分解-question-parser">3.1 问题分解 question parser</h3>
+<p>首先通过双向 GRU 或 BERT 得到问题的 embedding，利用 GRU 的最后一层的 ht 或 BERT 中的 [CLS] 的 embedding 作为输入，也就是说这里的输入应该是整个问题句子的语义信息</p>
+<p>这里选择 LSTM 作为 decoder（见原文附录2，但是 encoder 具体用的是什么好像没有点名，下次读读源码），将我们定义好的 10 种模块作为 vocabulary 来实现问题的分解（具体做法将每一个模块都转化为一个 100 维的 embedding），中间涉及注意力机制的计算是 decoder 和 encoder 的隐藏层之间的</p>
+<p>具体 question parser 的结构原文没有给明，还需要读读源码看。总体的结构是 encoder + decoder 的形式，将 10 种模块转化为 embedding 作为最后的 decoder 部分输出用到的 vocabulary</p>
+<p>注意这里使用 LSTM 还有别的原因，因为定义的 10 个模块本身存在输入和输出的格式限制（比如 find-num 的输出一定要是 N，但是 find-num 的输入一定要是文段 P，此时如果 find-num → 输出 N → 后面再跟着一个 find-num，则此时的分解就是非法的。而 LSTM 存在（将前一个已经生成的模块再作为下一个生成的输入利用）的特点，此时可以利用 LSTM 的这个特性控制不要生成问题的非法分解。</p>
+<br>
+<h3 id="3-1-定义模块-module">3.1 定义模块 module</h3>
+<p>这里共预先定义了 10 种模块，NMN 也就是用这 10 种模块来表示问题，分别训练每一种模块，再同通过按分解顺序依次执行对应的模块得到最后的答案：</p>
+<p>注意这里定义的模块可以分为两种：</p>
+<ul>
+<li>自然语言推理：也就是从文中找到信息的步骤</li>
+<li>符号推理：也就是通过得到的信息来进行客观意义上的推理得到最后的答案（比如计算差值，计数，取最大值，排序等等</li>
+</ul>
+<p>这里两种类型的模块分别定义了五种，绿色部分是 natural language reasoning，黄色部分是 symbolic reasoning</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111119568.png" alt="image-20231023111119568" style="zoom:67%;" />
+<p>这里的 In 和 Out 表示：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111235267.png" alt="image-20231023111235267" style="zoom:67%;" />
+<p>以下分别介绍每一个模块：</p>
+<ul>
+<li>
+<p>$find(Q) \to P$：也就是输入问题，找到和问题相关的语段；具体利用注意力机制：先计算对应文段的各个 token 和问题的各个 token 之间的相似度矩阵，记作 S；对应的 S 的 i，j 位置元素定义为：$$S_{ij} = w_f^T[Q_i. ; P_j. ; Q_i. \circ P_j.]$$这里的 wfT 是待学习参数；对应的 o 是 elementwise 的乘法；对应得到 S 矩阵后通过 softmax 得到文段和问题之间的注意力矩阵 A，通过注意力的方法从给定的上下文文段中得到最后的输出 P</p>
+</li>
+<li>
+<p>$filter(Q,P) \to P$：也就是通过问题中的限定条件来从给定的 P 中筛选出一部分符合的 P 文段；举例就是上面的问题中实现 in second quarter 的限定条件的部分。实际理解也就是 mask 掉一部分 P 中的内容（不符合的就 mask 掉），则此时计算文段 P 的第 j 个 token 对应的 masking score：$$M_j = \sigma(w_{filter}^T[q ; P_j. ; q\circ P_j.])$$这里的小 q 通过问题的 embedding  = Q 来计算：$q = \sum_i Q_i Q_i. \in R^d$，对应的 σ 是 sigmoid 函数，同理 wfT 是可学习参数，最后对应的输出 P 通过下式得到：$$P_{filter} = normalize(M \circ P)$$</p>
+</li>
+<li>
+<p>$relocate(Q,P) \rightarrow P$：也就是依据问题重新定位，举例就是依照上面的例子，找到 longest 的 field score 后需要找到 who kick；首先计算 P 对 P 的注意力矩阵：$$R_{ij} = w_{relocate}^T [(q+P_i.) ; P_j. ; (q+P_i.)\circ P_j.]$$ $$q = \sum_i Q_i Q_i. \in R^d$$得到 R 后经过 softmax，最后的输出通过 $P_{located} = \sum_i P_i R_i.$ 得到</p>
+</li>
+<li>
+<p>$\text{find-num(P)}\to N \text{ / } \text{find-date(P)} \rightarrow D$：同理是计算对应的文段 P 和文段中的数字 / 日期部分之间的相似度矩阵。以数字为例，假设此时文段 P 中存在 $N_{token}$ 个数字，每一个数字也就是一个 token，则此时计算对应的相似度矩阵 $S^{num}$：$$S_{ij} = P_i.^T W_{num} P_{n_j}.$$ 这里的 Pnj 也就是第 j 次提到的数字对应的 token；对 S 作 softmax 后得到 A，并通过 $T = \sum_i P_i A_i.^{num}$ 得到每一个提及对应为答案的概率，再得到最后的输出。注意这里如果两次提及都是相同的数字，需要将两次提及对应的概率相加；比如此时提及为 2234，对应的概率为 0.1 0.4 0.3 0.2，则此时答案为 234 的概率分别为 0.5 0.3 0.2；对应日期同理</p>
+</li>
+<li>
+<p>$count(P) \rightarrow C$：这部分挺复杂的，建议直接看原文部分可能更清楚一些 ... 本质的思想是计算注意力向量中连续相同的多个值的 span 大小，比如如果这里的向量为 0.3 0.3 0.2 0.4，则输出为 2（因为两个相同的 0.3 存在）。首先利用（一个奇怪的初值）[1,2,5,10] 作为权重来得到 $P_{scaled}\in R^{m*4}$，再扔进一个双向 GRU 得到隐藏状态 ht，再通过单层前馈和 sigmoid 得到对应的 $c_v$，也就是 $$c_v = \sum \sigma(FF(countGRU(P_{scaled})))$$这里用到正态假设，认为最后的答案是以 cv 为均值，方差为 0.5 的数，则此时对应计算答案 c：$$p(c) \propto exp(-(c-c_v)^2/2v^2)$$</p>
+</li>
+<li>
+<p>$\text{compare-num-lt(P1, P2)} \rightarrow P$：此时要求输出的 P 是较小的一个。首先将 P1 和 P2 扔进 find-num 的那个模块中，对应得到数字 N1 和 N2。注意这里的 find-num 得到的模块是（多个数字提及）和（其对应的概率）的形式，则此时计算概率：<br>
+$$<br>
+\begin{align}<br>
+p(N_1 &lt; N_2) &amp;= \sum _i \sum _j \mathbb{1} _{N_1^i &lt; N_2^j} {N_1^i N_2^j} \\<br>
+p(N_2 &lt; N_1) &amp;= \sum _i \sum _j \mathbb{1} _{N_2^i &lt; N_1^j} {N_2^i N_1^j}<br>
+\end{align}<br>
+$$</p>
+<p>对应得到最终的输出 Pout：$P_{out} = p(N_1&lt;N_2) * P_1 + p(N_2&lt;N_1)*P_2$​，随着训练不断进行，对应的两个 P 会不断接近边界 0/1，则此时对应的 Pout 也就是 P1 和 P2 二者其一</p>
+</li>
+<li>
+<p>对应的 $\text{compare-num-gt , compare-date-lt, compare-date-gt}$ 和上面的处理方法相似，在此不再赘述</p>
+</li>
+<li>
+<p>$\text{time-diff}(P_1, P_2)$：同理先通过 find-date 得到两个 P 对应的 D1 和 D2，同理这里的 D1 和 D2 是带有概率的日期列表，则计算 D1i 和 D2j 之间的差值，再对应乘上相关的概率，求加权平均。对应的概率计算：$p(t_d) = \sum_{i,j} 1_{(d_i-d_j  = t_d)} D_1^i D_2^j$</p>
+</li>
+<li>
+<p>$\text{find-max-num}(P)$：同理先通过 find-num 提取出数字列表，注意这里实际上是得到了文段中每一个数字提及对应的概率，记作 T，也就是第 j 个提及对应一个概率 Tj；再计算 Tmax，这里是通过抽样的方式实现的，原文比较清楚：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111452907.png" alt="image-20231023111452907" style="zoom:67%;" />
+<p>最后通过 $P_i  = \sum_j T_j^{max} / T_j P_i A_{ij}.$ 计算出我的输出结果 P</p>
+</li>
+<li>
+<p>$span(P) \rightarrow S$：也就是输出两个向量，分别表示每一个 token 是 start 或 end 的概率，训练方式和 count 相似，详细部分见原文的附录部分</p>
+</li>
+</ul>
+<br>
+<h3 id="3-3-模型训练">3.3 模型训练</h3>
+<p>注意到前面的模块是很复杂的，先需要训练问题分解部分，还要再训练模块本身的功能，如果直接利用端到端训练会很难</p>
+<p>这里使用 auxiliary training 的方式来完成模型训练。</p>
+<ul>
+<li>
+<p><strong>模块功能的无监督训练</strong>：针对 find-num / find-date / relocate 三个模块，本身的作用也就是从 P 文段中提取信息，这里希望在数字 / 日期提及周围的 token 能够得到更高的关注，则此时控制窗口大小 W = 10，希望在提及 mention 的窗口范围内的 token 能够有更高的 attention，对应损失函数设置为：<br>
+$$<br>
+H _{loss} ^n = -\sum _{i=1} ^m \log (\sum _{j=0} ^{N _{tokens}} \mathbb{1} _{n_j \in [i\pm W] }A ^{num} _{ij})<br>
+$$<br>
+此时这三个模块对应在一起训练，此时对应的总损失函数 = 三个模块对应的损失函数的加和</p>
+</li>
+<li>
+<p><strong>问题分解的有监督训练</strong>：这里由于本文使用的是 DROP 数据集，并没有任何关于问题分解的标签可用，这里作者直接选取了约 10% 的问题人工手动分解为几个模块来训练 question parser 部分。则此时的训练部分和带 LSTM  的 encoder + decoder 模型相同</p>
+</li>
+<li>
+<p><strong>模型输出的监督学习</strong>：这里存在真实答案所以可以直接进行监督学习。同时考虑到对于（最短的是什么？）类似的问题，对于 find-num 模块，真实答案只是帮助模块确认了是否找到了最小的那个 num，对于其他的 num 的寻找不存在监督作用，长此以往的训练会导致 find-num 就只倾向于找到较小的 num，而导致整体模型的有偏。为了缓解这一问题，这里对约 5% 的可能出现类似情况的问题加入噪音，比如对于 （A 的最短 xxx 是多少） 的问题，我们认为离 A 最近的一个数字本身也应该作为 find-num 的一个输出存在。将这样的噪音加入训练集，和真实答案一同进行模型的监督学习</p>
+</li>
+</ul>
+<br>
+<br>
+<hr>
+<h2 id="4-experiment-实验部分">4 experiment 实验部分</h2>
+<p>这里使用的是 AllenNLP 的 DROP 数据集来进行实验</p>
+<p>DROP 本身是一个融合了实体查找（也就是自然语言推理部分，本身是 bridge 实体的提取和信息的综合）和符号推理（也就是客观推理部分，比如排序，求最大值etc）的数据集，这里选用 DROP 来进行实验</p>
+<p>注意由于这里的推理能力是很有限的（本身只是定义了 10 种类型的 module），原文作者筛选了 20000 个符合相关类型的问题来作测试（也就是集中于讨论 数字类，比较，日期计算 etc 之类的问题）</p>
+<p>此时得到的问题本身可以分为六类：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111705218.png" alt="image-20231023111705218" style="zoom:60%;" />
+<p>实验结果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111725347.png" alt="image-20231023111725347" style="zoom:60%;" />
+<p>可以看到这里的提升还是比较明显的，同时初始的问题和文段的 embedding 对应的预训练模型对于整体模型效果还是影响很大的（GRU 对应的模型效果非常不行），本身从模型构造的角度来说也能感觉得到它很依赖初始 embedding 的质量（比如不停进行相似度矩阵计算 etc)</p>
+<p>同时问题暴露也比较明显。作者给出了三类较为典型的回答错误的问题：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111748733.png" alt="image-20231023111748733" style="zoom:67%;" />
+<br/>
+<blockquote>
+<p><strong>最后胡说几句：</strong></p>
+</blockquote>
+<p>个人认为还是模块设计本身对整体模型带来巨大限制；1）10个预设置的模块只能帮助模型解决数学类的符号推理问题，对于需要利用逻辑规则等的，更自然语言或人类常识方向的推理，由于其本身的多样性直接预设值模块是根本不可行的；2）LSTM 作为 decoder + 模块本身的输入输出限制 使得模块本身的组合有限（比如不能连着两个 find-num，只能是链状结构不能为树状；<br>
+但是对于类似于数值推理之类的，本身规则类别较少的推理问题或许这是一个可借鉴的思路，预先设计模块 + 把模块 embedding 了作为 vocabulary 来辅助 question parser 这种思路是真的很有意思hhh 一眼看上去会觉得 哇 的那种程度 ...<br>
+还有就是模型太多的细节论文没讲清楚，特别是 question parser 部分和训练部分，正文动不动指向附录但是附录还是啥都没说明白 ... 或者是我没读明白也说不定hhh（有机会还是看看源码吧（</p>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210706-paper-note-moduleReasoning20/" title="Neural Module Networks + NLP + Reasoning: 可用于文本推理的模块神经网络">https://baijn-nan.github.io/2023/10/30/20210706-paper-note-moduleReasoning20/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E6%8E%A8%E7%90%86Reasoning/" rel="tag"><i class="fa fa-tag"></i> 机器推理Reasoning</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210706-paper-note-moduleReasoning20/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210317，存档如下  Zhuosheng Zhang, Junjie Yang, Hai Zhao, Department of Computer Science and Engineering, Shanghai Jiao Tong University, Retrospective Reader for Machine Reading Comprehension 论文原文：h">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Retro-Reader: 基于回溯式阅读器的机器阅读理解模型">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210317-paper-note-RetroReader/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210317，存档如下  Zhuosheng Zhang, Junjie Yang, Hai Zhao, Department of Computer Science and Engineering, Shanghai Jiao Tong University, Retrospective Reader for Machine Reading Comprehension 论文原文：h">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055414086.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055456837.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055527245.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055650407.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055725058.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022061101106.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022061124279.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:27.435Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器阅读理解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055414086.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210317-paper-note-RetroReader/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210317-paper-note-RetroReader/","path":"2023/10/30/20210317-paper-note-RetroReader/","title":"Retro-Reader: 基于回溯式阅读器的机器阅读理解模型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Retro-Reader: 基于回溯式阅读器的机器阅读理解模型 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Our-Proposed-Model-%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D"><span class="nav-text">2  Our Proposed Model 模型介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-overview"><span class="nav-text">2.1 overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Sketchy-Reading-Module-%E6%B3%9B%E8%AF%BB%E6%A8%A1%E5%9D%97"><span class="nav-text">3.2  Sketchy Reading Module 泛读模块</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Embedding"><span class="nav-text">Embedding</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Interaction"><span class="nav-text">Interaction</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#External-Front-Verification-%EF%BC%88E-FV%EF%BC%89"><span class="nav-text">External Front Verification （E-FV）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-Intensive-Reading-Module-%E7%B2%BE%E8%AF%BB%E6%A8%A1%E5%9D%97"><span class="nav-text">3.3  Intensive Reading Module 精读模块</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Embedding-interaction"><span class="nav-text">Embedding + interaction</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Question-aware-Matching"><span class="nav-text">Question-aware Matching</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Span-Prediction"><span class="nav-text">Span Prediction</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Internal-Front-Verification-%EF%BC%88I-FV%EF%BC%89"><span class="nav-text">Internal Front Verification （I-FV）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Threshold-based-Answerable-Verification"><span class="nav-text">Threshold-based Answerable Verification</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-Rear-Verification"><span class="nav-text">3.4 Rear Verification</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-experiment-%E5%AE%9E%E9%AA%8C%E9%83%A8%E5%88%86"><span class="nav-text">4 experiment 实验部分</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210317-paper-note-RetroReader/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Retro-Reader: 基于回溯式阅读器的机器阅读理解模型 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Retro-Reader: 基于回溯式阅读器的机器阅读理解模型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3-MRC/" itemprop="url" rel="index"><span itemprop="name">机器阅读理解(MRC)</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>3.2k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>12 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210317，存档如下</p>
+<blockquote>
+<p>Zhuosheng Zhang, Junjie Yang, Hai Zhao, Department of Computer Science and Engineering, Shanghai Jiao Tong University, <strong>Retrospective Reader for Machine Reading Comprehension</strong></p>
+<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzIwMDEuMDk2OTR2NC5wZGY=">https://arxiv.org/pdf/2001.09694v4.pdf<i class="fa fa-external-link-alt"></i></span><br>
+源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2Nvb2VsZi9Bd2Vzb21lTVJD">https://github.com/cooelf/AwesomeMRC （**official）<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<p>当前是 SQuAD 上第四名的成绩（2020/3/16）看了看作者主页应该是被 AAAI2021 接收了</p>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<br>
+<p>当前大多机器阅读理解模型大多建立在（所给定的问题都是可以回答的 = 在原文的某一个范围内一定存在答案）的假设上，但是真实的业务场景并不如此。举个例子（来自 SQuAD2.0 MRC task）：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055414086.png" alt="image-20231022055414086" style="zoom:60%;" />
+<p>此时要求机器能够判别当前的问题是否真的是可以回答的，而不是对于任何问题都勉强给出一个似是而非的答案。基于此我们的主要任务包括：1）检查问题的可回答性 answerability; 2)对可以回答的问题再作进一步的阅读理解</p>
+<p>也就是说此时除了传统的 MRC 所重点关注的 encoder 模块，我同时需要一个 verification 的部分来区分这些不可回答的问题，而当前的大多数模型要么直接假设所有的问题都是可以回答的，要么就是单纯地将所有的 verification 的模块简单地集成入了 encoder 或者 decoder 的部分，而这样的操作往往效果不是很好</p>
+<p>传统的 MRC 模型主要包括以下几个结构设计：</p>
+<ul>
+<li>直接的 encoder + decoder 的模型，也就是说此时认为所有的问题都是可以回答的，直接不对本身的问题作 verification<br>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055456837.png" alt="image-20231022055456837" style="zoom:67%;" /></li>
+<li>将 verification 的部分包括在 encoder 内或者 decoder 内，但相对地效果不佳<br>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055527245.png" alt="image-20231022055527245" style="zoom: 67%;" /></li>
+</ul>
+<p>考虑一下真的人类是怎么做的：先通读一遍文章 + 再重新回到文章中进行精度进一步确认答案。基于人类的行为，这里提出一个新的模型 <strong>retrospective reader (Retro-Reader)</strong>，主要执行以下两个步骤：</p>
+<ul>
+<li>粗略地阅读文章，并掌握文章和问题之间的关系，给出一个初始的判断</li>
+<li>进一步精度文章，再验证答案并给出最后的预测</li>
+</ul>
+<p>简单表示如下：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055650407.png" alt="image-20231022055650407" style="zoom:67%;" />
+<br>
+<br>
+<hr>
+<h2 id="2-Our-Proposed-Model-模型介绍">2  Our Proposed Model 模型介绍</h2>
+<br>
+<h3 id="2-1-overview">2.1 overview</h3>
+<p>这里主要关注的还是抽取式的阅读理解问题（ span-based MRC task），也就是目标为在文档中划出一个 span 来作为答案。</p>
+<p>也就是说此时给定的信息为一个 &lt;文章 P ，问题 Q，答案 A &gt; 的三元组，则此时我们的任务是 1）从给定的文章 P 中进行 A 开始和结束位置的预测 = 在文中划出一个 span 作为候选答案 2）或对于不可回答的问题，回复一个 null 表示此问题本身是得不到答案的</p>
+<p>本文将阅读理解任务分为两个阶段（two-stage reading process）：</p>
+<ul>
+<li><strong>sketchy reading</strong>：通过略读大概掌握关系并给出一个粗糙的判断，这一步的主要目标是初步判断这个问题是不是可以回答的</li>
+<li><strong>intensive reading</strong>：通过精读进一步得到候选答案（也就是得到 answer span）+ 最后判断问题是否是可以回答的 + 给出最后的预测</li>
+</ul>
+<p>整体模型结构如下：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055725058.png" alt="image-20231022055725058" style="zoom:70%;" />
+<br>
+<h3 id="3-2-Sketchy-Reading-Module-泛读模块">3.2  Sketchy Reading Module 泛读模块</h3>
+<h4 id="Embedding">Embedding</h4>
+<p>这部分的目标是通过一些预训练模型得到 P 文章和 Q 问题的向量表示（embedding），将两个向量表示作拼接，再将这些表示作为输入扔给后面的部分</p>
+<p>具体来说，首先将输入的句子通过 tokenizer 切割为词语 / subword，比如此时切割为 n 个，记作 $T = {t_1, ... , t_n}$；每一个 subword 的 token 都是三个部分的加和：<strong>自身的 token + 位置 embedding + token 类型 embedding</strong>，设最后的输出为 $X = {x_1 ,x_2, ... , x_n}$</p>
+<h4 id="Interaction">Interaction</h4>
+<p>将上一步 embedding 得到的最后输出 X 作为输入，目标为得到输入的上下文表示</p>
+<p>这里可以通过一个多层 Transformer（multi-layer Transformer）的 encoder 部分来实现（本身 Transformer 就是编码器 - 解码器的结构，Transformer 详解 <span class="exturl" data-url="aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L20wXzQ2NTIyNjg4L2FydGljbGUvZGV0YWlscy8xMTQ1NTg5ODY=">戳这里<i class="fa fa-external-link-alt"></i></span>），设最后一个隐藏层的输出为 $H = {h_1,h_2,...,h_n}$</p>
+<h4 id="External-Front-Verification-（E-FV）">External Front Verification （E-FV）</h4>
+<p>得到上一步给出的上下文表示，可以认为此时机器已经完成了通读任务，但是此时需要机器给出一个粗糙的判断，此时通过 E-FV 来构造一个二分类器，让机器来初步判断此时的问题是不是可以回答的</p>
+<p>这里的输入是上一层输出的隐藏层的值 H，将 H 的第一个 token，也就是 [CLS] 对应的部分，也就是 h1 作为整个序列的表示，直接扔进一个全连接层（注意不是扔全部的 H，只要 h1 部分就行）来判断此时的问题是否是可以回答的。给出的输出是预测概率 $\hat{y_i}$：$$\hat{y_i}\varpropto softmax(FFN(h_1))$$</p>
+<p>用交叉熵函数来训练：<br>
+$$<br>
+\mathbb{L} ^{ans} = -\frac {1}{N} \sum^N _{i=1} [y_i \log {\hat{y} _i} + (1-y_i) \log (1-\hat{y}_i)]<br>
+$$</p>
+<p>注意这里同时计算了一个 external verification score，在后面的部分会用到这个值：$$score_{ext} = logit_{na} - logit_{ans}$$，注意这里的 na 表示问题不能回答，ans 表示可以回答</p>
+<br>
+<h3 id="3-3-Intensive-Reading-Module-精读模块">3.3  Intensive Reading Module 精读模块</h3>
+<p>这一部分的模型需要完成：</p>
+<ul>
+<li>最后拍板到底是不是可以回答的问题</li>
+<li>给出候选答案，也就是预测 span</li>
+<li>给出最后的预测结果</li>
+</ul>
+<h4 id="Embedding-interaction">Embedding + interaction</h4>
+<p>和前面略读部分是一样的（原理一样但并不是共享参数，是两个独立训练的部分），最后获得文章 P 和问题 Q 的上下文表示 $H$，但是注意到和普通的 BERT 模型之流不一样的地方在于，此时并不是直接将上下文表示送进一个线性层来预测结果，而是后续备用继续处理</p>
+<p>个人感觉这里不太对，问题在于等于要作两遍上下文表示训练，因为本身这个模型的略读和精读模块就是并行的，只是将它们的输出做了一个融合，而并不是让它俩耦合从而存在一种互相依赖的关系，则这里的两个上下文表示应该是并行训练的，这内存消耗（一言难尽（</p>
+<h4 id="Question-aware-Matching">Question-aware Matching</h4>
+<p>此时的输入是 embedding + interaction 得到的表示 H，首先注意到 H 本身是带有位置 embedding 的，将 H 分为两个部分，分别对应文章 $H^P$ 和问题对应的 $H^Q$（或者说这里的输入表示本身就是 $[CLS],Q,[SEP]P,[SEP]$ 的形式，切分还是很方便的）</p>
+<p>这里想要作 question aware，这里可以用如下两个注意力：</p>
+<ul>
+<li>
+<p><strong>交叉注意力 multi-head cross attention (CA)：</strong><br>
+这里实际上是一个多头注意力，查询向量为 $H^P$，键K = 值V = $H$</p>
+<ul>
+<li>这里的 Q 共有 p 个 token，此时也就是 p*d 的维度（d 是 embedding 的维度），此时是多头注意力，也就相当于存在 p 个查询向量，每一个向量都能够对应得到一个注意力分布，得到一个综合后的 V = H 的表示，也就是一个向量</li>
+<li>这里的多头注意力的最后的输出的维度应该是和 $H^P$ 相同的，可以看作是一个文章 embedding 经过 question 的注意力后的一个表示</li>
+</ul>
+</li>
+<li>
+<p><strong>匹配注意力 Matching Attention：</strong><br>
+实际上也就是一个普通的注意力模块，利用问题表示 $H^P$ 来计算 H 的注意力分布<br>
+$$<br>
+\begin{align}<br>
+M &amp;= \text{softmax} (H (WH^Q + b \otimes e)^T) \\<br>
+H' &amp;= MH^Q<br>
+\end{align}<br>
+$$</p>
+</li>
+<li>
+<p>这里的 H 的注意力后的表示计算如下，W b 可学习，e 是一个全是 1 的向量</p>
+</li>
+<li>
+<p>和前面不同的是这里直接用 $H^Q$ 作为整个查询，也就是说最后得到的表示和 H 本身是同大小的，可以认为这里得到的 H‘ 是一个 passage + question 集合的上下文表示 H 对应的 question 注意力后的表示</p>
+</li>
+</ul>
+<h4 id="Span-Prediction">Span Prediction</h4>
+<p>将上面得到的 H’ 扔进来预测候选答案，也就是确定 span</p>
+<p>具体操作也就是扔进一个全连接层 + softmax 输出每一个 token 分别是 start 位点 和 end 位点的概率 $$s,e \varpropto softmax(FFN(H'))$$</p>
+<p>这里的损失函数还是用的交叉熵函数：<br>
+$$<br>
+\mathbb{L} ^{span} = - \frac{1}{N} \sum ^N _i [\log (p^s _{y_i^s}) + \log (p^e _{y^e_i})]<br>
+$$</p>
+<p>这里对应的 $y_i^s$ 也就是第 i 个位置到底是不是 gold answer 的开始位点的 0-1 标签，后面的 $y_i^e$ 同理</p>
+<h4 id="Internal-Front-Verification-（I-FV）">Internal Front Verification （I-FV）</h4>
+<p>再来进一步确认这个问题是不是可以回答的，输入为上面得到的表示 $H'$ 的第一个表示 $h_1$，将 h1 扔进一个全连接层，再通过（基于分类方法）或（基于回归方法）得到最终的概率</p>
+<p>这里还是给定几个可选的方法：</p>
+<ul>
+<li>
+<p><strong>直接作 softmax</strong>：也就是将全连接层的输出通过一个 softmax，再利用交叉熵进行训练<br>
+$$<br>
+\begin{align}<br>
+\bar {y} _{i,k} &amp;= \text{softmax} (FFN(h_1')) \\<br>
+\mathbb {L} ^{ans} &amp;= - \frac{1}{N} \sum _{i=1}^N \sum _{k=1} ^K [y _{i,k} \log \bar{y} _{i, k}]<br>
+\end{align}<br>
+$$</p>
+</li>
+<li>
+<p><strong>用二元交叉熵函数作损失函数</strong>：也就是说这里通过一个 sigmoid：<br>
+$$<br>
+\begin{align}<br>
+\bar{y} _i &amp;= \text{sigmoid} (\text{FFN} (h_1)) \\<br>
+\mathbb{L} ^{ans} &amp;= - \frac{1}{N} \sum _{i=1} ^N [y_i \log {\bar{y} _i} + (1-y_i) \log (1-\bar{y}_i)]<br>
+\end{align}<br>
+$$</p>
+</li>
+<li>
+<p><strong>用回归 regression 的思想来处理</strong>：直接用 MSE 来作损失函数：<br>
+$$<br>
+\begin{align}<br>
+\bar{y} _i &amp;= FFN(h_1') \\<br>
+\mathbb{L} ^{ans} &amp;= \frac{1}{N} \sum _{i=1}^N (y_i - \bar{y}_i)^2<br>
+\end{align}<br>
+$$</p>
+<p>注意到这里实际上我们存在两个任务 → 也就是预测是否是可以回答的问题，一个是确定此时的答案 span，则此时的最终损失函数应该是 verification 部分的损失函数和 answer predicate 两个部分的损失函数：<br>
+$$<br>
+\mathbb{L} = \alpha_1 \mathbb{L} ^{span} + \alpha_2 \mathbb{L} ^{ans}<br>
+$$</p>
+<p>这里以某一个权重 αi 来对两个损失函数作融合</p>
+</li>
+</ul>
+<h4 id="Threshold-based-Answerable-Verification">Threshold-based Answerable Verification</h4>
+<p>最后拍板问题是不是可回答的</p>
+<p>此时令该问题对应的文章中各个 token 为开始 / 结束位置的概率的向量分别为 s 和 e，则分别计算：存在答案的得分 $score_{has}$ 和不存在答案的得分 $score_{null}$：<br>
+$$<br>
+\begin{align}<br>
+score _{has} &amp;= \max(s_k + e_l) \text{ , } 1&lt;k\leqslant l \leqslant n \\<br>
+score _{null} &amp;= s_1 + e_1<br>
+\end{align}<br>
+$$</p>
+<p>这里继续计算上面两个概率的差值：$$score_{diff} = score_{has} - score_{diff}$$​ 留下备用</p>
+<br>
+<h3 id="3-4-Rear-Verification">3.4 Rear Verification</h3>
+<p>也就是最后确认到底有没有答案</p>
+<p>注意到这里同时有两个 verification，也就是 E-FV 和 I-FV，分别代表（略读后对问题是否有答案的判定）和 （精读后对问题是否有答案的判定），此时考虑以某种方式将它们融合起来</p>
+<p>定义：<br>
+$$<br>
+v = \beta_1 score _{diff} + \beta_2 score _{ext}<br>
+$$</p>
+<p>这里的 $\beta_1$ 和 $\beta_2$ 是对应权重，将这里的 v 认为是最终判断有答案的概率，如果这个 v &gt; 预先设定的阈值 $\delta$，此时认为问题确实存在答案，反之不存在，且返回一个空字符串作为 span 预测的结果</p>
+<br>
+<br>
+<hr>
+<h2 id="4-experiment-实验部分">4 experiment 实验部分</h2>
+<p>用到的数据集包括 <strong>SQuAD2.0</strong> 和 <strong>NewsQA</strong>，是两个确实引入了回答不了的问题的数据集</p>
+<p>看看在 SQuAD 上的效果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022061101106.png" alt="image-20231022061101106" style="zoom:67%;" />
+<p>这里的 TAV 也就是直接使用 score_diff 的部分（上面 3.3 的最后一部分）来判断到底有没有答案，如果 score_diff 确实大于某一个阈值 δ 则认为有答案。也就是说 TAV 本身没有用到 E-FV 给出的判断。通过比较可以看到此时同时设置 E-FV 和 I-FV 或许真的可以帮助提升</p>
+<p>再看看在 newsQA 的效果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022061124279.png" alt="image-20231022061124279" style="zoom:67%;" />
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210317-paper-note-RetroReader/" title="Retro-Reader: 基于回溯式阅读器的机器阅读理解模型">https://baijn-nan.github.io/2023/10/30/20210317-paper-note-RetroReader/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3/" rel="tag"><i class="fa fa-tag"></i> 机器阅读理解</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210317-paper-note-RetroReader/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

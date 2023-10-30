@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210309，存档如下  划水休息两天不看论文了 ~ 来重新复习一下基础qaq 以下讲解参考大名鼎鼎的 nndl 邱锡鹏 《神经网络与深度学习》 部分内容（详见第八章，注意力与外部记忆）是对于不太行的初学者也比较友好的一本，当然不能要求一本书既全面又深入，阅读过程还是建议自己去更多地从别的渠道了解细节内容，但个人觉得即使是顺着通读亦对关于深度学习的整体框架搭建蛮有帮助的qaq 同时参">
+<meta property="og:type" content="article">
+<meta property="og:title" content="attention：浅谈注意力机制与自注意力模型（附键值对注意力 + 多头注意力）">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210309-summary-attention/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210309，存档如下  划水休息两天不看论文了 ~ 来重新复习一下基础qaq 以下讲解参考大名鼎鼎的 nndl 邱锡鹏 《神经网络与深度学习》 部分内容（详见第八章，注意力与外部记忆）是对于不太行的初学者也比较友好的一本，当然不能要求一本书既全面又深入，阅读过程还是建议自己去更多地从别的渠道了解细节内容，但个人觉得即使是顺着通读亦对关于深度学习的整体框架搭建蛮有帮助的qaq 同时参">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022043935192.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022044952815.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:12.127Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="深度学习基础">
+<meta property="article:tag" content="注意力机制">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022043935192.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210309-summary-attention/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210309-summary-attention/","path":"2023/10/30/20210309-summary-attention/","title":"attention：浅谈注意力机制与自注意力模型（附键值对注意力 + 多头注意力）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>attention：浅谈注意力机制与自注意力模型（附键值对注意力 + 多头注意力） | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-background"><span class="nav-text">1 background</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="nav-text">2 整体架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E8%AE%A1%E7%AE%97%E6%B3%A8%E6%84%8F%E5%8A%9B%E5%88%86%E5%B8%83"><span class="nav-text">2.1 计算注意力分布</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E8%AE%A1%E7%AE%97%E5%8A%A0%E6%9D%83%E5%88%86%E5%B8%83"><span class="nav-text">2.2 计算加权分布</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E5%9C%A8-encode-decode-%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8%E4%B8%BE%E4%BE%8B"><span class="nav-text">2.3 在 encode-decode 中的应用举例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E5%B8%B8%E7%94%A8%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6%E7%9A%84%E5%8F%98%E4%BD%93"><span class="nav-text">3 常用注意力机制的变体</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E9%94%AE%E5%80%BC%E5%AF%B9%E6%B3%A8%E6%84%8F%E5%8A%9B-key-value-pair"><span class="nav-text">3.1 键值对注意力 key-value pair</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E5%A4%9A%E5%A4%B4%E6%B3%A8%E6%84%8F%E5%8A%9B-Multi-Head-Attention"><span class="nav-text">3.2 多头注意力 Multi-Head Attention</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E8%87%AA%E6%B3%A8%E6%84%8F%E5%8A%9B-Self-Attention"><span class="nav-text">4 自注意力 Self-Attention</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-%E6%9F%A5%E8%AF%A2-%E9%94%AE%E5%80%BC%E5%AF%B9%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%A8%A1%E5%9E%8B-Query-Key-Value%EF%BC%8CQKV"><span class="nav-text">4.1 查询 - 键值对注意力模型  Query-Key-Value，QKV</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-%E5%A4%9A%E5%A4%B4%E8%87%AA%E6%B3%A8%E6%84%8F%E5%8A%9B-Multi-Head-Self-Attention"><span class="nav-text">4.2 多头自注意力 Multi-Head Self-Attention</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-summary"><span class="nav-text">5 summary</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210309-summary-attention/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="attention：浅谈注意力机制与自注意力模型（附键值对注意力 + 多头注意力） | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          attention：浅谈注意力机制与自注意力模型（附键值对注意力 + 多头注意力）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%9F%BA%E7%A1%80%E6%95%B4%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">基础整理</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%9F%BA%E7%A1%80%E6%95%B4%E7%90%86/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">深度学习基础</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>4.3k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>16 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210309，存档如下</p>
+<blockquote>
+<p>划水休息两天不看论文了 ~ 来重新复习一下基础qaq</p>
+<p>以下讲解参考大名鼎鼎的 nndl <span class="exturl" data-url="aHR0cHM6Ly9ubmRsLmdpdGh1Yi5pby8=">邱锡鹏 《神经网络与深度学习》<i class="fa fa-external-link-alt"></i></span> 部分内容（详见第八章，注意力与外部记忆）是对于不太行的初学者也比较友好的一本，当然不能要求一本书既全面又深入，阅读过程还是建议自己去更多地从别的渠道了解细节内容，但个人觉得即使是顺着通读亦对关于深度学习的整体框架搭建蛮有帮助的qaq</p>
+<p>同时参考了这篇综述：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MDQuMDI4NzQucGRm">An Attentive Survey of Attention Models<i class="fa fa-external-link-alt"></i></span>，具体这篇论文的阅读笔记也蛮多的就不找时间再写了（<span class="exturl" data-url="aHR0cHM6Ly93d3cuY25ibG9ncy5jb20veWRjb2RlL3AvMTEwNDA4MTEuaHRtbA==">https://www.cnblogs.com/ydcode/p/11040811.html<i class="fa fa-external-link-alt"></i></span> 这篇就写的很好~）</p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-background">1 background</h2>
+<br>
+<p>注意力机制本身想要解决的问题很简单，就是算不动了</p>
+<p>在整体模型越来越庞大的情况下，大家明显地觉得运算开始吃力了，这样的问题下直观的思想就是考虑如何<strong>按重要性更好地将手头有限的计算资源进行分配</strong>，以保证更多的计算资源可以分配到确实重要的内容上，而尽量不要太浪费在所谓不重要的内容上。人脑面对海量信息往往利用 <strong>注意力</strong> 将部分不重要的信息略去而只关注于重要的信息，这里将注意力分为两种：</p>
+<ul>
+<li>
+<p>自上而下的有意识的注意力，也就是 <strong>聚焦式注意力（Focus Attention）</strong>：此时的注意力是确定地有一个目的的，也就是会主动地去关注某一个特定的对象，本身依赖目的，存在预定的任务（举例阅读理解问题，此时给定问题以后，关注的只是和问题相似的文本段落对象，对其他对象可以少输入或不输入模型以节约计算资源）</p>
+</li>
+<li>
+<p>自下而上的无意识的注意力，也就是 <strong>基于显著性的注意力（Saliency Based Attention）</strong>：也就是说此时并没有预先根据某种目的或任务关注某一个特定的对象，而是单纯地当某一个对象表现出某种特征的时候，比如某一个对象值很大时则转而主动关注这样的对象（举例 max 池化，门控机制）</p>
+</li>
+</ul>
+<p>这里来一个 <code>nndl</code> 中的例子：</p>
+<blockquote>
+<p>一个和注意力有关的例子是鸡尾酒会效应。当一个人在吵闹的鸡尾酒会上和朋友聊天时，尽管周围噪音干扰很多，他还是可以听到朋友的谈话内容，而忽略其他人的声音（聚焦式注意力）。同时，如果背景声中有重要的词（比如他的名字），他会马上注意到（显著性注意力）</p>
+</blockquote>
+<br>
+<p>从这个思路出发，当前已经进行了较多的尝试，比如最简单的 <strong>池化层</strong>：最大池化本身也就是选择一个范围内的最大值保存下来，直观理解可以认为就是只关注了值最大的部分而将其他部分内容舍去，以更好地将更宝贵的计算资源放在可能重要的部分</p>
+<p>进一步地从当前主流的 encode - decode （编码器 - 解码器）模型来讨论一下 <strong>注意力机制</strong> 的优势。传统的编码器解码器模型存在以下两个很大的问题：</p>
+<ul>
+<li>编码器需要把输入的信息<strong>转化为一个定长的序列</strong>才能给到解码器进行处理，也就意味着此时容易造成信息的损失（非要塞到一个定长的序列里）</li>
+<li>此时输入的序列和最后解码器的输出本身<strong>难以作对齐</strong>，以翻译问题来说，我输入 Tom chase Jerry，此时由于编码器 RNN 是平等地对每一个词来进行编码操作的，也就是说我最后翻译出的 汤姆 本身是依赖了相同权重的 Tom 、chase、 Jerry 这三个词。但明显 汤姆 的翻译应该更多地依赖 Tom 才对，这就造成了本身输入序列和输出序列的不对齐。这同样也影响了本身神经网络的解释性问题，将所有输入的东西都以相同的权重看待将导致难以解释我最后的结果到底是依赖什么得出的。</li>
+</ul>
+<p>而 <strong>注意力机制</strong>，也就是尝试 <strong>在输入的信息上计算注意力分布</strong> → 从而得到 <strong>不同输入信息对应当前任务的重要性分布 = 不同的权重</strong> → 再根据不同的重要性，也就是不同的权重 <strong>计算当前输入信息的加权平均</strong>，以实现（对重要的，和任务相关的信息赋予更高的权重，而将不重要的信息基本忽略或赋予较低的权重）以更有效率地利用计算资源</p>
+<br>
+<br>
+<hr>
+<h2 id="2-整体架构">2 整体架构</h2>
+<br>
+<p><strong>注意力机制</strong> 本身只是一种思想，并不依赖某一个特定的模型（虽然总是依赖编码器 - 解码器的模型来解释它），可以简单地总结为两个步骤：</p>
+<ul>
+<li><strong>在给定的信息上计算注意力分布</strong>（也就是判断什么信息重要，什么信息不重要，分别赋予不同的权重）</li>
+<li><strong>根据注意力分布来计算所有输入信息的加权平均</strong></li>
+</ul>
+<br>
+<h3 id="2-1-计算注意力分布">2.1 计算注意力分布</h3>
+<p>简化问题，考虑此时输入 N 个向量 ：$[x_1, ... , x_N]$，我想要从中选出对于我的目标而言比较重要的信息，需要引入我的目标任务的表示，称为 <strong>查询向量（query vector）</strong>，则此时问题可以转换为考察 <strong>输入的不同内容和查询向量之间的相关度</strong>，一个简单的思路就是通过一个 <strong>注意力打分函数</strong> 对不同内容进行打分，赋予与我当前任务比较相关的部分更大的权重，再直接地通过一个 <code>softmax</code> 层得到分布，也就是输入信息的不同部分的权重。</p>
+<p>这里的注意力打分函数主要有以下几种：</p>
+<ul>
+<li>加性模型：$s(x,q) = v^T tanh(Wx + Uq)$</li>
+<li>点积模型：$s(x,q) = x^Tq$</li>
+<li>缩放点积模型：$s(x,q) = \frac{x^Tq}{\sqrt{D}}$</li>
+<li>双线性模型：$s(x,q) = x^TWq$</li>
+</ul>
+<p>上面的 W U 都是可以学习的参数，D是输入向量的维度</p>
+<p>比较常用的就是 <strong>点积模型</strong>，简单 + 有效</p>
+<p>通过每一个输入 x 和 q 计算得分函数 → 再通过 <code>softmax</code> 层，则第 i 个输入 xi 对应的权重也就是 $$softmax(s(x,q))$$</p>
+<br>
+<br>
+<h3 id="2-2-计算加权分布">2.2 计算加权分布</h3>
+<p>这里分为两种方式：</p>
+<ul>
+<li>
+<p><strong>软性注意力机制</strong>：也就是每一个输入的按各自权重的加权平均</p>
+<p>$$att(X,q) = \sum_{n=1}^N a_n x_n$$</p>
+</li>
+<li>
+<p><strong>硬性注意力机制</strong>：也就是只关注某一个向量，此时用某一个向量来直接代替所有输入的信息，而将其他的信息都一概忽略</p>
+<p>主要有以下两种形式：</p>
+<ul>
+<li>
+<p>选择权重最大的向量</p>
+</li>
+<li>
+<p>在注意力分布上进行随机采样（也就是权重越大的向量越容易被采到）</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>但是注意到，这里硬性注意力机制的最大的问题就是它本身是不可导的（比如选择权重最大实际上就是通过了一个 max 函数），也就是说这一步会导致无法使用反向传播算法，一般只能依赖强化学习进行训练</p>
+<br>
+<h3 id="2-3-在-encode-decode-中的应用举例">2.3 在 encode-decode 中的应用举例</h3>
+<p>在这里举个例子，考虑 seq2seq 框架下的 编码器 - 解码器模型中注意力机制最简单的应用方式</p>
+<p>整体如下，此时左边是正常的编码器-解码器模型，右边是加入了注意力模块的 （图片参考 <span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MDQuMDI4NzQucGRm">ref Fig.2<i class="fa fa-external-link-alt"></i></span>）</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022043935192.png" alt="image-20231022043935192" style="zoom: 50%;" />
+<p>经过 encode，此时输入 x1 x2 x3 对应的得到三个隐藏状态 h1 h2 h3，考察上一步中解码器已经得到的隐藏状态 s2，可以将 s2 作为查询向量，计算所有的隐藏状态 h1 h2 h3 和 s2 的相关度（这里的得分是通过一个前馈神经网络来学习的） → 得到注意力分布 → 得到 h1 h2 h3 的聚合内容，也就是图中的 c2，再进一步依据模型设计将 c2 用于解码器</p>
+<br>
+<br>
+<hr>
+<h2 id="3-常用注意力机制的变体">3 常用注意力机制的变体</h2>
+<br>
+<p>实际使用的时候直接利用最原本的模式的情况是不多的，这里讲几个应用比较广泛的变体：</p>
+<br>
+<h3 id="3-1-键值对注意力-key-value-pair">3.1 键值对注意力 key-value pair</h3>
+<p>也就是利用 <strong>键值对</strong> 的方式来输入信息，此时不再是只输入一个 x，而以：</p>
+<p>$$(K,V) = [(k_1, v_1), (k_2, v_2) , ... , (k_N, v_N)]$$</p>
+<p>的方式输入 N 组信息。这里满足：</p>
+<ul>
+<li>键 = k 用来计算注意力分布</li>
+<li>值 = v 用来基于注意力分布最后计算聚合后的信息</li>
+</ul>
+<p>其他内容和基本形式是一样的，也就是说此时的聚合信息可以表示为（如果利用软性的信息聚合，打分函数为 s）：</p>
+<p>$$att((K,V), q) = \sum_{n=1}^N softmax(s(q, k_n)) v_n$$</p>
+<ul>
+<li>阶段1 → 通过打分函数，利用查询向量 q，对此时输入的 （键 key）的部分进行打分</li>
+<li>阶段2 → 通过 <code>softmax</code> 将不同的打分作归一化处理，得到各个部分的注意力权重，也就是注意力分布</li>
+<li>阶段3 → 通过输入的 （值 value）结合注意力分布进行信息聚合</li>
+</ul>
+<p>K=V 的时候也就是普通的模型</p>
+<br>
+<br>
+<h3 id="3-2-多头注意力-Multi-Head-Attention">3.2 多头注意力 Multi-Head Attention</h3>
+<p>也就是此时存在多个查询 Q：</p>
+<p>$$Q = [q_1, ... , q_M]$$</p>
+<p>来通过一种 <strong>并行</strong> 的方式从输入中搜索需要的信息。直观理解就是解决问题需要很多不同的方面的信息，每一个不同的 qi 考察的都是不同的方面，此时利用不同的 qi 从不同的角度给输入信息的重要性进行打分，再进行某种程度的聚合。</p>
+<p>一般不同查询对应得到的聚合信息直接用向量拼接的方式：</p>
+<p>$$att((K,V), Q) = att((K,V), q_1) \oplus ... \oplus att((K,V), q_M) $$</p>
+<br>
+<br>
+<hr>
+<h2 id="4-自注意力-Self-Attention">4 自注意力 Self-Attention</h2>
+<br>
+<p>考虑当前针对输入序列的编码方式，如果我们需要将输入序列转化为一个定长的序列，此时卷积和循环神经网络均是较好的选择，但是注意到以上两种均只是一种局部编码的方式（循环神经网络本身由于长程依赖问题 / 梯度消失，实际上也只能建模局部的信息）</p>
+<p>换一个思路，如果我想要捕捉整个输入序列中的某种长程依赖关系，此时常用的方法包括：</p>
+<ul>
+<li>构建深层网络来捕捉关系 → 也就是增加神经网络的层数，但是大家这么干过都知道直接粗暴增加层数是很消耗计算资源的</li>
+<li>构造全连接网络 → 但是无法处理变长的序列，也就是说此时输入的序列必须要是等长的 = 输入层的神经元个数</li>
+</ul>
+<p>想要模拟全连接神经网络的思路来构建一种更好的，可以处理变长输入序列 + 捕捉长距离关系的模型，可以考虑利用注意力机制来 <strong>动态地</strong> 生成权重，这也就是 <strong>自注意力模型</strong> 的主要思路</p>
+<br>
+<br>
+<h3 id="4-1-查询-键值对注意力模型-Query-Key-Value，QKV">4.1 查询 - 键值对注意力模型  Query-Key-Value，QKV</h3>
+<p>考虑到往常的使用频率，这里先介绍一下最常用的 <strong>查询 - 键值对注意力模型（Query-Key-Value，QKV）</strong>，实际上为了增强模型效果，基本不会使用上面广义形式对应的自注意力模型</p>
+<p>假设此时的输入序列为 x，则自注意力模型可以分为以下几个步骤：</p>
+<ul>
+<li>将输入的 x <strong>线性投影到三个不同的空间</strong>，以分别得到查询向量 qi，键向量 ki，值向量 vi
+<ul>
+<li>注意这里线性投影的含义就是学习到三个不同的矩阵 Wq Wk Wv：$$Q = W_qX;  \text{ }\text{ }\text{ } K = W_kX; \text{ }\text{ }\text{ } V = W_vX$$也可以看作是一个简单的前馈神经网络。注意这里因为自注意力模型的打分函数常常使用点积形式，所以这里得到的 qi ，ki，vi 三个结果往往是相同维度的</li>
+</ul>
+</li>
+<li>利用上述得到的查询向量，键向量和值向量，通过上述的<strong>键值对注意力机制得到输出</strong>。也就是说如果这里得到的查询向量，键向量和值向量分别为：$$Q = [q_1,..., q_N]; \text{ } K = [k_1, ... , k_N]; \text{ } V = [v_1, ..., v_N]$$，则此时直接通过键值对注意力机制的方式来计算最后的输出：$$h_n = att((K,V),q_n) = \sum_{j=1}^N softmax(s(k_j, q_j))v_j$$</li>
+</ul>
+<p>整体图解如下：（图片来源 nndl Fig.8.4）</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022044952815.png" alt="image-20231022044952815" style="zoom:67%;" />
+<p>也就是说，输入三个（这里设 N=3）X 序列，每一个长度为 Dx，则此时得到三个查询向量，每一个查询向量得到一个对应的 （这三个 x 序列的线性组合），则此时得到三个结果，对应拼在一起，不改变输入的 X 的对应 N 这部分的维度，但是将长度 Dx 改变为了 Dv（这里的 Dv 是可以任意设置的，只要通过操作此时从 X 到值 V 的投影操作对应的矩阵 Wv 就可以了）</p>
+<p>也就是说通过上述操作，此时可以将不定长的序列 Dx 动态地生成适合的权重并转化为某一个定长 Dv</p>
+<br>
+<br>
+<h3 id="4-2-多头自注意力-Multi-Head-Self-Attention">4.2 多头自注意力 Multi-Head Self-Attention</h3>
+<p>其实也就是上述的自注意力操作加上了自注意力的思路</p>
+<p>比如说此时对应的 x 是 Dx 维度，共 N 个，我每一次通过一个矩阵 Wq 将其投影为一个查询矩阵的时候都可以一次性得到 N 个查询向量，这 N 个查询向量可以保证后续输出的结果还是共 N 个（只是另一个维度由值向量的维度 Dv 决定），这是我们上一节的思路</p>
+<p>考虑多头注意力，也就是说此时我们考虑能不能得到多个查询矩阵，以从不同的角度来捕捉 X 的重要情况，则此时我采用多个矩阵 Wqi 将它投影到 m 个不同的空间分别得到 m 个查询矩阵，共 m*N 个向量，再分别计算输出，最后采用向量拼接的方式把它拼起来得到最后的结果，这里思路是十分接近的，就不多说了。</p>
+<br>
+<br>
+<hr>
+<h2 id="5-summary">5 summary</h2>
+<br>
+<p>简单总结一下注意力机制的几个优点：</p>
+<ul>
+<li>直观上了解，它可以同时捕捉全局和局部的联系，也就是说每一个 xi 的对应的权重都是和全局比较后得出的（也就是 softmax 部分）</li>
+<li>大大减少了计算时间，直观理解也就是更多地将算力用在了确实需要注意的，与任务更加相关的重要的部分</li>
+<li>支持并行处理 ，注意力机制的计算都不依赖一层一层的结果输出，所以可以并行进行操作计算</li>
+<li>本身模型很简单（可能只是简单的点积 / 前馈神经网络，最后再加入一层 softmax），也就是说并不会为当前的模型带来太大的负担，本身参数也不多，训练容易</li>
+<li>某种程度上或许可以帮助提高神经网络模型的解释性，也就是说通过计算注意力分布，我可以知道我当前的答案或许是更多地来自哪一个输入，从而更好地为未来的结果提供一定的解释</li>
+</ul>
+<br>
+<p>但是可以注意到此时缺点也是很明显的：</p>
+<ul>
+<li>将所有的输入（对比到 encode - decode 模型也就是 encoder 部分的 隐藏层 h1 h2 h3）均平行对待，也就是说并没有考虑输入可能存在位置关系（比如 h2 就是在 h1 和 h3 之间输入的），而是并行地计算它们和查询向量 q 的关系，对于 nlp 任务来说本质上是损失了信息的</li>
+</ul>
+<p>当然后续的模型大多加入位置信息 embedding 来帮助缓解这个问题（比如 BERT 就是这么干的），所以并不认为这就是 attention 用在 nlp 上的致命伤</p>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210309-summary-attention/" title="attention：浅谈注意力机制与自注意力模型（附键值对注意力 + 多头注意力）">https://baijn-nan.github.io/2023/10/30/20210309-summary-attention/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%9F%BA%E7%A1%80/" rel="tag"><i class="fa fa-tag"></i> 深度学习基础</a>
+              <a href="/tags/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6/" rel="tag"><i class="fa fa-tag"></i> 注意力机制</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210309-summary-attention/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

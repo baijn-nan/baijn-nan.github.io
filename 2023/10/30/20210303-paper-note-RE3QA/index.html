@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210303，存档如下  Minghao Hu, Yuxing Peng, Zhen Huang, Dongsheng Li, National University of Defense Technology, Changsha, China (ACL19)   Retrieve, Read, Rerank: Towards End-to-End Multi-Document Re">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RE3QA: 检索+阅读+重新排序：端到端的多文档阅读理解">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210303-paper-note-RE3QA/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210303，存档如下  Minghao Hu, Yuxing Peng, Zhen Huang, Dongsheng Li, National University of Defense Technology, Changsha, China (ACL19)   Retrieve, Read, Rerank: Towards End-to-End Multi-Document Re">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021080610230.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021080700504.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021081500190.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021082022887.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021082156471.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021082244711.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:08:58.100Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器阅读理解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021080610230.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210303-paper-note-RE3QA/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210303-paper-note-RE3QA/","path":"2023/10/30/20210303-paper-note-RE3QA/","title":"RE3QA: 检索+阅读+重新排序：端到端的多文档阅读理解"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>RE3QA: 检索+阅读+重新排序：端到端的多文档阅读理解 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1. introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%A8%A1%E5%9E%8B%E8%A7%A3%E9%87%8A"><span class="nav-text">2 模型解释</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E6%96%87%E6%A1%A3%E7%AD%9B%E9%80%89%EF%BC%88%E5%88%9D%E6%AD%A5%E4%BF%AE%E5%89%AA%EF%BC%8Cpruning-document%EF%BC%89"><span class="nav-text">2.1 文档筛选（初步修剪，pruning document）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E6%96%87%E6%9C%AC%E7%89%87%E6%AE%B5%E7%BC%96%E7%A0%81%EF%BC%88segment-embedding%EF%BC%89"><span class="nav-text">2.2 文本片段编码（segment embedding）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E6%8F%90%E5%89%8D%E5%81%9C%E6%AD%A2%E6%A3%80%E7%B4%A2%E5%99%A8%EF%BC%88-Early-Stopped-Retriever%EF%BC%89"><span class="nav-text">2.3 提前停止检索器（ Early-Stopped Retriever）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-%E8%BF%9C%E7%A8%8B%E7%9B%91%E7%9D%A3%E9%98%85%E8%AF%BB%E5%99%A8%EF%BC%88Distantly-Supervised-Reader%EF%BC%89"><span class="nav-text">2.4 远程监督阅读器（Distantly-Supervised Reader）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-%E7%AD%94%E6%A1%88%E9%87%8D%E6%8E%92%E5%BA%8F%EF%BC%88answer-reranker%EF%BC%89"><span class="nav-text">2.5 答案重排序（answer reranker）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83"><span class="nav-text">3 模型训练</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210303-paper-note-RE3QA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="RE3QA: 检索+阅读+重新排序：端到端的多文档阅读理解 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RE3QA: 检索+阅读+重新排序：端到端的多文档阅读理解
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3-MRC/" itemprop="url" rel="index"><span itemprop="name">机器阅读理解(MRC)</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>2.8k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>10 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210303，存档如下</p>
+<blockquote>
+<p>Minghao Hu, Yuxing Peng, Zhen Huang, Dongsheng Li, National University of Defense Technology, Changsha, China (ACL19)   <strong>Retrieve, Read, Rerank: Towards End-to-End Multi-Document Reading Comprehension</strong></p>
+<p>原论文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MDYuMDQ2MTgucGRm">https://arxiv.org/pdf/1906.04618.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2h1bWluZ2hhbzE2L1JFM1FB">official<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1. introduction</h2>
+<p>延续前序研究的思路，考虑通过 <strong>检索（也就是寻找和整体问题相关的段落）+ 阅读（编码，embedding etc）+ 重排序（对可能的答案进行重新排序以生成最终的回答）的方式</strong> 完成机器阅读理解的任务。但是此时存在几个常有的问题：</p>
+<ul>
+<li>多个模块之间是独立的，独立进行训练，而不是作为一个整体共同解决问题。且此时常常要重复编码的输入，属于不必要的计算开支。</li>
+<li>难以将上游问题和下游任务很好地结合，简单理解就是上游的学习的目标往往不是下游任务最终的目标，导致学习目标和最后的目的的分离，或整体模型的训练-测试的分离。</li>
+</ul>
+<p>原论文提出 $RE^3QA$ 方法，作为一个整体阅读理解问题模型，将检索（context retrieve）+ 阅读（reading comprehension）+ 重新排序（answer reranking） 三个部分进行结合，得到端到端的多文档阅读理解模型。</p>
+<p>其本身为多文档的阅读理解任务设计，也就是说不同于传统的单独一个段落的阅读理解，此时需要 retrieve 的行为，即从整个内容中寻找和问题相关的部分，删除大部分对回答问题没有贡献的文本。进一步地从提取出的段落中提取答案，再通过重排序候选答案的方式（reranker）得到最终解答。新方法的优势在于：一方面其本身三个模块共享文本表示（contextualized text representation），另一方面将上游学习任务和下游的部分很好地结合，属于一个端到端的模型。同时由于将文本表示在整个模型的各个部分直接共享，此时不再需要重复的编码的输入，节省时间。</p>
+<p>几个前序研究的特点如下表：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021080610230.png" alt="image-20231021080610230" style="zoom: 50%;" />
+<br>
+<br>
+<hr>
+<h2 id="2-模型解释">2 模型解释</h2>
+<br>
+<p>先看一下整个模型的 overview</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021080700504.png" alt="image-20231021080700504" style="zoom: 67%;" />
+<p>明确地分为 <strong>三个部分（retrieve + read + rerank）</strong>。输入的为问题和一系列文档（a set of document)</p>
+<ul>
+<li>首先将输入的文档进行初步的筛选（也就是上图 pruning document 部分）→</li>
+<li>再将文本进行处理，得到固定长度的 segment →</li>
+<li>继续对得到的 segment 进行编码（这里使用的是预训练的 transformer 模块，对应图中的 T-block 部分）→
+<ul>
+<li>为保证效率，这里采用提前停止的思路，通过排序评分比较，仅仅将部分文档继续进入下一部分（也就是 early stop 部分）→</li>
+</ul>
+</li>
+<li>通过远程监督的阅读理解器，输出候选答案（图中 read 部分） →</li>
+<li>将候选答案重排序，得到最终答案</li>
+</ul>
+<br>
+<br>
+<h3 id="2-1-文档筛选（初步修剪，pruning-document）">2.1 文档筛选（初步修剪，pruning document）</h3>
+<p>以段落为尺度对文档进行拆解和修剪</p>
+<p>考虑此时输入的是文档的集合，经过 TF-IDF 向量化后，保留的是和输入的问题之间余弦cos距离最小的 topK 段落。此时通过保留下来的 k 个段落原本的相对位置，将经过筛选后的段落重新排序为一个新的文档 d，作为修剪后的文档，进入下一步操作。</p>
+<p>注意这里的方法很简单，但是作为一个初步筛选是十分有效的（论文表示 95% 以上的无关的段落将被舍弃）</p>
+<br>
+<h3 id="2-2-文本片段编码（segment-embedding）">2.2 文本片段编码（segment embedding）</h3>
+<p>这里不同于传统直接使用 句子 作为划分依据，而是通过 <strong>滑动窗口</strong> 来帮助分割文档。设定滑动窗口长度为 l，跨度 stride 为 r，将上述筛选处理后的文档 d 划分为多个 segment：</p>
+<p>$$C = { c_1, ... , c_n }, \text{ }\text{ }\text{ } n = [\frac{L_d-l}{r}]+1$$</p>
+<p>再通过预训练的 transformer 对 segment 进行编码。此时输入的为：</p>
+<p>$$[\text{ }[CLS]; q; [SEP] ; c ; [SEP]\text{ }]$$</p>
+<p>这里和 Transformer 和 bert 是相同的，就不多说了。CLS 是表征 token，标识分类 classification；q 是问题，SEP 作为句子之间区分的标志。注意这里上述的输入中的每一个 xi 都是 单词，type 类别 ，位置 embedding 的逐元素相加。直接放进 Transformer 进行编码，得到 $$h0 \in R^{L_x * D_h}$$，这里的 Lx 是输入的长度，Dh 为 hidden size</p>
+<p>注意这里同时使用 $I$ 个 Transformer blocks 进行训练，也就是得到 $I$ 个上述的 embedding 结果。</p>
+<br>
+<h3 id="2-3-提前停止检索器（-Early-Stopped-Retriever）">2.3 提前停止检索器（ Early-Stopped Retriever）</h3>
+<p>这里为了计算效率，采用了 early stop 的方法。</p>
+<p>论文表示在部分数据集中即使经过筛选，最后的 segment 也是较多的，如果此时将每一个 segment 都进行完整的 embedding 将损失大量信息。本文 <strong>利用早期汇总的隐藏层表示对各个 segment 进行评分和排序，并仅保留 topK 的 segment 的信息进入后续的模块</strong></p>
+<p>也就是说这里本身有 $I$ 个 transformer，但是仅仅使用第 J 个隐藏层的输出来作为对 segment 的表示来计算不同 segment 的得分，（这里的 J &lt; I，也就是使用的是早期层中的表示）<br>
+设 $h^J$ 为第 J 个隐藏层的输出，此时通过：</p>
+<p>$$\mu = softmax(w_\mu h^J)$$</p>
+<p>$$score^r = w_r tanh(W_r \sum _{i=1} ^{L_x} {\mu_ih_i^J})$$</p>
+<p>计算各个 segment 的得分。注意这里的  $w_\mu , w_r , W_r$ 都是学习的参数。第一个式子 μ 和 第二个式子的 sum 后部分，可以看作是将整个句子按照重要程度转换得到一个向量，输入第二个式子的 wr tanh 部分进行打分。</p>
+<p>得到所有的 segment 的得分后，保留得分最高的 N 个segment 进入下一个模块。其他的信息直接丢弃。注意这里的 N 一般不会太大，可以起到大大简化计算的作用。</p>
+<p>注意这一部分训练的目标函数：先将多个 segment 的得分 score r 标准化，通过：</p>
+<p>$$\mathcal{L}_I = -\sum _{i=1} ^2 y_i^r \log{(softmax(score^r)_i)}$$</p>
+<p>作为目标函数，其中 $y_i^r$ 是 one-hot label，用来标识当前的 segment 中是否存在至少一个正确答案中的文本（需要完全匹配)。</p>
+<br>
+<h3 id="2-4-远程监督阅读器（Distantly-Supervised-Reader）">2.4 远程监督阅读器（Distantly-Supervised Reader）</h3>
+<p>此时的目标是从多个 segment 中得到候选答案。此时通过片段切割的方法实现，也就是 <strong>计算每一个（答案开始位置 s）和 （答案结束位置 e）的得分，将得分相加作为这个候选答案的得分，排序再选择。</strong></p>
+<p>这里的 Transformer 共 $I$ 个，考虑最终隐藏层的输出 $h^l$，则此时答案开始部分和结束部分的得分计算为：</p>
+<p>$$score^s  = w_s h^l , \text{  } score^e = w_eh^l$$</p>
+<p>，进一步假设此时有一个候选答案 $a_i$，$\alpha_i$ 和 $\beta_i$ 分别是它的开始和结束部分对应的 indice，则此时整个答案 $a_i$ 的得分就是 $\alpha_i$ 作为开始的得分和 $\beta_i$ 作为结束的得分的加和：</p>
+<p>$$score^{all}<em>{a_i} = score^s</em>{\alpha_i} + score^e_{\beta_i}$$</p>
+<p>注意，这里为了标记最后的正确答案在原文中的位置，引入两个label：$y^s , y^e$，用来标记当前是否确实为正确答案的某一个文本片段的开始或结束。原文提到由于可能当前的 segment 本身不含有任何的正确答案文本片段，所以 ys 和 ye 的第一个元素都默认标记为 1</p>
+<p>这里用远程监督的方式来训练阅读器，这部分的损失函数：<br>
+$$<br>
+\begin{align}<br>
+\mathcal{L} _{II} &amp;= -\sum _{i=1} ^{L_x} y_i^s \log{(softmax(score^s)_i)} \\<br>
+&amp;= -\sum _{i=1} ^{L_x} y_j^e \log{(softmax(score^e)_j)}<br>
+\end{align}<br>
+$$<br>
+<br></p>
+<h3 id="2-5-答案重排序（answer-reranker）">2.5 答案重排序（answer reranker）</h3>
+<p>此时得到了候选答案，通过 reranker 作重排序，得到最后的答案。</p>
+<p>注意前面得到的候选答案中可能会存在重复的正确答案的片段（比如正确答案含有 dog ，可能很多的候选答案中都存在 dog 这个片段），这里采用 <strong>跨度级别非最大抑制（Span-level non-maximum suppression）</strong> 来对部分重复冗余的候选答案进行裁剪；</p>
+<p>此时输入候选答案集合 A，候选答案得分集合 S（来自于上一步），选择 A 集合中得分最高的答案 ai，将其加入集合 B 并从集合 A 中删除，同时寻找集合 A 中和答案 ai 存在重叠的答案。不断循环上述步骤，直到集合 A 为空或者集合 B 中的答案个数达到某个上限。</p>
+<p>具体 span-level NMS 的算法步骤如下：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021081500190.png" alt="image-20231021081500190" style="zoom:67%;" />
+<p>此时将集合 B 作为我的候选答案的集合，进一步对集合 B 中的候选答案进行重排。注意这里的思路和前面的打分比较类似，同理是将候选答案 a 进行某种转化为新的向量，再进行打分：<br>
+$$<br>
+\eta = softmax(w_{\eta} h ^I _{\alpha_i : \beta_i}) \<br>
+score_i ^a = w_a \tanh{(W_a \sum _{j=\alpha_i} ^{\beta_i} \eta _{j-\alpha_i+1} h_j^I)}<br>
+$$</p>
+<p>为了对这一部分的打分进行训练，引入标签 yhard 和 ysoft：</p>
+<ul>
+<li>$y_i^{hard}$： 也就是当前答案 ai 和真实答案的精确匹配分数</li>
+<li>$y_i^{soft}$：也就是当前答案 ai 和真实答案的模糊匹配 F1 分数</li>
+</ul>
+<p>如果此时 B 集合中的所有候选答案实际上都不包含正确答案，也就是所有的 element 的 yhard 编码都是 0，则此时用正确答案来替代集合 B 中得分最低的那个候选答案。</p>
+<p>定义第三部分的损失函数：<br>
+$$<br>
+\begin{align}<br>
+\mathcal{L} _{III} &amp;= -\sum _{i=1} ^{M^*} y _i ^{hard} \log {(softmax(score^a)_i)} \\<br>
+&amp;+ \sum _{i=1} ^{M^*} {|| y_i ^{soft} - \frac{score_i^a}{\sum _{j=1} ^{M^*} score_j^a}||^2}<br>
+\end{align}<br>
+$$</p>
+<p>最终选择重排序（rerank)后得分最高的候选答案作为正确答案。</p>
+<br>
+<be>
+<hr>
+<h2 id="3-模型训练">3 模型训练</h2>
+<p>注意这里本身是一个端到端的学习方式，则整体的损失函数为前面三个部分的损失函数的加和：<br>
+$$<br>
+\mathcal{J} = \mathcal{L} _I + \mathcal{L} _{II} + \mathcal{L} _{III}<br>
+$$</p>
+<p>通过直接计算迭代最后的损失函数来训练整个模型。整体的端到端的训练顺序：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021082022887.png" alt="image-20231021082022887" style="zoom:67%;" />
+<br>
+<p>来看看最后的模型效果</p>
+<p>首先是使用的数据集的情况：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021082156471.png" alt="image-20231021082156471" style="zoom: 55%;" />
+<p>最后的训练效果比较：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021082244711.png" alt="image-20231021082244711" style="zoom: 67%;" />
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210303-paper-note-RE3QA/" title="RE3QA: 检索+阅读+重新排序：端到端的多文档阅读理解">https://baijn-nan.github.io/2023/10/30/20210303-paper-note-RE3QA/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3/" rel="tag"><i class="fa fa-tag"></i> 机器阅读理解</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210303-paper-note-RE3QA/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

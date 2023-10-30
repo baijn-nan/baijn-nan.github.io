@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210306，存档如下  An Yang, Quan Wang, Jing Liu, Kai Liu, Yajuan Lyu, Hua Wu, Qiaoqiao She and Sujian Li; Key Laboratory of Computational Linguistics, Peking University, MOE, China, Baidu Inc., Beiji">
+<meta property="og:type" content="article">
+<meta property="og:title" content="KT-NET: 结合丰富知识增强预训练语言表达以辅助机器阅读理解">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210306-paper-note-KTNET/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210306，存档如下  An Yang, Quan Wang, Jing Liu, Kai Liu, Yajuan Lyu, Hua Wu, Qiaoqiao She and Sujian Li; Key Laboratory of Computational Linguistics, Peking University, MOE, China, Baidu Inc., Beiji">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022041544251.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022041717379.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022042529388.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022042602756.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022042641082.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:09.040Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器阅读理解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022041544251.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210306-paper-note-KTNET/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210306-paper-note-KTNET/","path":"2023/10/30/20210306-paper-note-KTNET/","title":"KT-NET: 结合丰富知识增强预训练语言表达以辅助机器阅读理解"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>KT-NET: 结合丰富知识增强预训练语言表达以辅助机器阅读理解 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-background"><span class="nav-text">1.1 background</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-this-work"><span class="nav-text">1.2 this work</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Knowledge-Embedding-and-Retrieval-%E9%92%88%E5%AF%B9%E8%83%8C%E6%99%AF%E7%9F%A5%E8%AF%86%E7%9A%84%E5%B5%8C%E5%85%A5%E5%92%8C%E6%A3%80%E7%B4%A2"><span class="nav-text">2  Knowledge Embedding and Retrieval 针对背景知识的嵌入和检索</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-KB-embedding-%E8%83%8C%E6%99%AF%E7%9F%A5%E8%AF%86%E5%B5%8C%E5%85%A5"><span class="nav-text">2.1 KB embedding 背景知识嵌入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-KB-Concepts-Retrieval-%E8%83%8C%E6%99%AF%E7%9F%A5%E8%AF%86%E6%A6%82%E5%BF%B5%E6%A3%80%E7%B4%A2"><span class="nav-text">2.2 KB Concepts Retrieval 背景知识概念检索</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Our-Approach-%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D"><span class="nav-text">3  Our Approach 模型介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-overview"><span class="nav-text">3.1 overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-BERT-Encoding-Layer%EF%BC%88%E5%88%A9%E7%94%A8-BERT-%E8%BF%9B%E8%A1%8C-embedding%EF%BC%89"><span class="nav-text">3.2 BERT Encoding Layer（利用 BERT 进行 embedding）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-Knowledge-Integration-Layer%EF%BC%88%E4%B8%8A%E4%B8%8B%E6%96%87%E4%BF%A1%E6%81%AF%E4%B8%8EKB%E4%BF%A1%E6%81%AF%E6%95%B4%E5%90%88%EF%BC%89"><span class="nav-text">3.3 Knowledge Integration Layer（上下文信息与KB信息整合）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-Self-Matching-Layer-%EF%BC%88%E8%BF%9B%E4%B8%80%E6%AD%A5%E4%B8%B0%E5%AF%8C%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9F%A5%E8%AF%86%E5%92%8C%E8%83%8C%E6%99%AF%E7%9F%A5%E8%AF%86%E7%9A%84%E4%BA%A4%E4%BA%92%EF%BC%89"><span class="nav-text">3.4 Self-Matching Layer （进一步丰富上下文知识和背景知识的交互）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-4-1-%E7%9B%B4%E6%8E%A5%E4%BA%A4%E4%BA%92"><span class="nav-text">3.4.1 直接交互</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-4-2-%E9%97%B4%E6%8E%A5%E4%BA%A4%E4%BA%92"><span class="nav-text">3.4.2 间接交互</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-5-Output-Layer-%EF%BC%88%E8%BE%93%E5%87%BA%E5%B1%82%EF%BC%89"><span class="nav-text">3.5 Output Layer （输出层）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-experiment-%E5%AE%9E%E9%AA%8C%E9%83%A8%E5%88%86"><span class="nav-text">4 experiment 实验部分</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210306-paper-note-KTNET/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="KT-NET: 结合丰富知识增强预训练语言表达以辅助机器阅读理解 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          KT-NET: 结合丰富知识增强预训练语言表达以辅助机器阅读理解
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3-MRC/" itemprop="url" rel="index"><span itemprop="name">机器阅读理解(MRC)</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>4.1k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>15 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210306，存档如下</p>
+<blockquote>
+<p>An Yang, Quan Wang, Jing Liu, Kai Liu, Yajuan Lyu, Hua Wu, Qiaoqiao She and Sujian Li; Key Laboratory of Computational Linguistics, Peking University, MOE, China, Baidu Inc., Beijing, China;  <strong>Enhancing Pre-Trained Language Representations with Rich Knowledge for Machine Reading Comprehension</strong></p>
+<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly93d3cuYWNsd2ViLm9yZy9hbnRob2xvZ3kvUDE5LTEyMjYucGRm">https://www.aclweb.org/anthology/P19-1226.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cDovL2dpdGh1Yi5jb20vcGFkZGxlcGFkZGxlL21vZGVscy90cmVlL2RldmVsb3AvUGFkZGxlTkxQL1Jlc2VhcmNoL0FDTDIwMTktS1RORVQ=">official<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<p>原文写于</p>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<br>
+<h3 id="1-1-background">1.1 background</h3>
+<p>当前机器阅读理解问题已经取得了较好的成效，而这些模型往往依赖于预训练模型：也就是首先在众多未标记文本上进行预训练，以先得到能够较好地捕捉复杂语言的模型，再进一步地利用于机器阅读理解问题中。在这里 BERT 模型凭借多层 transformer 在众多预训练模型中表现较好。</p>
+<p>但是注意到，在众多阅读理解问题中，整体模型不止需要 <strong>捕捉语义信息 / 理解语言的能力</strong> ，同时还需要 <strong>足够的背景知识以支持问题推理</strong></p>
+<p>举个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022041544251.png" alt="image-20231022041544251" style="zoom:80%;" />
+<p>注意上面的例子，此时得到正确的答案同时需要背景知识来自 wordnet 的背景知识：</p>
+<ul>
+<li>Trump is the person who leads US</li>
+<li>sanctions has a common hypernym with ban</li>
+</ul>
+<p>这些知识在文本中没有体现，可能是由于此时的文本默认大家已经有了类似的常识，人类在进行测试的时候可以轻松过地依赖这样的常识给出答案。但是机器没有，它只能依赖给定的文本去作推断（因为此时的预训练模型有的仅仅是 → 捕捉当前给定的文本的语义信息 的能力），这也就是 BERT 难以得到正确答案的原因</p>
+<p>也就是说，此时不止需要整体的关于文本的阅读 + 问题的理解 = 对给定的文本的语义的捕捉，如果此时机器模型可以像人一样，在做阅读理解题目的时候同时已经具有了一定的自己的相关的背景知识，则理应可以在各类阅读理解问题上取得更好的表现（个人理解就类似 gre RC的 assumption 题，选项都是在阅读文本 + 题目中没有出现的内容，此时需要的是个人的背景知识配合对文本的逻辑理解来判断哪一些选项确实是文本作者默认已经成立的前提假设）</p>
+<p>则此时需要考虑的问题转化为了 → 如何进一步改进机器阅读理解所应用的预训练模型？使得它在学习如何捕捉已经给定文本的语义信息的同时（也就是阅读给定文本 + 阅读题目并提取信息的能力，BERT 已经较好地实现了）也像人一样具备了一定的和当前文章+问题相关的基础背景知识（本文的目标）</p>
+<br>
+<h3 id="1-2-this-work">1.2 this work</h3>
+<p>综上，为解决上述问题并进一步提升机器阅读理解模型的效果，本文从其所依赖的预训练模型部分入手，提出了同时融合了语言-知识融合模型（KT-NET；Knowledge and Text fusion NET），作为较之 BERT 更为优秀的预训练模型以辅助后续的机器阅读理解问题的解决。</p>
+<p>这里提供给预训练模型学习用的外部知识包括：</p>
+<ul>
+<li><strong>WordNet</strong>：包含了词汇之间的词义关系信息（ lexical relations between words）</li>
+<li><strong>NELL</strong>：包含了多种实体信息（ beliefs about entities）</li>
+</ul>
+<p>注意在具体进行融合的时候采用的不是符号事实（symbolic facts），而是 <strong>KB embedding</strong> 的方法（具体在 2 会解释），优势如下：</p>
+<ul>
+<li>此时融合的知识不只是和阅读文本相关，同时和整体 KB 的信息是相关的</li>
+<li>可以更好地帮助同时融入多个 KB 进入预训练模型</li>
+</ul>
+<br>
+<br>
+<hr>
+<h2 id="2-Knowledge-Embedding-and-Retrieval-针对背景知识的嵌入和检索">2  Knowledge Embedding and Retrieval 针对背景知识的嵌入和检索</h2>
+<p>可以看到前面重点提到了一个东西叫 KB embedding，这里来解释一下它的相关内容</p>
+<p>注意到此时我们存在两个需求，一个是前面提到的 <strong>KB embedding</strong>，也就是说需要先将背景知识 encode 为 KB embedding  的形式，再尝试将它融入到预训练模型中；另一个是 <strong>Retrieval 检索</strong>，注意到针对每一个文章 + 问题，我不能让机器为了这一个题学完世界上所有的背景知识，也就是我需要检索什么样的背景知识和当前问题+文章是相关的，在让预训练模型去学习</p>
+<br>
+<h3 id="2-1-KB-embedding-背景知识嵌入">2.1 KB embedding 背景知识嵌入</h3>
+<p>KB embedding 可以理解为背景知识的 embedding，这里用到了两个 KB（也就是背景知识集合）： WordNet 和 NELL，每一个 KB 都储存为三元组的形式：$$ (subject, relation, object)$$这里 WordNet 主要是词义方面的（比如 organism, hypernym of, animal）而 NELL 是实体关系方面的（比如 Coca Cola, headquartered in, Atlanta）或者对于一个概念的解释（比如 Coca Cola, is a, company）</p>
+<p>但是这里并不是直接采用符号事实的方式进行信息的存储，而是考虑将它们编码到一个连续的向量空间中，也就是说给定一个三元组 $(s, r, o)$，此时我想要学习到 subject s，relation r，object o 三者的向量表示。这样做的好处是我就可以在向量空间内来衡量这个三元组的可信度（validity）</p>
+<p>这里的具体实现采用的是 BILINEAR model（也就是双线性模型），利用双线性函数来进行 validity 的衡量：$$f(s,r,o) = s^Tdiag(r)o$$，注意这里的 s，r，o 分别为 subject，relation，object 的向量表示且 $\in R^{d_2}$，$diag(r)$ 是一个对角线由 r 给出的对角矩阵</p>
+<p>认为已经存储在 KB 中的三元组是具有高 validity 的，则此时可以利用 KB 提供的信息学到三元组的向量表示，也就是最终通过学习可以得到两个 KB 中各个实体 + 关系的各自的向量表示</p>
+<p>这里的具体训练原文参考的是<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE0MTIuNjU3NXY0LnBkZg==">Yang et al., 2015<i class="fa fa-external-link-alt"></i></span> 的思路，该论文的<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2ZhY2Vib29rcmVzZWFyY2gvUHlUb3JjaC1CaWdHcmFwaA==">源码戳这里<i class="fa fa-external-link-alt"></i></span>（pytorch）</p>
+<br>
+<h3 id="2-2-KB-Concepts-Retrieval-背景知识概念检索">2.2 KB Concepts Retrieval 背景知识概念检索</h3>
+<p>此时还需要对所有两个 KB 提供的背景知识进行检索，以筛选出解决当前文章 + 问题的阅读理解问题所需要的背景知识再让预训练模型去学</p>
+<p><strong>针对 WordNet</strong>，此时给定问题和文章段落，将其中词汇的同义词集作为概念返回。也就是说这里只是用到了 WordNet 的同义词集，WordNet 本身就是标识各个词之间语义关系的 KB</p>
+<p><strong>针对 KEEL</strong>，需要首先从给定的问题和文章段落中识别实体（因为 KEEL 是指定实体之间关系的 KB），再直接用字符串匹配的方式去 KEEL  中找这些实体，并把所有和这些实体相关的其他实体也提取出来。注意这里提取到的 subword 也会共享检索结果，比如只是提取到了 coca，但是它本身可以作为 coca-cola 的一部分从 KEEL 中链接到 company 这个实体并提取出来。</p>
+<p>经过上述的步骤，我们可以从两个 KB 中提取出和文章和问题相关的 concept 的集合。再结合前面对 KB 中所有 concept 的向量编码，此时可以得到一个候选 concept 的向量集合且每一个向量 $\in R^{d_2}$</p>
+<p>这个候选集在后续模型中会用到。</p>
+<br>
+<br>
+<hr>
+<h2 id="3-Our-Approach-模型介绍">3  Our Approach 模型介绍</h2>
+<br>
+<h3 id="3-1-overview">3.1 overview</h3>
+<p>先来看看整体模型：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022041717379.png" alt="image-20231022041717379" style="zoom:80%;" />
+<p>此时的整体目标还是给定带有 m 个 token 的文本 P，n 个 token 的问题 Q，最后输出文本中的某一段连续序列（contiguous span in the passage）作为答案 A</p>
+<p>整体主要包括四个模块：</p>
+<ul>
+<li><strong>BERT encoding layer → 基于 BERT  的编码</strong>：和前序研究相同，利用预训练的 BERT 模型来捕捉阅读文本 + 问题的上下文语义信息并进行 embedding</li>
+<li><strong>knowledge integration layer → 背景知识整合</strong>：也就是从背景知识记忆中选择相关的可能需要的背景知识（以 KB embedding 的形式）并和 BERT embedding 的结果进行整合</li>
+<li><strong>self-matching layer → 自注意力层</strong>：利用自注意力机制进一步处理此时得到的 embedding，进一步地丰富学到的背景知识和 BERT 对文本+问题编码之间的交互</li>
+<li><strong>output layer → 最终预测</strong>：注意这里目标同理是给出答案，也就是预测答案部分在文章 passage 中的开始位置和结束位置 = 预测文章各个部分作为开始部分的概率和结束部分的概率。</li>
+</ul>
+<br>
+<h3 id="3-2-BERT-Encoding-Layer（利用-BERT-进行-embedding）">3.2 BERT Encoding Layer（利用 BERT 进行 embedding）</h3>
+<p>也就是正常的 BERT，就不多说了。这里给定文章 P 和问题 Q，注意输入的形式：</p>
+<p>$$S = [<CLS> , Q, <SEP>,P , <SEP>]$$</p>
+<p>，也就是将问题和文章都贴在一起扔进去了，CLS 和 SEP 也就是传统 BERT 模型中的作用，注意这里本文并没有用到 CLS（只是为了满足 BERT 保持了这个形式）</p>
+<p>针对 S 中的每一个 token，此时的输入实际上使用的是 token, position, segment 编码，也就是：$$h_i^0 = s_i^{tok}+s_i^{pos}+s_i^{seg}$$，注意对于 Q 中的所有的词使用的都是同一个 segment。</p>
+<p>这里 BERT 的输出记作 ${h_i^L}_{i=1}^{m+n+3}$，m 是 P 中的 token 数目，n 是 Q 中的 token 数目，共 L 层</p>
+<br>
+<h3 id="3-3-Knowledge-Integration-Layer（上下文信息与KB信息整合）">3.3 Knowledge Integration Layer（上下文信息与KB信息整合）</h3>
+<p>也就是将 KB 中可能相关的背景信息和 BERT 得到的 embedding 进行整合，也就是整个模型的核心部分。可以直观理解为将 BERT 最后结果的 $h_i^L$ 作为输入，利用 KB  背景信息对其所含信息进行进一步的丰富，使得此时的预训练模型不仅能够充分掌握问题和文章提供的上下文信息（BERT 部分），同时能够像人一样具有一定的相关背景知识（KB 部分）</p>
+<p>给定 BERT 对于每一个 token $s_i$ 的表示，也就是 $h_i^L \in R^{d_1}$，和一个来自 KB 的候选集 $C(s_i)$，利用注意力机制从候选集中选取相关的 KB concept。这里的 KB 候选集 $C(s_i)$ 也就是前面 2 部分提取出的 KB 的 concept 候选集，标识着所有可能和问题和文章相关的 concept，且此时得到的是 KB embedding 的标识，也就是一个向量集合。</p>
+<p>当然前面的 KB 候选集筛选只是初筛，还会存在大量实际上对我们解决问题并没有帮助的 concept，这里进一步使用注意力机制来处理：令 $c_j$ 标识 KB 候选集 $C(s_i)$ 中的 concept，$c_j \in R^{d_2}$，文章+问题的输入 S 中的任意一个 token 记作 $s_i$，利用双线性测量来判断 cj 和 si 之间的相关度 → 也就是计算注意力权重：<br>
+$$<br>
+\alpha _{ij} \varpropto exp(c_j^T Wh_i^L)<br>
+$$</p>
+<p>这里的 W 是模型学习参数。注意到这里的 si 和 cj 可能是全不相关的，这里引入一个知识定点（knowledge sentinel）$\bar{c} \in R^{d_2}$，这里用相同的方法先计算知识定点的注意力权重：<br>
+$$<br>
+\beta_i \varpropto exp(\bar{c} ^T Wh_i^L)<br>
+$$</p>
+<p>则最后汇总得到一个经过了和 token si 相关的注意力权重加权整合的 KB 信息表示：<br>
+$$<br>
+k_i = \sum _j a _{ij} c _j + \beta _i \bar{c}<br>
+$$</p>
+<p>这里满足 $\sum_j a_{ij} + \beta_i = 1$</p>
+<p>注意 $k_i$ 的特点：由于引入了知识定点 $\bar{c}$，此时即使 si 和 某一个 ci 是完全不相关的，ci 的一部分信息也可以作为 $\bar{c}$ 的一部分以某种权重对 $s_i$ 的信息进行补充，也就是前面优势部分所提到的：<strong>不只融合和阅读文本相关的知识，同时某种程度上融合了和整个 KB 的信息相关的知识</strong></p>
+<p>这里的 $k_i$ 可以视为一个知识状态向量（knowledge state vector），也就是针对当前的 token si ，通过（结合了 si 特点的注意力机制）分配权重，为 token $s_i$ 准备的它所相关的 KB 信息</p>
+<p>最后将 $k_i$ 表示和 BERT 输出的 $s_i$ 表示连起来，输出：</p>
+<p>$$u_i = [h_i^L, k_i] \in R^{d_1+d_2}$$</p>
+<br>
+<br>
+<h3 id="3-4-Self-Matching-Layer-（进一步丰富上下文知识和背景知识的交互）">3.4 Self-Matching Layer （进一步丰富上下文知识和背景知识的交互）</h3>
+<br>
+<p>这里将上一步得到的 ui 作为输入，目标是通过自注意力机制进一步地融合上下文信息（BERT 的输出，也就是 hi）和相关的背景知识信息（前面的 KB 经过注意力权重后的表示 ki）</p>
+<p>这里分别针对  <strong>直接交互</strong> 和 <strong>间接交互</strong> 进行处理。</p>
+<br>
+<h4 id="3-4-1-直接交互">3.4.1 直接交互</h4>
+<p>给定两个 token：si 和 sj（也就是它们对应的 ui 和 uj 表示），用 trilinear 函数来计算它们之间的相似度：<br>
+$$<br>
+r _{ij} = w^T [u_i, u_j , u_i \odot u_j]<br>
+$$</p>
+<p>这里的 ⊙ 是 element-wise 的乘法，w 是学习参数，最后得到的是一个相似度矩阵 R，每一个元素 rij 衡量的就是 ui 和 uj 之间的相似度</p>
+<p>进一步地对 R 逐行作 softmax 运算，得到自注意力的权重矩阵 A</p>
+<p>再对每一个 token si （表示为 ui）计算自注意力向量 vi：<br>
+$$<br>
+a_ij = \frac {exp(r _{ij})} {\sum _j {exp(r _{ij})}} \\<br>
+v_i = \sum _j {a _{ij} u_j}<br>
+$$</p>
+<p>直观理解就是此时通过自注意力，将不同 ui 之间的信息同样做了融合</p>
+<br>
+<h4 id="3-4-2-间接交互">3.4.2 间接交互</h4>
+<p>考虑到 si 之间可能还存在多跳的交互，比如 si 和 sj 之间通过 sk 进行交互</p>
+<p>这里直接对原始注意力矩阵作自乘的运算，也就是：<br>
+$$<br>
+\bar {A} = A^2 \\<br>
+\bar {v}_i = \sum_j \bar{a} _{ij} u_j<br>
+$$</p>
+<p>这里的 $\bar{a}_{ij}$ 也就是 $\bar{A}$ 中的元素，这里的 $\bar{v}_i$ 表示了所有的 sj 如何通过可能的中间 token sk 与我们的 si 进行了交互。</p>
+<br>
+<p>最后得到本层的输出：</p>
+<p>$$o_i = [u_i, v_i, u_i-v_i,u_i \odot v_i, \bar{v}_i, u_i - \bar{v}_i] \in R^{6d_1+6d_2}$$</p>
+<br>
+<br>
+<h3 id="3-5-Output-Layer-（输出层）">3.5 Output Layer （输出层）</h3>
+<br>
+<p>这里还是遵循 BERT 的思路并采用线性输出层配一个简单的 softmax，来预测答案的边界（也就是每一个位置是答案开始 / 结束边界的概率）</p>
+<p>任意一个 token  si 是开始或结束边界的概率为：<br>
+$$<br>
+\begin{align}<br>
+p_i^1 = \frac {exp(w_1^T o_i)} {\sum _j {exp(w_1^T o_j)}} \\<br>
+p_i^2 = \frac {exp(w_2^T o_i)} {\sum _j {exp(w_2^T o_j)}}<br>
+\end{align}<br>
+$$</p>
+<p>这里的 oi 就是上一层最后的输出，w1 和 w2 是学习参数，注意最后的答案选择：</p>
+<ul>
+<li>满足 开始位置 a &lt; 结束位置 b</li>
+<li>且此时对应的 $p_a^1 p_b^1$ 是最大的</li>
+</ul>
+<p>最后的训练函数是利用真实开始结束位置来计算的对数似然函数：<br>
+$$<br>
+\mathcal{L} = - \frac{1}{N} \sum^N _{j=1} {(\log{p^1 _{y_j^1}} + \log {p^2 _{y_j^2}})}<br>
+$$</p>
+<br>
+<br>
+<hr>
+<h2 id="4-experiment-实验部分">4 experiment 实验部分</h2>
+<p>先来看看数据集：原文用的是  <code>ReCoRD</code> 和 <code>SQuAD1.1</code></p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022042529388.png" alt="image-20231022042529388" style="zoom:67%;" />
+<p>再看看在两个数据集上分别的效果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022042602756.png" alt="image-20231022042602756" style="zoom:80%;" />
+<p>可以看到这里还是有一定的提升的。注意 SQuAD 的部分， KT-NET - NETwordnet 的反而是效果最好的，可以认为 SQuAD 是一个不那么地依赖外部信息来作答的数据集 (...)</p>
+<p>同时作者做了一个和 BERT 的直接的对比（case study 部分）</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022042641082.png" alt="image-20231022042641082" style="zoom: 60%;" />
+<p>这里热力图展示的是问题和文章之间的相关性，主要是一列一列地看：可以了解到此时 KT-NET 可以帮助每一个问题中的词汇对不同的文章有更加不同的相关性，也就是每一列内的元素相关性差距拉大，表明相对于 BERT 确实是有一定提升的。</p>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210306-paper-note-KTNET/" title="KT-NET: 结合丰富知识增强预训练语言表达以辅助机器阅读理解">https://baijn-nan.github.io/2023/10/30/20210306-paper-note-KTNET/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3/" rel="tag"><i class="fa fa-tag"></i> 机器阅读理解</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210306-paper-note-KTNET/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

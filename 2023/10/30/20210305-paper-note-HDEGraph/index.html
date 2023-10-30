@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210305，存档如下  Ming Tu, Guangtao Wang, Jing Huang, Yun Tang, Xiaodong He, Bowen Zhou JD AI Research;  Multi-hop Reading Comprehension across Multiple Documents by Reasoning over Heterogeneous Gra">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HDEGraph: 基于异构图推理实现跨文档的多跳阅读理解">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210305-paper-note-HDEGraph/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210305，存档如下  Ming Tu, Guangtao Wang, Jing Huang, Yun Tang, Xiaodong He, Bowen Zhou JD AI Research;  Multi-hop Reading Comprehension across Multiple Documents by Reasoning over Heterogeneous Gra">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022035202426.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022035534992.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022040213330.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022040839926.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022040914997.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:05.985Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器阅读理解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210305-paper-note-HDEGraph/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210305-paper-note-HDEGraph/","path":"2023/10/30/20210305-paper-note-HDEGraph/","title":"HDEGraph: 基于异构图推理实现跨文档的多跳阅读理解"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>HDEGraph: 基于异构图推理实现跨文档的多跳阅读理解 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%A8%A1%E5%9E%8B%E8%A7%A3%E9%87%8A"><span class="nav-text">2 模型解释</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E4%B8%8A%E4%B8%8B%E6%96%87%E7%BC%96%E7%A0%81-context-encoding"><span class="nav-text">2.1 上下文编码 context encoding</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-1-GRU-%E7%BC%96%E7%A0%81%EF%BC%88%E8%93%9D%E8%89%B2%E9%83%A8%E5%88%86%EF%BC%89"><span class="nav-text">2.1.1 GRU 编码（蓝色部分）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-2-%E5%AE%9E%E4%BD%93%E6%8F%90%E5%8F%96-Entity-extraction%EF%BC%88%E6%A9%99%E8%89%B2%E9%83%A8%E5%88%86%EF%BC%89"><span class="nav-text">2.1.2 实体提取 Entity extraction（橙色部分）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-3-%E8%AE%A1%E7%AE%97%E5%AE%9E%E4%BD%93%E9%97%B4-co-attention%EF%BC%88%E7%BB%BF%E8%89%B2%E9%83%A8%E5%88%86%EF%BC%89"><span class="nav-text">2.1.3 计算实体间 co-attention（绿色部分）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-4-%E8%87%AA%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%B1%A0%E5%8C%96-self-attentive-pooling%EF%BC%88%E7%BA%A2%E8%89%B2%E9%83%A8%E5%88%86%EF%BC%89"><span class="nav-text">2.1.4 自注意力池化 self-attentive pooling（红色部分）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E5%9F%BA%E4%BA%8E%E5%BC%82%E6%9E%84%E5%9B%BE%E7%9A%84%E6%8E%A8%E6%96%AD-Reasoning-over-HDE-graph"><span class="nav-text">2.2 基于异构图的推断 Reasoning over HDE graph</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-1-HDE-graph-%E6%9E%84%E5%BB%BA"><span class="nav-text">2.2.1 HDE graph 构建</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-2-%E4%BF%A1%E6%81%AF%E4%BC%A0%E9%80%92-Message-passing"><span class="nav-text">2.2.2 信息传递 Message passing</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E5%80%99%E9%80%89%E7%AD%94%E6%A1%88%E6%89%93%E5%88%86-Score-accumulation"><span class="nav-text">2.3 候选答案打分  Score accumulation</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E5%AE%9E%E9%AA%8C%E9%83%A8%E5%88%86"><span class="nav-text">3 实验部分</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210305-paper-note-HDEGraph/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="HDEGraph: 基于异构图推理实现跨文档的多跳阅读理解 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          HDEGraph: 基于异构图推理实现跨文档的多跳阅读理解
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3-MRC/" itemprop="url" rel="index"><span itemprop="name">机器阅读理解(MRC)</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>3.5k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>13 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210305，存档如下</p>
+<blockquote>
+<p>Ming Tu, Guangtao Wang, Jing Huang, Yun Tang, Xiaodong He, Bowen Zhou<br>
+JD AI Research;  <strong>Multi-hop Reading Comprehension across Multiple Documents by Reasoning over Heterogeneous Graphs</strong></p>
+<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MDUuMDczNzR2Mi5wZGY=">https://arxiv.org/pdf/1905.07374v2.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL0pELUFJLVJlc2VhcmNoLVNpbGljb24tVmFsbGV5L0hERUdyYXBo">official<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<br>
+<p>多跳阅读理解问题，特别是跨文档的多跳阅读理解问题为当前的机器阅读理解学习模型提出了新的挑战。</p>
+<p>在这里首先解释以下什么是多跳阅读理解问题，这里借用 CogQA 论文里的例子来展示。（<a href="https://baijn-nan.github.io/2023/10/21/20210304-paper-note-CogQA/">CogQA 笔记</a>）</p>
+<p><strong>多跳阅读理解问题</strong> 可以直观地理解为需要多次跳转，将不同的信息进行进一步整合才能得到答案的阅读理解问题。举个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png" alt="image-20231021084007009" style="zoom: 80%;" />
+<p>这个问题本身问的是导演，但是没有给出电影的名字，首先需要后面的信息去推断是哪一部电影，才能进一步去寻找该电影的导演。直观理解就是此时需要从多个文档中收集信息并经过一定的多重推导过程才能得到最后答案。</p>
+<br>
+<p>针对多跳理解问题，当前效果比较好的模型主要集中于以下两种模式：</p>
+<ul>
+<li>对多个文档内容进行初步筛选，再把筛选出来的内容进行拼接为一个新的文档，再利用前面的针对单文档的模型来进行阅读理解和实体的提取。</li>
+<li>使用 GNN 方法，也就是先通过阅读理解将内容作为 GNN 的新的实体加入网络，再通过 GNN 的结点结构完成下游任务（CogQA 就是类似的思路）</li>
+</ul>
+<p>本文使用的还是受到基于 GNN 方法的启发，将异构信息网络的思路引入机器阅读理解模型，提出一种新类型的图模型：<strong>异构文档-实体网络（Heterogeneous Document-Entity (HDE) graph）</strong></p>
+<p>HDE graph 的特点主要有：</p>
+<ul>
+<li>此时允许图上的不同结点属于不同的类型（也就是异构信息网络的特点），也就是说此时的图模型可以充分表示不同级别不同类型的信息。这里采用三种类型的结点：候选答案（candidate）+ 文档（document）+ 实体（entity）</li>
+<li>受到 CFC 的启发，这里用到 co-attention 和 self-attention 来学习初始结点的表示</li>
+<li>此时将结点之间不同的关系引入图模型（也就是异构信息网络中能够表示不同结点关系的不同类型的边），以更好地完成依赖图模型推断过程。</li>
+</ul>
+<br>
+<br>
+<hr>
+<h2 id="2-模型解释">2 模型解释</h2>
+<p>先看看整体模型的架构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022035202426.png" alt="image-20231022035202426" style="zoom: 67%;" />
+<p>整体模型大致可以分为三个部分：</p>
+<ul>
+<li><strong>上下文编码 context encoding</strong>：也就是通过 co-attention 和 self-attention 进行上下文编码，以初始化整个 HDE graph</li>
+<li><strong>基于异构图的推断过程 Reasoning over HDE graph</strong>：通过基于 GNN 的传播算法在整个构造的 HDE graph 上进行推断过程，从而得到各个结点的最终表示</li>
+<li><strong>针对候选答案打分  score accumulation</strong>：也就是利用此时 HDE graph 的结点表示对候选答案进行打分，筛选出最终答案</li>
+</ul>
+<br>
+<br>
+<h3 id="2-1-上下文编码-context-encoding">2.1 上下文编码 context encoding</h3>
+<p>类似于异构图的思路，实际上就是对一个 query 的预测任务：给定 (s , r , ?) 则此时的目标就是通过给定的 s 实体，r 关系和背景资料支持文档 $S_q$ ，从所有可能的候选答案 $C_q$ 中选择得到最后的结果。</p>
+<p>上下文编码部分分为四个模块，如下图所示：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022035534992.png" alt="image-20231022035534992" style="zoom:90%;" />
+<ul>
+<li><strong>GRU 编码（蓝色部分）</strong></li>
+<li><strong>实体提取 Entity extraction（橙色部分）</strong></li>
+<li><strong>计算实体间 co-attention（绿色部分）</strong></li>
+<li><strong>自注意力池化 self-attentive pooling（红色部分）</strong></li>
+</ul>
+<p>这里作者提了一下本文基于 CFC 的优化的点：</p>
+<ul>
+<li>比 CFC 更多地计算了 query 和 候选答案 之间的 co-attention</li>
+<li>用到了自注意力机制来综合 co-attention 给出的信息</li>
+</ul>
+<br/>
+<h4 id="2-1-1-GRU-编码（蓝色部分）">2.1.1 GRU 编码（蓝色部分）</h4>
+<p>首先使用 GRU 分别对 query， 文档 和 候选答案 进行编码，最后输出 query 的编码 $H_q \in R^{l_q*h}$，文档的编码 $H_s^i \in R^{l_s^i * h}$（这里的 i 表示是第 i 个参考文档），候选答案的编码 $H_c^j \in R^{l_c^j * h}$，这里的 h 是  RNN 最后输出的维度</p>
+<br>
+<h4 id="2-1-2-实体提取-Entity-extraction（橙色部分）">2.1.2 实体提取 Entity extraction（橙色部分）</h4>
+<p>还是前面导演的那个例子，此时从电影的信息需要先抽取出电影名字这个实体，才能进一步地得到最后导演名字作为答案。</p>
+<p>注意这里将同时利用问题 query 和 可能的候选答案 来进行实体抽取。使用 simple exact match strategy 的方法（具体来自于 <span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvYWJzLzE4MDguMDk5MjA=">De Cal 2018 等人<i class="fa fa-external-link-alt"></i></span>）得到 query 和 候选答案中各个 mention 的开始和结束位置，此时的各个 mention 将被处理为一个实体。得到实体后将上述 GRU 部分编码结果的实体对应部分提取出来，作为其初始表示。</p>
+<br>
+<h4 id="2-1-3-计算实体间-co-attention（绿色部分）">2.1.3 计算实体间 co-attention（绿色部分）</h4>
+<p>co-attention 的作用为使得 query 和 document 之间的信息能够互相融合加强</p>
+<p>首先通过 GRU 输出的表示，计算 query 和第 i 个文档之间的相似度矩阵（similarity matrix）：<br>
+$$<br>
+A _{qs} ^i = H _s ^i (H _q)^T \in \mathbb{R} ^{l^i_s \times l_q}<br>
+$$</p>
+<p>这里的 A 用于展示当前 query 中某个词和 文档 中任意某个词之间的两两相关程度</p>
+<p>进一步计算注意力文本，也就是 query 和 document 经过注意力机制后的上下文表示（attention context）<br>
+$$<br>
+C_q = softmax(A^T _{qs}) H_s \in \mathbb{R} ^{l_q \times h} \\<br>
+C_s = softmax(A _{qs}) H_q \in \mathbb{R} ^{l_s \times h}<br>
+$$</p>
+<p>注意这里用 softmax 做了一个标准化的操作（column-wise normalization)</p>
+<p>再进一步利用一个双向 GRU 对得到的 Cs （也就是文档部分）进行进一步的编码：<br>
+$$<br>
+D_s = f(softmax(A _{qs}) C_q) \in \mathbb{R} ^{l_s \times h}<br>
+$$<br>
+此时将得到的 Ds 和 Cq 进行按列的拼接，得到最后的 co-attention 表示：<br>
+$$<br>
+S _{ca} = [C_s ; D_s] \in \mathbb{R} ^{l_s \times 2h}<br>
+$$<br>
+注意这里最后得到的 $S _{ca}$ 也就是经过了 query 的信息融合和注意力机制的支持文档的信息。将上述的步骤同样用于 query 和 候选答案之间，query 和实体之间，得到 $C _{ca}$ 和 $E _{ca}$，注意这里总共是计算了三组 co-attention</p>
+<br>
+<h4 id="2-1-4-自注意力池化-self-attentive-pooling（红色部分）">2.1.4 自注意力池化 self-attentive pooling（红色部分）</h4>
+<p>也就是将一个有序的上下文表示通过自注意力模块得到一个固定维度的 + 非有序的特征向量，中间经过的是注意力筛选。直观理解就是，此时通过为 co-attention 得到的结果（一个序列）中的每一个词语进行打分，将得分标准化后作为权重经过池化操作，最终得到一个能够体现输入序列的综合信息的特征向量。</p>
+<p>给定 co-attention 的输出 $S_ {ca}$，计算如下：<br>
+$$<br>
+a_s = softmax(MLP(S _{ca})) \in \mathbb{R} ^{l_s \times 1} \\<br>
+s _{sa} = a_s^T S _{ca} \in \mathbb{R} ^{1 \times 2h}<br>
+$$</p>
+<p>这里的 MLP 是一个两层的 MLP 配上 tanh 作为激活函数，最终得到经过了自注意力池化的表示 $S_{sa}$</p>
+<p>同理，考虑 co-attention 的其他两个输出 $C_{ca}$ 和 $E_{ca}$，经过同样的操作得到 $C_{sa}$ 和 $E_{sa}$</p>
+<br>
+<br>
+<h3 id="2-2-基于异构图的推断-Reasoning-over-HDE-graph">2.2 基于异构图的推断 Reasoning over HDE graph</h3>
+<p>这里将 HDE graph 表示为 $G = {V , E}$，V 是结点的表示，而 E 为连接结点的边，此时的结点分为三种：文档，候选答案，抽取出的实体</p>
+<p>此时利用 HDE graph 可以表示更多粒度下的信息：</p>
+<ul>
+<li>document 结点可以表示融合了 query 信息的（因为经过了 co-attention）文档层面的整体信息</li>
+<li>候选答案结点表示经过了 query 信息融合的候选答案中相关的信息</li>
+<li>entity 结点表示了通过 query 信息后的，某文档中的或者 query 本身中存在的可能会对推理有帮助作用的 subject</li>
+</ul>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022040213330.png" alt="image-20231022040213330" style="zoom:50%;" />
+<br>
+<h4 id="2-2-1-HDE-graph-构建">2.2.1 HDE graph 构建</h4>
+<p>通过上一步最后的自注意力池化后，此时可以得到各个结点的初始表示。此时进一步地定义它们之间的相关关系，也就是边的关系：</p>
+<ul>
+<li>文档 + 候选答案：只要该候选答案出现在该文档中至少一次则存在这类的边连接两个实体</li>
+<li>文档 + 实体：标识该实体是从该文档中提取出来的</li>
+<li>候选答案 + 实体：标识该实体本身是该候选答案中的一个 mention</li>
+<li>实体 + 实体：标识两个实体是从同一个文档中提取出来的</li>
+<li>实体 + 实体：如果两个实体是来自同一个 query 或同一个候选答案的 mention，但不是来自于同一个文档（和上一个边类型区别开）</li>
+<li>候选答案 + 候选答案 ：所有的候选答案之间两两相连</li>
+<li>实体 + 实体：其他的不满足上述条件的两个实体之间相连</li>
+</ul>
+<p>至此，我们将整个 HDE graph 构造完毕</p>
+<br>
+<h4 id="2-2-2-信息传递-Message-passing">2.2.2 信息传递 Message passing</h4>
+<p>本文选用的是 GNC 的消息传递策略，分为 聚合（aggregation）和 组合（combination）两个部分。</p>
+<br>
+<p><strong>聚合</strong> 也就是将邻居结点的信息进行聚集整合：<br>
+$$<br>
+z_i^k = \sum _{r\in R} {\frac {1} {N_i^r}} \sum _{j \in N_i^r} {f_r(h_j^k)}<br>
+$$</p>
+<p>这里的 R 是所有的边的种类的集合，$N_i^r$ 是所有以边类别 r 与结点 i 相连的邻居结点的集合，$|N_i^r|$ 表示这样的结点集合中结点的个数，$h_j^k$ 是结点 j 在第 k 层的表示，$f_r$ 本身是一个转换，可以用 MLP 实现，最后得到的是 $z_i^k$ ，也就是结点 i 的第 k 层表示。</p>
+<p>个人觉得这里的思路和 RippleNet 是类似的（<a href="https://baijn-nan.github.io/2023/10/18/20210208-paper-note-RippleNet/">RippleNet 笔记</a>），比如此时相连的模式是 1-2-3，则第一层都只有自己的信息，而第二层时，二层的结点 2 的信息中包含了结点 3 的信息，而 三层的结点 1 的信息中包含了二层的结点 2 的信息，自然也就包含了结点 3 的信息，经过多层的传播，此时实现了多跳的信息融合。</p>
+<p><strong>组合</strong>也就是将结点 i 的原始表示信息和它的多层信息进行综合：<br>
+$$<br>
+u_i^k = f_s(h_i^k) + z_i^k<br>
+$$</p>
+<p>这里的 $h_i^k$ 也就是结点 i 的原始第 k 层表示信息，而 $f_s$ 同理可以由 MLP 实现</p>
+<p>注意到在层数比较大的时候，  GNN 很容易遇到平滑问题（smoothing problem ），也就是整个 GNN 中的结点都很相似而没有区分度。为了避免平滑，此时在组合的部分加入一种门机制（gating mechanism）：<br>
+$$<br>
+g_i^k = sigmoid(f_g([u_i^k ; h_i^k])) \\<br>
+h_i ^{k+1} = \tanh (u_i^k) \odot g_i^k + h_i^k \odot (1-g_i^k)<br>
+$$</p>
+<p>这里的 $f_g$ 同理通过 MLP 实现（注意原文用的是单层的 MLP），注意这里实际上是通过 $g_i^k$​ 来控制到底多少信息来自于结点 i 的原本表示 h ，又多少信息来自 HDE graph 推断后的表示 u</p>
+<p>经过 k 次处理（K 次信息传递），得到每一个结点的最终表示 $h_i^{k}$</p>
+<br>
+<br>
+<hr>
+<h3 id="2-3-候选答案打分-Score-accumulation">2.3 候选答案打分  Score accumulation</h3>
+<p>得到图最终的表示后，可以基于图中的表示来为候选答案进行打分以提取最终答案<br>
+$$<br>
+a = f_C (H^C) + ACC _{max} (f_E (H^E))<br>
+$$</p>
+<p>这里的 $H^C$ 是所有候选答案结点的表示，C 是候选答案个数，$H^E$ 是所有和候选答案相连的实体结点的表示，$ACC_{max}$ 取和某一个候选答案结点相连的所有的实体结点中的最高分，这里的 $f_E, f_C$ 都是通过两层的 MLP 实现的，激活函数还是用的 $\tanh$，最后的输出 $a \in R^{C*1}$ 则表示此时 C 个候选答案各自为正确答案的概率（得分经过标准化)</p>
+<p>这里得到最后的 a，则利用 a 和真实的答案标签 → 交叉熵损失函数来进行整体模型的训练</p>
+<br>
+<br>
+<hr>
+<h2 id="3-实验部分">3 实验部分</h2>
+<p>原文使用的是 WikiHop 数据集 进行最后的模型测试。（43K 训练集，2.5K 测试集）</p>
+<p>注意这里作者依据经验将整个 query 分为了 relation 和 subject 两类，预训练的词向量用的是 300-dimensional GLoVe 和 100-dimensional character n-gram embeddings</p>
+<p>原文里作者还搞了一个结合了 15 个模型的集成学习（用了不同的超参数和随机数种子），融合的时候用的是简单的多数投票策略</p>
+<p>现在来看看结果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022040839926.png" alt="image-20231022040839926" style="zoom:80%;" />
+<p>为了考察整个模型的不同部分的贡献，原文还做了消融实验：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022040914997.png" alt="image-20231022040914997" style="zoom:80%;" />
+<p>可以看出此时 HDE graph 的贡献还是蛮显著的，也就是说花这么大力气又是提取实体构建 HDE graph 又是在上面做多跳信息融合确实也算有效果 ...</p>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210305-paper-note-HDEGraph/" title="HDEGraph: 基于异构图推理实现跨文档的多跳阅读理解">https://baijn-nan.github.io/2023/10/30/20210305-paper-note-HDEGraph/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3/" rel="tag"><i class="fa fa-tag"></i> 机器阅读理解</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210305-paper-note-HDEGraph/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

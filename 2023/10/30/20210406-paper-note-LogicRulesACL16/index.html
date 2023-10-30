@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210406，存档如下  Zhiting Hu, Xuezhe Ma, Zhengzhong Liu, Eduard Hovy, Eric P. Xing, School of Computer Science, Carnegie Mellon University ; Harnessing Deep Neural Networks with Logic Rules 原文：https">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Harnessing Deep Neural Networks with Logic Rules: 结合逻辑规则的深层神经网络">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210406-paper-note-LogicRulesACL16/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210406，存档如下  Zhiting Hu, Xuezhe Ma, Zhengzhong Liu, Eduard Hovy, Eric P. Xing, School of Computer Science, Carnegie Mellon University ; Harnessing Deep Neural Networks with Logic Rules 原文：https">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023103922691.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023103947133.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023105846377.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023110025249.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:40.624Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器推理Reasoning">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023103922691.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210406-paper-note-LogicRulesACL16/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210406-paper-note-LogicRulesACL16/","path":"2023/10/30/20210406-paper-note-LogicRulesACL16/","title":"Harnessing Deep Neural Networks with Logic Rules: 结合逻辑规则的深层神经网络"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Harnessing Deep Neural Networks with Logic Rules: 结合逻辑规则的深层神经网络 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Method"><span class="nav-text">2 Method</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-overview"><span class="nav-text">2.1 overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-Learning-Resources-Instances-and-Rule-%E5%AE%9E%E4%BE%8B%E5%92%8C%E8%A7%84%E5%88%99"><span class="nav-text">2.2  Learning Resources: Instances and Rule 实例和规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-Rule-Knowledge-Distillation-%E8%A7%84%E5%88%99%E7%9F%A5%E8%AF%86%E8%92%B8%E9%A6%8F"><span class="nav-text">2.3  Rule Knowledge Distillation 规则知识蒸馏</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-Teacher-Network-Construction-%E6%95%99%E5%B8%88%E7%BD%91%E7%BB%9C%E6%9E%84%E5%BB%BA"><span class="nav-text">2.4 Teacher Network Construction 教师网络构建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-%E8%AE%AD%E7%BB%83%E5%92%8C%E6%B5%8B%E8%AF%95"><span class="nav-text">2.5 训练和测试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Applications"><span class="nav-text">3  Applications</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-Sentiment-Classification-%E6%83%85%E6%84%9F%E5%88%86%E7%B1%BB"><span class="nav-text">3.1 Sentiment Classification 情感分类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Named-Entity-Recognition-%E5%91%BD%E5%90%8D%E5%AE%9E%E4%BD%93%E8%AF%86%E5%88%AB"><span class="nav-text">3.2  Named Entity Recognition 命名实体识别</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210406-paper-note-LogicRulesACL16/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Harnessing Deep Neural Networks with Logic Rules: 结合逻辑规则的深层神经网络 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Harnessing Deep Neural Networks with Logic Rules: 结合逻辑规则的深层神经网络
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E6%8E%A8%E7%90%86Reasoning/" itemprop="url" rel="index"><span itemprop="name">机器推理Reasoning</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>2.4k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>9 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210406，存档如下</p>
+<blockquote>
+<p>Zhiting Hu, Xuezhe Ma, Zhengzhong Liu, Eduard Hovy, Eric P. Xing, School of Computer Science, Carnegie Mellon University ; <strong>Harnessing Deep Neural Networks with Logic Rules</strong></p>
+<p>原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE2MDMuMDYzMTh2Ni5wZGY=">https://arxiv.org/pdf/1603.06318v6.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL1poaXRpbmdIdS9sb2dpY25u">更贴切来说是一个官方应用案例<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<p>当前广泛应用的深度神经网络（例如 DNN）结构存在一定的问题：</p>
+<ul>
+<li>过于依赖大量的标记数据参与训练</li>
+<li>纯数据驱动（data-driven）的学习方式往往缺乏解释性</li>
+<li>难以将人类的一些思维模式融合进入模型，或者仅仅局限于昂贵的直接监督学习或专门的初始化方法</li>
+<li>人类本身在解决问题的时候不仅仅是依赖于单纯的问题本身提供的信息，而更多地会共同结合自己的常识知识和过往经历进行判断。而当前模型难以将常识知识或者一些人类的思维模式融入任务中</li>
+</ul>
+<p>综上，考虑将逻辑规则（logic rules）融入传统的神经网络模型，将为 DNN CNN 等模型带来训练，解释性和最终效果多个方面的进步。本文提出了一种<strong>将逻辑规则（logic rules）融入多种不同的传统神经网络（如 CNN DNN 等）的方法</strong>，使得神经网络结构可以同时从作好了标签的实例和逻辑实例中进行学习，并通过一种迭代蒸馏（iterative rule knowledge distillation）的方式，利用逻辑规则中结构化的信息来辅助模型参数的训练。这里的逻辑规则可以看作是一种针对当前给定的数据的一种信息补充，也就使得该方法可以应用于结合未标签数据的半监督学习方式。</p>
+<p>本质上本文的方法可以看作是 <strong>知识蒸馏（knowledge distillation）和 后验正则化（posterior regularization - PR）的融合</strong>，也就是说，在每一层循环均从 PR 选择后验的约束规则来建立一个 规则正则化的教师 teacher，再通过模仿教师网络的预测的方式来训练学生网络 student</p>
+<br>
+<br>
+<hr>
+<h2 id="2-Method">2 Method</h2>
+<br>
+<h3 id="2-1-overview">2.1 overview</h3>
+<p>本质上来说这个模型可以同时从特殊的例子（specific examples）和常识知识（general rules）中学习</p>
+<p>来看看模型的整体结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023103922691.png" alt="image-20231023103922691" style="zoom:60%;" />
+<p>具体流程 → 通过后验的正则化规则来建立 teacher 部分 → 要求 student 部分学习 teacher 部分的预测</p>
+<br>
+<h3 id="2-2-Learning-Resources-Instances-and-Rule-实例和规则">2.2  Learning Resources: Instances and Rule 实例和规则</h3>
+<p>这里使用带有置信区间的 first-order logic (FOL) 规则，记作 $R = {R_l,\lambda_l}^L_{l=1}$，注意这里的 $R_l$ 也就是输入的目标空间 $(x,y)$ 上的第 l 个规则，对应的 $\lambda_l \in [0,\infty]$ 为置信区间，这里的 $\lambda_l  = \infty$​ 则表示为硬规则。这里为了后续编码的灵活性和优化的方便采用软规则（soft logic）来进行 FOL 的编码，也就是说此时的值是连续的，也就是区间 [0,1] 而不是单纯的 01 集合 {0, 1}。这里集合运算的规则如下：<br>
+$$<br>
+\begin{align}<br>
+&amp; A\&amp;B = \max {A + B-1, 0} \\<br>
+&amp; A\vee B = min {A + B, 1} \\<br>
+&amp; A_1 \wedge ... \wedge A_N = \sum _i A_i /N \\<br>
+&amp; \neg A = 1-A<br>
+\end{align}<br>
+$$<br>
+<br></p>
+<h3 id="2-3-Rule-Knowledge-Distillation-规则知识蒸馏">2.3  Rule Knowledge Distillation 规则知识蒸馏</h3>
+<p>本质一个神经网络即通过当前已知的 x 信息考虑得到一个关于 y 的条件概率 $p_\theta(y|x)$，此时记神经网络通过给定的信息 x 给出的预测结果向量为 $\sigma_\theta(x)$，注意这里的预测结果是一个 K 维的（K分类问题）软分类（soft prediction vector）</p>
+<p>对于传统的神经网络而言，本质模型的训练也就是不断将最后输出的 $p_\theta(y|x)$ 同正确的标签比较并更新神经网络的参数 θ，但是这里为了同时向模型中加入规则中蕴含的信息，这里同时要求模型去模仿一个规则正则化的模型给出的 $p_\theta(y|x)$，记作  $q(y|x)$</p>
+<p>这里采用 <strong>蒸馏（distillation）</strong> 方法的思路：将模型给出的预测 $p_\theta(y|x)$ 称作 学生（student），而规则正则化模型给出的记作 $q(y|x)$，称为老师（teacher），此时老师本身理解一定的逻辑规则，则老师会为某一个问题给出自己的解答（也就是这里的给定 x 输出 q(y|x)），而学生的任务就是将自己对这个问题的解答（也就是 $p_\theta(y|x)$）同老师给出的解答作对比，不断更正自己的答案以接近老师的答案</p>
+<p>具体更新参数 θ 的时候考虑的是 1）预测真的正确的标签 hard label 2）学习规则正则化的模型给出的 $p_\theta(y|x)$ 这两个任务的平衡：<br>
+$$<br>
+\theta ^{(t-1)} = \arg\min _{\theta \in \Theta} \frac{1}{N} \sum _{n=1} ^N (1-\pi) l(y_n, \sigma _\theta (x_n)) + \pi l(s_n ^{(t)}, \sigma _\theta (x_n))<br>
+$$</p>
+<p>这里的 $l$ 是对应的任务的损失函数（比如分类任务就是交叉熵损失函数之类），$\sigma_\theta(x_n)$ 也就是模型给出的预测，$s_n^{(t)}$ 是 teacher 部分的针对 xn 的软逻辑预测向量，这里通过 $\pi$ 来控制两个任务之间的比重</p>
+<br>
+<h3 id="2-4-Teacher-Network-Construction-教师网络构建">2.4 Teacher Network Construction 教师网络构建</h3>
+<p>每一轮迭代（设这里是第 t 轮）都需要构造一个教师网络（teacher network），这里利用后验正则化规则来帮助逻辑约束的构建</p>
+<p>假设这里有一系列的规则 （FOL rules），记作 $R = {R_l,\lambda_l}^L_{l=1}$，则教师网络的目标就是找到一个对应的 $q(y|x)$，一方面是服从规则的，一方面是接近 $p_\theta$ 的</p>
+<ul>
+<li>对于要求 q(y|x) 服从规则方面，此时采用 expectation operator 的方式：此时令 $r_{lg}(X,Y)$ 来标识从 X 到 Y 是否是服从规则 $R_l$ 的，则我想要 q(y|x) 在置信区间 $\lambda_l$ 满足 $$E_{q(y|x)}[r_{lg}(X,Y)] = 1 $$</li>
+<li>对于要求 q(y|x) 一定程度上接近 $p_\theta$ 方面，实际上也就是要求两个分布尽量接近，则此时衡量接近的程度用 KL 散度</li>
+</ul>
+<p>综上，此时构造 q(y|x) 也就是在约束下（也就是满足规则 Rl 的约束下）最小化第二个任务的损失函数（也就是 KL 散度）：<br>
+$$<br>
+\begin{align}<br>
+\min _{q, \xi \geq 0} &amp;\text{ } KL(q(Y \vert X) || p _\theta (Y|X)) + C \sum _{l, g_l} \xi _{l, g_l} \\<br>
+s.t. &amp;\text{ } \lambda(1-\mathbb{E}_q [r _{l, g_l} (X, Y)]) \leq \xi _{l, g_l} \\<br>
+&amp;\text{ } g_l = 1, ..., G_l, \text{ } l = 1, ..., L<br>
+\end{align}<br>
+$$</p>
+<p>本质也就是一个优化问题，这里的 $\xi_{l,g_l}$​​ 是对应的松弛变量（slack variable），注意这里实际上是一个凸优化问题，可以通过原问题的对偶问题解决，此时上述优化任务的对偶问题可以得到如下形式的解：<br>
+$$<br>
+q ^* (Y|X) \propto p _\theta (Y|X) exp {-\sum _{l, g_l} C\lambda_l (1-r _{l, g_l} (X,Y))}<br>
+$$</p>
+<br>
+<br>
+<h3 id="2-5-训练和测试">2.5 训练和测试</h3>
+<p>整体的伪代码：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023103947133.png" alt="image-20231023103947133" style="zoom:60%;" />
+<p>注意这里每一轮都要新构建一个 teacher，再更新 student 的参数，本质上 teacher 的构建是一个凸优化问题（通过求解其对偶问题得到 q(y|x) 参与 student 的训练），而 student 部分也就是不断更新对应的 θ 参数的过程</p>
+<p>注意最后测试的时候可以用 student 给出的 p(y|x)，也可以用 teacher 给出的 q(y|x)，一般来说 q 的 teacher 的表现会好一些，本质上来说 q 对于数据涉及的  / 本身逻辑规则覆盖的情况效果较好，而 p 对于纯粹未知的情况的处理效果较好</p>
+<br>
+<br>
+<hr>
+<h2 id="3-Applications">3  Applications</h2>
+<p>这里考虑分别在 CNN 和 RNN 两个最为常用的神经网络基本框架上实验效果，这里的 CNN 用于文本情感分类，而 RNN 对标实体识别任务</p>
+<h3 id="3-1-Sentiment-Classification-情感分类">3.1 Sentiment Classification 情感分类</h3>
+<p>这里采用一通道的 CNN，引入 but 规则：<br>
+$$<br>
+\begin{align}<br>
+&amp;\text{has- 'A-but-B'-structure(S)} \Rightarrow \\<br>
+&amp;(1(y=+) \Rightarrow \sigma _\theta(B) _+ \wedge \sigma _\theta (B) _+ \Rightarrow 1(y=+))<br>
+\end{align}<br>
+$$</p>
+<p>$1()$​ 函数标识内部逻辑的正确与否，正确返回 1，错误返回 0；上面这个规则可以直观理解为 but 前后出现情感的转折</p>
+<p>这里用三个数据集 <strong>SST2 + MR + CR</strong> 来评价效果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023105846377.png" alt="image-20231023105846377" style="zoom:60%;" />
+<p>可以看到这里的提升还是比较明显的，并且 q（teacher） 的表现稍优于 p（student）</p>
+<br>
+<h3 id="3-2-Named-Entity-Recognition-命名实体识别">3.2  Named Entity Recognition 命名实体识别</h3>
+<p>也就是 NER 任务，也就是将句子中的实体文本识别出来并加入不同的实体类别，LSTM 在类似的任务上表现不错，这里考虑用本文的方法优化 LSTM 的 RNN 部分</p>
+<p>这里对应的规则：<br>
+$$<br>
+\text{equal} (y _{i-1}, \text{I-ORG}) \Rightarrow \neg \text{equal} (y_i, \text{B-PER})<br>
+$$</p>
+<p>也就是 I-ORG 不能跟在 B-PER 后面</p>
+<p>注意这里的置信度 $\lambda_l = \infty$，也就是说这里是一个硬规则，一点都不能违反</p>
+<p>这里在 <strong>CoNLL-2003</strong> 数据集上进行测试，结果如下：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023110025249.png" alt="image-20231023110025249" style="zoom:60%;" />
+<p>同理可以看出这里的 q（teacher） 的表现是要略好于 p（student）的表现的</p>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210406-paper-note-LogicRulesACL16/" title="Harnessing Deep Neural Networks with Logic Rules: 结合逻辑规则的深层神经网络">https://baijn-nan.github.io/2023/10/30/20210406-paper-note-LogicRulesACL16/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E6%8E%A8%E7%90%86Reasoning/" rel="tag"><i class="fa fa-tag"></i> 机器推理Reasoning</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210406-paper-note-LogicRulesACL16/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210304，存档如下； 23 再看到真是有点小怀念 ...  Ming Ding, Chang Zhou, Qibin Chen, Hongxia Yang, Jie Tang, Department of Computer Science and Technology, Tsinghua University, DAMO Academy, Alibaba Group Cognit">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CogQA：基于认知图谱的多跳阅读理解">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210304-paper-note-CogQA/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210304，存档如下； 23 再看到真是有点小怀念 ...  Ming Ding, Chang Zhou, Qibin Chen, Hongxia Yang, Jie Tang, Department of Computer Science and Technology, Tsinghua University, DAMO Academy, Alibaba Group Cognit">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084048309.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084221942.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021085453537.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021085225964.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021085254195.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:02.963Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器阅读理解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210304-paper-note-CogQA/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210304-paper-note-CogQA/","path":"2023/10/30/20210304-paper-note-CogQA/","title":"CogQA：基于认知图谱的多跳阅读理解"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>CogQA：基于认知图谱的多跳阅读理解 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%A8%A1%E5%9E%8B%E8%A7%A3%E9%87%8A"><span class="nav-text">2 模型解释</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-System-1-BERT"><span class="nav-text">2.1 System 1  (BERT)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-1-%E8%BE%93%E5%85%A5"><span class="nav-text">2.1.1 输入</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-2-%E8%BE%93%E5%87%BA"><span class="nav-text">2.1.2 输出</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-System-2-GNN"><span class="nav-text">2.2 System 2 (GNN)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E9%A2%84%E6%B5%8B%E9%83%A8%E5%88%86%EF%BC%88predictor%EF%BC%89"><span class="nav-text">2.3 预测部分（predictor）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83%EF%BC%88training%EF%BC%89"><span class="nav-text">2.4 模型训练（training）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E5%AE%9E%E9%AA%8C%E9%83%A8%E5%88%86"><span class="nav-text">3 实验部分</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E6%95%B0%E6%8D%AE%E9%9B%86%E4%BB%8B%E7%BB%8D"><span class="nav-text">3.1 数据集介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-text">3.2 实验结果</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210304-paper-note-CogQA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="CogQA：基于认知图谱的多跳阅读理解 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CogQA：基于认知图谱的多跳阅读理解
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3-MRC/" itemprop="url" rel="index"><span itemprop="name">机器阅读理解(MRC)</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>5.3k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>19 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210304，存档如下；</p>
+<p>23 再看到真是有点小怀念 ...</p>
+<blockquote>
+<p>Ming Ding, Chang Zhou, Qibin Chen, Hongxia Yang, Jie Tang, Department of Computer Science and Technology, Tsinghua University, DAMO Academy, Alibaba Group<br>
+<strong>Cognitive Graph for Multi-Hop Reading Comprehension at Scale</strong></p>
+<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MDUuMDU0NjB2Mi5wZGY=">https://arxiv.org/pdf/1905.05460v2.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL1RIVURNL0NvZ1FB">official / pytorch<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<p>近期较多模型（例如 bert ）均在一些传统的阅读理解问题上取得了较好的效果，但是本质上同人类表现相比仍存在以下三个需要克服的问题：</p>
+<ul>
+<li>推理能力：传统阅读理解问题的机制仍限制于从文本中寻找和问题相似的段落并从中提取答案，也就是说只是简答地完成匹配的任务 = <strong>简单的语义匹配</strong>，并不具有推理并解决复杂问题的能力。</li>
+<li>解释性：传统用于解决阅读理解问题的模型并不具有较好的<strong>解释性</strong>，即使可以标注出提取答案所依赖的段落，但是难以给出整体问题解决推理的逻辑链条，难以 step by step 地给出问题的解决思路。</li>
+<li>拓展性：传统模型大多通过从整个文本中寻找相关的段落进行一定的文本筛选，再集中于一部分的文本进行整体的阅读理解与答案提取，不同于人类的能够针对总体文本作总结并<strong>结合多个部分的信息，再通过推理</strong>给出答案的能力。</li>
+</ul>
+<br>
+<p>在这里先解释一下什么是 <strong>多跳阅读理解问题</strong>：可以直观地理解为需要多次跳转，将不同的信息进行进一步整合才能得到答案的阅读理解问题。举个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png" alt="image-20231021084007009" style="zoom: 80%;" />
+<p>这个问题本身问的是导演，但是没有给出电影的名字，首先需要后面的信息去推断是哪一部电影，才能进一步去寻找该电影的导演。</p>
+<br>
+<p>为解决上述问题，基于 dual process theory，我们尝试将以下两个模块进行结合以模拟人类解决问题的思路：</p>
+<ul>
+<li>系统 1 通过浏览信息，收集和问题可能相关的信息</li>
+<li>系统 2 则将得到的信息作进一步的挖掘整合（也就是推理过程）再得到最终的答案</li>
+</ul>
+<p>这样的结合方式能够较好地解决更为复杂的多跳阅读理解问题。</p>
+<p>基于此本文提出 <strong>Cognitive Graph QA (CogQA)</strong> 模型。模型主要由以下两个模块组成：</p>
+<ul>
+<li>
+<p><strong>system1（BERT）</strong>：从文本中提取和问题相关的实体（entity）并得到候选答案，同时对其语义信息进行编码（encode），对应到人脑进行阅读理解的过程也就是记忆部分，人通过浏览阅读材料无意识地记录所有和问题相关的信息。</p>
+</li>
+<li>
+<p><strong>system2（GNN）</strong>：将系统 1 得到的信息进行整合，通过图的方式进行问题的推导，并收集一定的线索（clues）来帮助更好地提取下一跳的信息。对应到人脑也就是推断过程</p>
+</li>
+</ul>
+<p>将上述的两个步骤不断循环重复，直到找到所有可能的候选答案（也就是 system1 不再能够给出新的候选答案的时候）。最后的问题的解答基于 system2 的推断结果，也就是对各个结点更新后的结果（reasoning results）。注意其中<strong>两个系统是互相依赖的</strong></p>
+<br>
+<br>
+<hr>
+<h2 id="2-模型解释">2 模型解释</h2>
+<p>这里利用 BERT 作为 system1，利用 GNN 作为 system2，整体的模型架构如下图所示：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084048309.png" alt="image-20231021084048309" style="zoom: 60%;" />
+<br>
+<h3 id="2-1-System-1-BERT">2.1 System 1  (BERT)</h3>
+<p>也就是对整体信息的提取部分</p>
+<h4 id="2-1-1-输入">2.1.1 输入</h4>
+<p>BERT 部分系统的输入形如：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084221942.png" alt="image-20231021084221942" style="zoom:80%;" />
+<p>这里的 CLS 和 SEP 同传统 BERT 的含义相同，不再赘述。question 为目标问题文本，而 $clues[x ,G]$ 为认知图谱中<strong>结点 x 的前序结点相关的文本中涉及到了 x 的句子</strong>，$Para[x]$ 也就是涉及了结点 x 的 context</p>
+<p>这里着重说一下 clues，举个例子，在上面的问题中（再放一遍图）：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png" alt="image-20231021084007009" style="zoom: 80%;" />
+<p>第一跳通过问题提取到了 quality cafe，第二跳通过 quality cafe 提取到了 old school，则此时 quality cafe 就是 old school 的前序结点。此时关于 old school 的 clues 就是所有 quality cafe 的段落中涉及到了  old school 的句子。注意这里的 clues 是直接输入原句子（raw sentence）的，而没有利用某一个隐藏层的表示之类。（原文提到主要是基于训练效率的考虑)</p>
+<p>也就是说，这里的 结点 x 的 clues 可以简单理解为（我之所以从 x 的上一个结点推出 x 的原因 = 涉及 x 的上一个结点的文本中确实提到了 x 的证据）</p>
+<p>对于一个实体 x 它的 Para[x] 可能是空的（也就是上一个实体确实提到了实体 x，但是实体 x 的更多信息没有了），则此时 Span Extraction 的部分（也就是下一跳实体和候选答案的提取）不能够继续进行，但是仍能够基于前面的部分计算 Semantics Generation 部分。可以认为此时结点 x 不再作延伸（也就是不再有从 x 出发的新的 ans 结点或者实体结点），但是本身 x 自己的初始化表示还是可以完成的。</p>
+<br>
+<h4 id="2-1-2-输出">2.1.2 输出</h4>
+<p>再来看系统 1 的输出，主要包括两个部分：</p>
+<ul>
+<li><strong>Span Extraction</strong>：也就是下一跳的实体 + 答案候选</li>
+<li><strong>Semantics Generation</strong> : 关于涉及了结点 x 的文本的语义向量</li>
+</ul>
+<p>先分别来计算候选答案和下一跳的实体。将两个部分分开考虑的主要原因是二者的生成依赖的思路不同：候选答案更多的依赖的还是问题的表述和用词（比如对于一个涉及了 where 的问题，明显 new york 比 2019 更可能是正确答案），而下一跳的实体的选择更多地考虑描述的匹配，也就是某一个实体是否符合某一个问题中的描述，考虑的更多的是句子之间的关系。</p>
+<p>这里利用四个指针向量 $S_{hop},  E_{hop}, S_{ans},  E_{ans}$ 来计算该序列的某一个指定位置是下一跳实体 / 答案的开始 / 结束位置的概率。举例，设 T 是 BERT 输出的序列，第 i 个位置是某一个答案的开始位置的概率计算如下：<br>
+$$<br>
+P ^{start} <em>{ans} [i] = \frac{e ^{S</em>{ans} \cdot T_i}}{\sum <em>j {e ^{S</em>{ans} \cdot T_j}}}<br>
+$$</p>
+<p>也可以看作是把 BERT 的输出放进一个新的前馈并加上了一个 softmax 层，本质上也就是 bert 的输出表示配合一个分类（也就是分类当前的 i 位置到底是不是开始/结束)的下游任务。     上面的四个指针向量就是学习的目标。</p>
+<p>这里只关注 top-K 个概率最大的起始位置，对于每一个起始位置，计算它的结束位置：<br>
+$$<br>
+end_k = \arg{\max} _{start_k \leqslant j \leqslant start_k + max{L}} {P _{ans} ^{end} [j]}<br>
+$$</p>
+<p>也就是从起始位置开始，往后 maxL 的范围内，寻找概率最大的可能的结束位置。</p>
+<p>注意这样得到的可能还是概率很小（因为寻找的是最大的概率，但是可能即使是概率最大的那个位置，对应的概率本身还是比较小的，比如此时推理还没有完成，我要找的是 director 但是所有 x 对应的 para 都没有 director 相关的信息，则此时可能还不存在答案），则此时将第 0 个位置（对于 BERT 的输入，也就是 [cls]）作为答案起始的概率 P 作为阈值（也就是 $P_{ans}^{start}[0]$），只有大于这个阈值才能被认定为可能的答案起始位置。对于 hop 同理。</p>
+<p>得到新的候选答案和下一跳实体以后，对整个认知图谱进行结点扩充。</p>
+<p>System 1 <strong>同时还输出 Semantics Generation</strong></p>
+<p>考虑到 BERT 输出的序列 T 的第 0 位置的 T0 具有总结整个句子的能力，这里使用 T0 作为 $sem[x, Q, clues]$ 的表示。注意这里并不是使用最后一层输出的 T0，（因为最后一层输出来的 T 用在前面去获取可能的下一跳实体和候选答案了，且本身依据 BERT 自己的特点后面几层的存在意义也就是帮助 span 预测之类的任务），在这里直接使用隐藏层输出的 T0。</p>
+<br>
+<br/>
+<h3 id="2-2-System-2-GNN">2.2 System 2 (GNN)</h3>
+<p>系统 2 本质上就是一个图神经网络 GNN，首先根据 System 1 生成的新的下一跳实体和候选答案，在认知图谱上生成新的结点（也就是从实体 x 延伸出去的新的结点）。</p>
+<p>同时用上一步生成的 sem 作为结点 x 的初始化表示</p>
+<p>注意这里针对 GNN 更新的结点分为两种类型：</p>
+<ul>
+<li><strong>answer nodes</strong> : 也就是来自于上面预测得到的 answer span</li>
+<li><strong>next-hop nodes</strong> : 也就是来自于新找到的下一个 hop 的 entity</li>
+</ul>
+<p>进一步地，我希望这个知识图谱能够通过推断来更好地更新对 x 的表示（bert 得到的 sem 只是一个初始化表示，这里进一步利用认知图谱的推断来获得一个更加优化的表示，也就是说将该结点与其他结点的关系等信息也加入该结点的表示，而不仅仅是通过预训练的 BERT 给定初始的表示，从而能够更好地展现认知图谱上相近的各个结点之间的互相影响 = 互相充实信息）</p>
+<p>更新规则如下：<br>
+$$<br>
+\Delta = \sigma ((AD ^{-1})^T \sigma(XW_1)) \\<br>
+X' = \sigma (XW_2 + \Delta)<br>
+$$</p>
+<p>这里的 W1 和 W2 是权重矩阵，而 A 是 图的邻接矩阵，D 通过 A 计算：$$D_{jj} = \sum_i A_{ij}$$，从公式的角度来说，$(AD^{-1})^T$ 也就是对 A 的某种归一化（column-normalized)，而 $\Delta$ 也就是 x 的前序结点对 x 的影响的某种综合度量。</p>
+<p>注意论文提到，每一时刻都同步更新 x 和 <strong>在整个认知图谱构造完成后多次地（by multiple steps）统一更新 x</strong> 之间的差距是不大的，而肯定地此时后者会更节省时间和计算资源。</p>
+<br>
+<br>
+<h3 id="2-3-预测部分（predictor）">2.3 预测部分（predictor）</h3>
+<p>经过系统12 的处理，此时得到的认知图谱中的实体都是和问题以某种逻辑相关的，则此时需要从这些实体中（筛的是 answer span 实体）进行一定的筛选得到答案。</p>
+<p>由于这里最后测试的时候使用的是 HotpotQA 数据集，其中的答案大致分为两类：</p>
+<ul>
+<li>special question：也就是一般的问题，以 what / where / when / who 之类的开头的普通的询问问题</li>
+<li>alternative / general question：也就是两个实体比较的问题，此时回答是 yes 或 no，或回答两个实体中的某一个</li>
+</ul>
+<p>此时原文通过问题的疑问词简单地判断各个问题属于哪一类，再分别用不同的预测 predictor 来处理</p>
+<p>对于一般的问题 <strong>special question</strong>，答案大多是抽取式得到的，这部分通过一个两层的全连接神经网络（也就是这里的 $F()$）来实现：<br>
+$$<br>
+answer = \arg{\max} _{\text{answer node x}} {\mathcal{F} (X [x])}<br>
+$$</p>
+<p>也就是从所有构造得到的答案结点中选出通过 MLP 后最大的结点作为最后的答案</p>
+<p>而对于 <strong>alternative question 和 general question</strong>，本质上都是对两个实体 x 和 y 的比较问题，则此时将两个结点的差值作为输入（$X[x] - X[y]$），再通过 FCN（全连接卷积）来作为一个二分类问题处理（两个问题类型对应两个 FCN）</p>
+<br>
+<br/>
+<h3 id="2-4-模型训练（training）">2.4 模型训练（training）</h3>
+<p>注意到这里的 system1 和 system2 之间是互相辅助的，system1 不断地提取可能的答案和下一跳的实体，从而扩充整个认知图谱（answer nodes 和 next-hop nodes）；而 system2 本身通过认知图谱的构建，利用 clues[x] 来扩充和 x 有关的信息而帮助 system1 下一步的寻找（也就是 system1 在找 clues 的时候要回到 GNN 里看看前序结点）</p>
+<p>最后需要的是利用 GNN 通过推理增强后的 answer nodes 的表示来从多个 clue 得到的 answer nodes 中选择一个来作为最后的 final answer</p>
+<p>整体模型的训练分别针对 system 1 和 system 2 进行：</p>
+<br>
+<p><strong>Task #1: Span Extraction</strong></p>
+<p>考虑到 HotpotQA 数据集的特点，这里已经给出了每一个问题的最佳答案 + 对答案预测有帮助的两个实体，故这里用<strong>有监督的方式</strong>，对于每一个实体 x 相关的 context，也就是 $Para[x]$，此时都有关于 span 的信息：$$D[x,Q] = {(y_1, start_1, end_1), ... , (y_n, start_n, end_n)}$$ 注意这里的 yi 表示不同的真实答案和确实用到的实体，训练用到的真实 start 和 end 是通过模糊匹配得到的（本身给出的 gold answer 本身不一定真的一字不差存在于文本中，实体同理）。则此时我们可以得到真实的 hop span 和 ans span 的位置，如果一个 para 中有 k 个 entity 存在，则此时用于训练的真实标签 → 将每一个可能的 hop 的 start 位置的概率设置为 1/k</p>
+<p>将训练集中样本 hop 和 ans 的开始位置记作 $gt_{ans}^{start}$</p>
+<p>进一步地，为训练模型学会避开无关的信息，此时事先向构造的认知图谱中<strong>加入无关的结点</strong>，模型应学会不要从这些无关的结点中延伸得到 answer span。注意到前面设置了 0 位置的值为阈值，如果 start 位点的值 &lt; 0 位置的值则此时不设置 span，则对于这些额外加入的无关结点，其正确的 span 的标签也就是一个 <strong>0 位置为 1 的 one-hot 向量</strong></p>
+<p>这里用交叉熵损失函数：<br>
+$$<br>
+\mathcal{L} _{ans} ^{start} = -\sum _i {gt ^{start} _{ans} [i] \cdot \log {P _{ans} ^{start} [i]}}<br>
+$$</p>
+<br>
+<p><strong>Task #2: Answer Node Prediction</strong></p>
+<p>前面的训练是为了判断模型是否能够真的提取出真实答案所在的实体，而 predict 部分也就是判断模型能否从所有和问题 Q 相关的结点（也就是所有的认知图谱中的 answer span 实体）中提取出最后的真实答案。</p>
+<p>这里为每一个问题构造一个 sample：根据训练集构造一个真的的认知网络，其中包括所有真实需要的推理路径，记作 gold-only graph</p>
+<p>向这个 graph 中添加负样本，包括在上一个 task1 中用到的无关的实体结点，再从所有结点中随机选择一个，随机从这个结点对应的 para 中随机抽取一段作为答案结点，同理生成两个错误的答案结点加入 gold-only graph，再在这个东西上训练 answer prediction 的部分</p>
+<p>用交叉熵函数作为损失函数：<br>
+$$<br>
+\mathcal{L} = -\log {(softmax(\mathcal{F}(X)) [ans])}<br>
+$$</p>
+<p>这个损失函数一方面可以优化预测的 F 和 system2，注意到此时 system1 生成的 sem 也作为初始值参与了最终 X 的值，也就是说对该损失函数的优化某种程度上也可以帮助对 system1 也就是 BERT 进行精调。</p>
+<br>
+<br>
+<hr>
+<h2 id="3-实验部分">3 实验部分</h2>
+<br>
+<h3 id="3-1-数据集介绍">3.1 数据集介绍</h3>
+<p>先简单说一下数据集，这里用到的是  <strong>HotpotQA</strong></p>
+<p>考虑到传统的机器阅读理解数据集存在一定的缺陷，将模型的能力仅仅限制在了简单的模式匹配，而不是真正的理解问题与顺次推理，这里为展现 CogQA 模型在需要一定的理解推理能力的更为复杂的多跳阅读理解问题上的优势，采用 HotpotQA 来进行测试</p>
+<p>HotpotQA 提出的挑战主要包括：1）此时要求模型能够有从多个文档中综合收集信息的能力，也就是多个来源筛选可能的支撑性事实 2）不再是简单的模式匹配，本身需要模型自己具有一定的推理能力，真正理解问题并结合信息进行推理，得到最后答案</p>
+<p>基本包括：</p>
+<ul>
+<li><code>id</code> 唯一标识</li>
+<li><code>question</code> 问题字符串</li>
+<li><code>answer</code> 正确答案字符串，注意这里的答案是有多种类别的，有些答案只是 yes / no 类型，仅仅从文中进行 answer span 的划分不能完全满足需要</li>
+<li><code>supporting_fact</code> 包含所有解答这个问题所需要的事实推理证据，每一个证据包括 title 所在段落标题和 sent_id = 具体提供了事实证据的句子的下标，也就是说这里给出的证据是精确到句子的</li>
+<li><code>context</code> 参考段落内容</li>
+</ul>
+<br>
+<p>HotpotQA 同时为挑战者提供了两个子任务：</p>
+<ul>
+<li>预测答案</li>
+<li>标记出答案的事实证据，也就是考察模型的可解释性</li>
+</ul>
+<br>
+<h3 id="3-2-实验结果">3.2 实验结果</h3>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021085453537.png" alt="image-20231021085453537" style="zoom:60%;" />
+<p>这里的 CogQA-sys1 是只利用 system1 抽取实体但是不作推理直接预测，Cog-onlyQ 是 system1 只利用问题信息而不涉及前序结点对应的 clues</p>
+<p>原文给了一些具体的例子，可以看出此时 CogQA 确实以某种推导的思路得到了最后的正确答案，而不仅仅通过语义匹配误打误撞</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021085225964.png" alt="image-20231021085225964" style="zoom: 60%;" />
+<p>看看在不同问题类型上的不同效果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021085254195.png" alt="image-20231021085254195" style="zoom: 67%;" />
+<p>注意在 alternative（是否问题 yes/no）和 general （比较类）问题上的提升比较小，可以理解，此时 CogQA 并没有作整体的答案类型判断，只是选取 answer span 作为最后的结果，所以在是否问题上表现不会特别好；而比较类问题本身就是当前多跳阅读理解的难点之一，后续几个模型好像突破也不是非常大</p>
+<br>
+<br>
+<hr>
+<p>最后一点个人想法：</p>
+<ul>
+<li>
+<p>觉得实体抽取部分的思路比较独特，对于大多数同样沿用 BERT 类模型 + GNN 思路的模型，大多直接将句子中出现的所有实体直接作下一跳的结点（引入大量噪声且图变得很大）或者直接用文段中出现的超链接作为指引下一跳的方式（太依赖于 HotpotQA 数据集本身的特点，有点任务导向的意味在里面 / 说的就是 [HGN][1]），这一点本身也在原文的实验部分体现，CogQA 的 <strong>通过不断循环而寻找所有可能的下一跳实体并根据阈值决定何时结束</strong> 的思路确实是简单但有效的（[EPAr][2]也有点类似于它的思路）</p>
+</li>
+<li>
+<p>实体抽取部分比较有趣的还有 MUPPET，类似于利用迭代的方式抽取，并依据当前已经抽取得到的信息来不断更新检索向量，类似于不断自我引导的一种抽取方式（<strong>待补充</strong>）</p>
+</li>
+<li>
+<p>训练的部分用到的 <strong>引入错误实体</strong> 来帮助训练的思路，感觉比较少看到 BERT系+GNN 的模型用这样的思路帮助训练的（自己对这块还不熟悉...）但是训练部分（特别是 task2 的 answer predictor 部分）的负样本的生成是不是有点随意（</p>
+</li>
+<li>
+<p>注意到 CogQA 在一些 yes / no 和比较类问题上表现不佳</p>
+<ul>
+<li>这里是怎么提取到切实的需要比较的两个实体 x 和 y 的原文没有说明（后续看源码 <strong>待补充</strong>）。</li>
+<li>当前看到的大多使用 HotpotQA 的模型都较难在这两个问题类型上取得较好的突破（[HGN][1] 也是在比较类问题上效果不好），期待更多的解决方案？</li>
+</ul>
+</li>
+<li>
+<p>将<strong>常识知识加入</strong>帮助模型推理（HGN 实验发现对于 HotpotQA 数据集中的部分问题错答的主要原因是缺乏一定的常识知识，可以利用 [KT-NET][4] 的思路将常识信息和 bert 的编码作一定程度的融合？）</p>
+</li>
+</ul>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210304-paper-note-CogQA/" title="CogQA：基于认知图谱的多跳阅读理解">https://baijn-nan.github.io/2023/10/30/20210304-paper-note-CogQA/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3/" rel="tag"><i class="fa fa-tag"></i> 机器阅读理解</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210304-paper-note-CogQA/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

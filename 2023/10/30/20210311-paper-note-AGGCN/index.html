@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210311，存档如下  Zhijiang Guo, Yan Zhang and Wei Lu, StatNLP Research Group, Singapore University of Technology and Design; Attention Guided Graph Convolutional Networks for Relation Extraction 论文原">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AGGCN：基于注意力导向图卷积神经网络的关系提取模型">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210311-paper-note-AGGCN/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210311，存档如下  Zhijiang Guo, Yan Zhang and Wei Lu, StatNLP Research Group, Singapore University of Technology and Design; Attention Guided Graph Convolutional Networks for Relation Extraction 论文原">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022045807639.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022045841258.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022050025408.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022050201073.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022050559497.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022050649064.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:14.816Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器阅读理解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022045807639.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210311-paper-note-AGGCN/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210311-paper-note-AGGCN/","path":"2023/10/30/20210311-paper-note-AGGCN/","title":"AGGCN：基于注意力导向图卷积神经网络的关系提取模型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>AGGCN：基于注意力导向图卷积神经网络的关系提取模型 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Attention-GUided-GCNs-%E6%A8%A1%E5%9E%8B%E8%A7%A3%E9%87%8A"><span class="nav-text">2 Attention GUided GCNs 模型解释</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-overview"><span class="nav-text">2.1 overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-GCNs-%E5%9B%BE%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C"><span class="nav-text">2.2 GCNs 图卷积神经网络</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-Attention-Guided-Layer-%E6%B3%A8%E6%84%8F%E5%8A%9B%E5%AF%BC%E5%90%91%E5%B1%82"><span class="nav-text">2.3 Attention Guided Layer 注意力导向层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-Densely-Connected-Layer-%E5%AF%86%E9%9B%86%E8%BF%9E%E6%8E%A5%E5%B1%82"><span class="nav-text">2.4 Densely Connected Layer 密集连接层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-Linear-Combination-Layer-%E7%BA%BF%E6%80%A7%E7%BB%84%E5%90%88%E5%B1%82"><span class="nav-text">2.5 Linear Combination Layer 线性组合层</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-AGGCNs-for-Relation-Extraction-%E5%AE%9E%E7%8E%B0%E5%85%B3%E7%B3%BB%E6%8F%90%E5%8F%96"><span class="nav-text">3 AGGCNs for Relation Extraction 实现关系提取</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-Experiments-%E5%AE%9E%E9%AA%8C%E9%83%A8%E5%88%86"><span class="nav-text">4  Experiments 实验部分</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-dataset-%E5%92%8C%E5%AE%9E%E9%AA%8C%E8%AE%BE%E7%BD%AE"><span class="nav-text">4.1 dataset 和实验设置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-%E5%87%A0%E4%B8%AA%E7%BB%86%E8%8A%82"><span class="nav-text">4.2 几个细节</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-result"><span class="nav-text">4.3 result</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210311-paper-note-AGGCN/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="AGGCN：基于注意力导向图卷积神经网络的关系提取模型 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AGGCN：基于注意力导向图卷积神经网络的关系提取模型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3-MRC/" itemprop="url" rel="index"><span itemprop="name">机器阅读理解(MRC)</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>3.3k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>12 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210311，存档如下</p>
+<blockquote>
+<p>Zhijiang Guo, Yan Zhang and Wei Lu, StatNLP Research Group, Singapore University of Technology and Design; <strong>Attention Guided Graph Convolutional Networks for Relation Extraction</strong></p>
+<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MDYuMDc1MTB2OC5wZGY=">https://arxiv.org/pdf/1906.07510v8.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL0NhcnR1cy9BR0dDTg==">official * pytorch<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<br>
+<p>关系提取（relation extraction），也就是从一段文本中检测学习各个实体之间的关系。本身在多个 nlp 相关的任务中均有较为显著的作用，从生物医学文献的挖掘到问答系统均有应用。</p>
+<p>来一个例子，此时有两个句子，三个实体（L858E, EGFR and gefitinib），自此时的目标就是学习三个实体之间的关系：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022045807639.png" alt="image-20231022045807639" style="zoom: 65%;" />
+<p>传统的关系提取模型主要分为以下两种：</p>
+<ul>
+<li>基于序列的（ sequence-based）：基于词语之间的序列关系来讨论实体之间的关系</li>
+<li>基于依赖关系的（dependency-based）：基于依存树（dependency tree）来进行实体间的关系建模</li>
+</ul>
+<p>其中效果较好的为基于依赖关系的关系抽取模型，也就是说此时不仅仅关注单词序列，整体基于关系依赖树进行关系提取，树的结构可以学到更多从单纯序列处理中无法得到的信息，比如一些非位置的句法关系。为获得更好的模型效果并更好地从无关的信息中提取关系信息，针对关系依赖树提出了许多不同的剪枝策略，而其中大多是基于规则的（rule-based pruning strategies）。这些剪枝策略在某种程度上反而会造成信息的损失，并不适于达到某种保留重要信息和删去无关信息之间的平衡。</p>
+<p>为了解决上述问题，本文提出了 “软剪枝” 策略（“soft pruning” strategy）以将原式的 <strong>依存树（dependency tree）转化为全连通的带权图（a fully connected edge-weighted graph）</strong> ，这里的 图结点之间的 <strong>权重可以看作是不同实体之间的关系强弱</strong>，后续将会通过 <strong>端到端 + 注意力机制的方式</strong>来学习</p>
+<p>同时为了编码这个全连接的图，这里需要用到 <strong>密集连接的多层图卷积神经网络</strong>（GCNs with dense connections）。注意此时浅层的图卷积神经网络是不足以来捕捉这种非位置的关系的，如果想要捕捉 k-hop 的关系则此时需要 k 层参与。而密集连接进一步帮助我们训练整个网络并捕捉更多的丰富信息</p>
+<br>
+<br>
+<hr>
+<h2 id="2-Attention-GUided-GCNs-模型解释">2 Attention GUided GCNs 模型解释</h2>
+<br>
+<h3 id="2-1-overview">2.1 overview</h3>
+<p>还是先来看一下整体模型的结构</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022045841258.png" alt="image-20231022045841258" style="zoom:60%;" />
+<p>AGGCN 共有 M 个block，每一个 block 的输入为 <strong>每一个 node 的 embedding</strong> + <strong>当前的邻接矩阵 adjacency matrix</strong></p>
+<br>
+<p>每一个 block  包括三个部分：</p>
+<ul>
+<li>注意力导向 （<strong>attention guided layer</strong>）：输入的邻接矩阵通过多头自注意力  得到 N 个新的权重矩阵，每一个就代表一个新的全连接图，这里的每一个边的权重可以看作是对结点之间关系强弱程度的度量</li>
+<li>共 N 个密集连接层（<strong>densely connected layer</strong>）：前面多头自注意力得到的结果分别输入 N 个独立的密集连接层以得到新的表示，每一个有 L 层</li>
+<li>一个线性连接组合层（<strong>linear combination layer</strong>）：通过一个线性组合的层将所有的前面的 N 个输出综合得到一个隐藏表示</li>
+</ul>
+<p>下面来分别看看每一个部分的内容</p>
+<br>
+<br>
+<h3 id="2-2-GCNs-图卷积神经网络">2.2 GCNs 图卷积神经网络</h3>
+<p>开始之前先简单来讲一下 GCN</p>
+<p>图卷积神经网络，也就是 graph convolutional network，本质上就是直接在图结构上运行的神经网络。考虑此时存在 n 个结点的图（无向图），则可以利用一个 n*n 的邻接矩阵 A 来表示这个图的信息。</p>
+<p>这里考虑针对依赖树来编码：先为树的每一个结点都增加一个和自己连接的边（self-loop），如果此时树模型中 i ，j 两个结点是直接相连的，则设置 $A_{ij} = A_{ji} = 1$，否则为 0</p>
+<p>此时进一步考虑在这样一个图上的卷积运算：在 l 层上的第 i 个结点的计算定义为<br>
+$$<br>
+h_i ^{(l)} = \rho (\sum _{j=1} ^n A _{ij} W ^{(l)} h_j ^{(l-1)} + b ^{(l)})<br>
+$$</p>
+<p>这里的 W 和 b 都是学习参数，ρ 是一个激活函数</p>
+<p>假设此时的初始输入  $x_i = h_i^{(0)} \in R^d$</p>
+<br>
+<h3 id="2-3-Attention-Guided-Layer-注意力导向层">2.3 Attention Guided Layer 注意力导向层</h3>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022050025408.png" alt="image-20231022050025408" style="zoom:80%;" />
+<p>注意这里实际上有 M 个 block，每一个 block 都包括了一个注意力导向层</p>
+<p>当前的大多数策略还是以剪枝为主，但是这样的 hard 的方法容易导致一些似乎不重要的信息直接完整的被删去而带来的信息损失（也就是 不重要 ≠ 一无是处），这里利用注意力机制来更好地整合信息</p>
+<p>这里的目标：也就是 <strong>通过输入的原始的依存树生成一个全连接的带权图 = 生成它的邻接矩阵$\tilde{A}$</strong></p>
+<p>原始的做法是直接利用剪枝的策略：先预先定义好一定的固定的剪枝策略 → 将此时的依存树通过剪枝得到 subtree  → 利用 subtree 直接构建邻接矩阵，不存在的边全部一概设置为 0。而这么做的缺点就是预先定义好的剪枝策略可能会造称不必要的信息损失</p>
+<p>这里利用 <strong>键值对 - 多头自注意力</strong> 来对这一步骤进行改进：先将原始的树（也就是不进行剪枝的 fulltree）直接转化为邻接矩阵作为初始输入，再通过键值对多头自注意力得到新的邻接矩阵 $\tilde{A}$ ，经过该 block 结束后，再将上一个 block 的输出作为下一个该层的输入</p>
+<p>自注意力部分计算如下：<br>
+$$<br>
+\tilde {A} ^{(t)} = softmax (\frac {QW_i^Q \times (KW_i^K) ^T} {\sqrt{d}})<br>
+$$</p>
+<p>这里的 $K = Q = h^{(l-1)}$，均为上一层的输出（指的是上一个 block 的输出，整个模型共有 M 个 block，每一个 block 最后的输出是通过了最后的  linear combination layer 的那个），$W_i^Q$ 和 $W_i^K$ 是需要训练的 ，分别负责通过当前的 Q = K 得到第 i 个查询矩阵和键矩阵，i 标记是第 i 个投影矩阵（因为这里是多头自注意力，i = 1，...，N)</p>
+<p>注意这里自注意力部分的得分函数的计算，需要 / √d，这里的 d 是维度</p>
+<p>在实际使用的时候，原始的句子的 fulltree 得到的邻接矩阵就是第一个 block 的最初始的输入</p>
+<br>
+<h3 id="2-4-Densely-Connected-Layer-密集连接层">2.4 Densely Connected Layer 密集连接层</h3>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022050201073.png" alt="image-20231022050201073" style="zoom:67%;" />
+<p>目的是为了加深整个模型的层数，以更好地捕捉丰富的局部信息和 k-hop 的信息，因为上面的注意力导向层产生了 N 个不同的邻接矩阵 $\tilde{A}$，则这里使用 N 个密集连接层来进行操作</p>
+<p>先定义 $g_j^{(l)}$ 为 ：<br>
+$$<br>
+g_j ^{(l)} = [x_j;h_j ^{(1)} ; ... ; h_j ^{(l-1)}]<br>
+$$</p>
+<p>这里的 xj 是结点 j 的初始表示，$h_j^{(l)}$ 为对应的第 l 层的输出中对应的 结点 j 的表示，这里直接用级联的方式得到 gj</p>
+<p>则此时对于第 t 个密集连接层（对应第 t 个多头自注意力的查询矩阵）的每一个子层sublayer，其输出中的结点 i 的值可以如下计算：<br>
+$$<br>
+h _{t_i} ^{(l)} = \rho (\sum ^n _{j=1} \tilde{A} ^{(t)} _{ij} W_t ^{(l)} g_j ^{(l)} + b_t ^{(l)})<br>
+$$</p>
+<p>这里的 W 和 b 是待学习参数，$\tilde{A}$​ 是前面学到的新的邻接矩阵（共学了 N 个不一样的这个东西摆着），ρ 是激活函数</p>
+<p>此时每一个子层都输出一个上面的 $h_{t_i}^{(l)}$，最后将多个子层的输出进行拼接，得到最后的该密集连接层的输出</p>
+<p>注意一下这里每一个密集连接层的隐藏层的维数：每一个密集连接层有 L 个 sublayer（每一个 block 有 N 个密集连接层，N*L 个子层），注意这里的 sublayer 的大小是不一定要求大于等于输入维度的，也就是说可以将它设置得相对小以减少需要训练的参数个数。原文使用的为：$d_{hidden} = d/L$</p>
+<p>简单来说就是如果我的输入维度为 300，此时用 3 个子层，则每一个的 d_hidden 都是 300/3 = 100，我的输出也就是维度 100 的，再三个子层的 100 的输出拼在一起，就是最后的 300 的输出，不变</p>
+<br>
+<h3 id="2-5-Linear-Combination-Layer-线性组合层">2.5 Linear Combination Layer 线性组合层</h3>
+<p>也就是把 N 个密集连接层的输出连在一起：<br>
+$$<br>
+h _{comb} = W _{comb} h _{out} + b _{comb}<br>
+$$</p>
+<p>这里的 $h_{out}$ 也就是共 N 个密集连接层的输出的拼接：$h_{out} = [h^{(1)}; ... ; h^{(N)}] \in R^{d*N}$，Wcomb 是要学习的权重矩阵，bcomb 是要学习的偏差向量</p>
+<br>
+<br>
+<hr>
+<h2 id="3-AGGCNs-for-Relation-Extraction-实现关系提取">3 AGGCNs for Relation Extraction 实现关系提取</h2>
+<br>
+<p>回到此时我们的目的：也就是为了文本中的实体关系抽取</p>
+<p>以上的 h 得到的是句子中的实体的表示，此时进一步地得到句子的表示：<br>
+$$<br>
+h _{sent} = f(h _{mask}) = f(AGGCN(x))<br>
+$$</p>
+<p>这里的 $h_{mask}$ 是被掩蔽的部分的表征，也就是句子中非实体的部分的表征（因为前面的部分不断地在针对实体得到实体的更优秀的表征)，f 是一个最大池化方程，目标是 $R^{d<em>n}$ → $R^{d</em>1}$，也就是得到一个向量来表征这个句子</p>
+<p>同理，此时可以通过最大池化得到实体的表征：$$h_{e_i} = f(h_{e_i})$$<br>
+这里的 $h _{e_i}$ 是前面的输出</p>
+<p>将上面句子的表征（实际上就是去掉了实体的部分的表征 + 最大池化得到的向量）和实体表征（也就是前面 AGGCN 的输出经过了最大池化得到的向量）进行拼接，再经过一个前馈神经网络 FFNN，得到最后的表征：<br>
+$$<br>
+h _{final} = FFNN([h _{sent}; h _{e_i}; ...; h _{e_i}])<br>
+$$</p>
+<p>此时的 $h_{final}$ 即为最后的表示，将最后的表示放入简单的逻辑回归分类器来判断选定的实体对之间是否存在关系</p>
+<br>
+<br>
+<hr>
+<h2 id="4-Experiments-实验部分">4  Experiments 实验部分</h2>
+<br>
+<h3 id="4-1-dataset-和实验设置">4.1 dataset 和实验设置</h3>
+<p>注意这里实际上是有监督学习，用来训练和测试的数据集都有了人工标记（标记是否存在关系，什么样的关系 / 也就是关系的不同分类）</p>
+<p>这里分为两个部分，一个是 <strong>多个句子的 n 元关系抽取</strong>，一个是 <strong>句子级关系抽取</strong></p>
+<p>对于 多个句子的 n 元关系抽取 的评估数据集用的是 PubMed，每一个例子都有多个句子，包含多个有着不同关系的实体对。这里考察了两种，一种是只将实体关系分类为（有关系 /  没关系）来进行分类，也就是二元问题；另一个是多分类问题，此时不同的实体对可能有多种关系（“resistance or nonresponse”, “sensitivity”, “response”, “resistance” , “None”）</p>
+<p>对于 句子级关系抽取 的评估用的是 TACRED dataset，也就是说这里不再是用的多句子的形式，实体对可能出现的关系有 41 种，就还是多分类问题</p>
+<br>
+<h3 id="4-2-几个细节">4.2 几个细节</h3>
+<p>关于超参数的部分，比较重要的有 block 个数 M，多头自注意力个数 N，和此时密集连接层的子层 sublayer 个数 L</p>
+<p>通过初步实验发现：</p>
+<ul>
+<li>N=2，M=2，L1=2，L2=4，d_hidden=340 → 多句子的 n 元关系抽取 → 效果最好</li>
+<li>N=3，M=2，L1=2，L2=4，d_hidden=300 → 句子级别关系抽取 → 效果最好</li>
+</ul>
+<p>可以看到此时 block 的个数 / 子层个数 / 多头自注意力个数都不会太大</p>
+<p>词向量一开始初始化的时候用的是 <code>GloVe</code>，评估用的是五折交叉验证</p>
+<br>
+<h3 id="4-3-result">4.3 result</h3>
+<p>来看看效果</p>
+<p><strong>多个句子的 n 元关系提取任务</strong>：注意这里的 binary-class 就是只是分类有关系和没关系，multi-class 就是多分类问题，需要进一步预测到底是什么样的关系</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022050559497.png" alt="image-20231022050559497" style="zoom:55%;" />
+<p><strong>TACRED 上的句子级关系抽取</strong></p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022050649064.png" alt="image-20231022050649064" style="zoom:60%;" />
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210311-paper-note-AGGCN/" title="AGGCN：基于注意力导向图卷积神经网络的关系提取模型">https://baijn-nan.github.io/2023/10/30/20210311-paper-note-AGGCN/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3/" rel="tag"><i class="fa fa-tag"></i> 机器阅读理解</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210311-paper-note-AGGCN/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

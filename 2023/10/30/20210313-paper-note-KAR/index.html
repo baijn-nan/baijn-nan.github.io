@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210313，存档如下  Chao Wang and Hui Jiang, Department of Electrical Engineering and Computer Science, Lassonde School of Engineering, York University, Explicit Utilization of General Knowledge in Ma">
+<meta property="og:type" content="article">
+<meta property="og:title" content="KAR: 实现机器阅读理解中对常识知识的显示应用">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210313-paper-note-KAR/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210313，存档如下  Chao Wang and Hui Jiang, Department of Electrical Engineering and Computer Science, Lassonde School of Engineering, York University, Explicit Utilization of General Knowledge in Ma">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022053124295.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022053427122.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022054918162.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022054953766.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055023970.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:23.000Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器阅读理解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022053124295.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210313-paper-note-KAR/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210313-paper-note-KAR/","path":"2023/10/30/20210313-paper-note-KAR/","title":"KAR: 实现机器阅读理解中对常识知识的显示应用"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>KAR: 实现机器阅读理解中对常识知识的显示应用 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%95%B0%E6%8D%AE%E5%A2%9E%E5%BC%BA%E6%96%B9%E6%B3%95"><span class="nav-text">2 数据增强方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-Semantic-Relation-Chain-%E8%AF%AD%E4%B9%89%E5%85%B3%E7%B3%BB%E9%93%BE"><span class="nav-text">2.1  Semantic Relation Chain  语义关系链</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-Inter-word-Semantic-Connection-%E5%8D%95%E8%AF%8D%E9%97%B4%E8%AF%AD%E4%B9%89%E8%81%94%E7%B3%BB"><span class="nav-text">2.2  Inter-word Semantic Connection 单词间语义联系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-General-Knowledge-Extraction-%E5%B8%B8%E8%AF%86%E6%8F%90%E5%8F%96"><span class="nav-text">2.3 General Knowledge Extraction 常识提取</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Knowledge-Aided-Reader-%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D"><span class="nav-text">3 Knowledge Aided Reader 模型介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-overview"><span class="nav-text">3.1 overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Overall-Architecture-%E6%A8%A1%E5%9E%8B%E5%90%84%E5%B1%82%E4%BB%8B%E7%BB%8D"><span class="nav-text">3.2  Overall Architecture 模型各层介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Lexicon-Embedding-Layer"><span class="nav-text">Lexicon Embedding Layer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Context-Embedding-Layer"><span class="nav-text">Context Embedding Layer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Coarse-Memory-Layer"><span class="nav-text">Coarse Memory Layer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Refined-Memory-Layer"><span class="nav-text">Refined Memory Layer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Answer-Span-Prediction-Layer"><span class="nav-text">Answer Span Prediction Layer</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-Knowledge-Aided-Mutual-Attention-%E7%9F%A5%E8%AF%86%E8%BE%85%E5%8A%A9%E6%B3%A8%E6%84%8F%E5%8A%9B"><span class="nav-text">3.3 Knowledge Aided Mutual Attention 知识辅助注意力</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-Knowledge-Aided-Self-Attention-%E7%9F%A5%E8%AF%86%E8%BE%85%E5%8A%A9%E8%87%AA%E6%B3%A8%E6%84%8F%E5%8A%9B"><span class="nav-text">3.3 Knowledge Aided Self Attention 知识辅助自注意力</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-experiment-%E5%AE%9E%E9%AA%8C%E9%83%A8%E5%88%86"><span class="nav-text">4 experiment 实验部分</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210313-paper-note-KAR/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="KAR: 实现机器阅读理解中对常识知识的显示应用 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          KAR: 实现机器阅读理解中对常识知识的显示应用
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3-MRC/" itemprop="url" rel="index"><span itemprop="name">机器阅读理解(MRC)</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>3.8k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>14 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210313，存档如下</p>
+<blockquote>
+<p>Chao Wang and Hui Jiang, Department of Electrical Engineering and Computer Science, Lassonde School of Engineering, York University, <strong>Explicit Utilization of General Knowledge in Machine Reading Comprehension</strong></p>
+<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE4MDkuMDM0NDl2My5wZGY=">https://arxiv.org/pdf/1809.03449v3.pdf<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<p>当前机器阅读理解模型 MRC 和人类行为之间的差距往往体现在：</p>
+<ul>
+<li><strong>缺少足够数据样例来训练</strong>：MRC 模型的训练需要大量的文本 passage，对应的问题 question，真实的答案 gold answer，对于抽取式问题甚至还需要答案提取的证据 span。但是对于人类而言，只需要比较少的例子即可以通过分析快速地学到更多的信息和解题方法。</li>
+<li><strong>对于噪声缺乏一定的鲁棒性</strong>：研究表明特意加入的噪音能够大大影响整体 MRC 模型的性能，而本文认为造成这一问题的主要原因是机器太过于依赖本身文本给定的信息，而人类可以利用常识来进行判断。</li>
+</ul>
+<p>针对第二个问题举个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022053124295.png" alt="image-20231022053124295" style="zoom:55%;" />
+<p>facilitate 本身是 help 的同义词，而这一个同义词的关系并没有体现在文本中，也就是说如果机器只是阅读了 passage，它连 help 这个词都没见过，本身也就不会学习到 help 和 facilitate 之间的相关性</p>
+<p>也就是说，如果此时能够让机器同时具有人类阅读时具有的常识（general knowledge），或许能够帮助机器更好地理解任务并给出解答。</p>
+<p>想要让机器同时利用人的常识来进行阅读理解，此时主要目标为解决以下两个问题：</p>
+<ul>
+<li><strong>结合文章-问题对，提取出相关的常识信息</strong>：不能让机器为了解答一个问题学遍全世界所有的常识，故这里需要根据文章问题 pair 提取出可能帮助机器解答问题的相关的常识</li>
+<li><strong>利用常识并帮助标注答案span</strong>：也就是如何将外界学到的常识信息利用进入整个 MRC 模型中</li>
+</ul>
+<p>第一个问题很好解决，本文利用 <strong>WordNet (Fellbaum, 1998)</strong> 作为外界知识库（这个东西可以简单地理解为一个同义词库）</p>
+<p>第二个问题，当前常用的解决方式为：得到相关常识的向量标识（也就是编码到一个向量空间），再利用它丰富 word 级别的上下文语义表示，此时也就是将常识的信息和表示结合，再进行后续的 MRC 预测。但是注意到这样的方式本身是隐形的，也就是说我们很难知道这样被融入进去的表达能够怎样帮助我们最后的预测。</p>
+<p>本文尝试提出一种能够帮助实现 <strong>于机器阅读理解中显式利用常识信息</strong> 的方法，主要贡献包括：</p>
+<ul>
+<li>提出一种<strong>数据增强方法</strong>（data enrichment method）：也就是利用 WordNet 提取出和当前 passage-question pair 相关的同义词用来完成某种程度上的数据增强</li>
+<li>提出<strong>端到端的机器阅读理解模型 nowledge Aided Reader (KAR)</strong>：显式利用提取出来的常识来帮助注意力机制部分的学习</li>
+</ul>
+<br>
+<br>
+<hr>
+<h2 id="2-数据增强方法">2 数据增强方法</h2>
+<p>这里利用 WordNet 来实现数据增强，也就是主要采取同义词的信息来完成，目标为提取出同当前文章-问题对相关的外部知识信息，也就是外部知识和 passage-question pair 中 word 的语义联系</p>
+<br>
+<h3 id="2-1-Semantic-Relation-Chain-语义关系链">2.1  Semantic Relation Chain  语义关系链</h3>
+<p>WordNet 本身就是同义词库，但是注意到本身一个词在不同的应用场景下会存在不同的含义，自然也就存在不同的同义词。在 WordNet 中定义了共 16 种语义关系，以标注两个同义词确实为同义所需要的应用上下文环境。</p>
+<p>则此时可以将 WordNet 中的语义关系看作语义关系链的形式，比如词汇 A 通过关系种类 1 与词汇 B 相连，而词汇 B 通过关系种类 2 与词汇 C 相连，通过不同的链的类型，不同的词汇可以连成语义关系链的形式。</p>
+<p>对于词汇 A 的同义词集，此时还有词可能和 A 是通过多跳的形式相连的，这些词可能和 A 也存在一定的潜在关系。这里将两个不同的词之间通过多种不同的语义关系相连的路径定义为语义关系链，并将其中一个词作为一个 hop 看待（类似于 图 的形式）</p>
+<br>
+<h3 id="2-2-Inter-word-Semantic-Connection-单词间语义联系">2.2  Inter-word Semantic Connection 单词间语义联系</h3>
+<p>注意到本身利用同义词信息来进行数据增强的重点问题就是在考察当前的两个问题之间到底有没有语义联系。考虑单词 w，此时 WordNet 会给出它的同义词集合 $S_w$，这里使用 $S_w^*$ 来表示单词 w 的扩充同义词集合（extended synsets），集合包括所有可以通过上面定义的语义关系链和单词 w 相连的单词。</p>
+<p>但是注意到如果此时不加限制可能整个 WordNet 中的词汇都能够相连，故在此设定超参数 $\kappa \in N$ 来规定所有可以被加入 $S_w^<em>$ 的单词涉及的最大跳数，这里对于 0 跳的时候，S</em> 也就是 Sw</p>
+<p>注意这里不对当前连接不同单词之间的 relation 的类型加限制，只要是相连了就行</p>
+<br>
+<h3 id="2-3-General-Knowledge-Extraction-常识提取">2.3 General Knowledge Extraction 常识提取</h3>
+<p>此时根据给定的 passage-question pair 来抽取相关的常识：</p>
+<p>此时认为所有和当前 passage 的词汇存在一定同义词关系的词汇都是我想要学习的外部常识。令任意一个词汇 w，则此时我想要抽取集合 $E_w$，包含所有 <strong>和词汇 w 存在同义词关系的 passage 中的词汇在 passag 中的位置信息</strong>：</p>
+<ul>
+<li>这里只是抽取<strong>位置信息</strong>，也就是找到所有和当前词汇 w 存在同义词关系的，且在 passage 中的词汇，且记录它们的位置信息。注意如果此时 w 词本身也在 passage 中，略过它自己在 passage 中的信息。</li>
+<li>利用规定了最大 hop 的超参数 <strong>κ 来控制此时抽取的数量</strong>，也就是说只有文章中的词汇 y 本身在当前词汇 w 的 κ-hop 内，才记录 y 在 passage 中的位置信息</li>
+</ul>
+<br>
+<br>
+<hr>
+<h2 id="3-Knowledge-Aided-Reader-模型介绍">3 Knowledge Aided Reader 模型介绍</h2>
+<br>
+<h3 id="3-1-overview">3.1 overview</h3>
+<p>先来看看整体的模型结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022053427122.png" alt="image-20231022053427122" style="zoom:60%;" />
+<p>注意这里还是 attention 主导的模型，主要包括两种：</p>
+<ul>
+<li><strong>mutual attention</strong>：主要目标是将问题表示和文章表示融合，可以得到经过了问题表示融合的文章表示（question-aware passage representation），这一步也是传统的 MRC 会处理的</li>
+<li><strong>self-attention</strong>：通过（经过了问题表示融合的文章表示）与自己的自注意力模块得到最后的最终文章表示</li>
+</ul>
+<p>而整个文章的创新点便在于 <strong>利用了前面抽取出的外部知识（常识）来辅助上述的注意力机制</strong>，与一般的直接将外部知识 embedding 和当前文章表示 embedding 进行融合的方式，这里针对外部知识的应用方式是显式的。</p>
+<p>定义：</p>
+<ul>
+<li>$P = {p_1, ... , p_n}; \text{ } Q = {q_1, ..., q_m}$  文章 - 问题的集合</li>
+<li>当前目标则为预测答案的 span（抽取式问题）：$[a_s,a_e]$</li>
+</ul>
+<br>
+<h3 id="3-2-Overall-Architecture-模型各层介绍">3.2  Overall Architecture 模型各层介绍</h3>
+<p>KAR 本身作为一个 端到端 的阅读理解模型，可以表示为以下五层的拼接：</p>
+<h4 id="Lexicon-Embedding-Layer">Lexicon Embedding Layer</h4>
+<p>图中蓝色部分，分别对文章和问题来做</p>
+<p>也就是通过词汇 word 得到 lexicon embedding，每一个 lexicon embedding 包括两个部分：<strong>word embedding（词向量） + character embedding（字符向量）</strong>，这里使用 <strong>GloVe预训练</strong> 来得到词向量，用 <strong>CNN</strong> 来得到字符向量</p>
+<p>将得到的两个向量拼在一起扔进一个全连接层 + ReLU 激活以得到最后的综合表示 lexicon embedding，则可以得到文章 passage 的表示 $L_P \in R^{d<em>n}$ 和 问题的表示 $L_Q \in R^{d</em>m}$</p>
+<h4 id="Context-Embedding-Layer">Context Embedding Layer</h4>
+<p>图中红色部分，分别对文章和问题来做</p>
+<p>也就是分别将文章和问题编码好的 lexicon embedding 扔到一个 <strong>参数共享的双向 LSTM = BiLSTM</strong> 中，这里的隐藏层维度为 d/2（d 是前面 embedding 的维度），此时进一步地将前向和后向的输出直接作向量拼接，分别得到文章的上下文表示 $C_P\in R^{d<em>n}$ 和问题的上下文表示 $C_Q\in R^{d</em>m}$</p>
+<h4 id="Coarse-Memory-Layer">Coarse Memory Layer</h4>
+<p>黑色部分，将 question 与 passage 融合</p>
+<p>也就是通过  knowledge aided mutual attention （这个在下一节介绍）来实现 question 和 passage 的 context embedding 的融合，再通过一个 <strong>BiLSTM</strong>（隐藏层的大小还是 d/2），将前后的输出作向量拼接得到最终表示 G，这里的 G 也就是融合了问题信息的文章表示（question-aware passage representations）</p>
+<h4 id="Refined-Memory-Layer">Refined Memory Layer</h4>
+<p>橙色部分</p>
+<p>利用 knowledge aided self-attention （下面介绍）将上一部分得到的 融合了问题信息的文章表示（question-aware passage representations） 进行进一步的聚合</p>
+<p>将输出还是通过一个隐藏层为 d/2 的 <strong>BiLSTM</strong>，同理将前后的输出作向量拼接得到最终表示 H，这里的 H 也就是最终的文章表示</p>
+<h4 id="Answer-Span-Prediction-Layer">Answer Span Prediction Layer</h4>
+<p>绿色部分，目标是得到答案的 span，也就是开始和结束位置</p>
+<p>将问题的上下文表示，也就是 C_Q 经过一个 <strong>attention pooling</strong> 得到 $r_Q$，计算答案开始 span 对应的概率：<br>
+$$<br>
+t_i = v_s ^T  \tanh (W_s h _{p_i} + U_s r_Q) \in \mathbb{R}<br>
+$$</p>
+<p>$$<br>
+o_s = softmax({t_1, ..., t_n}) \in \mathbb{R} ^n<br>
+$$</p>
+<p>这里的  W 和 U 和 v 都是待学习参数，实际上就是一个连接层 + tanh 激活 + softmax 输出概率</p>
+<p>同理，得到 os 开始概率后来预测结束的概率：<br>
+$$<br>
+t_i = v_e^T \tanh {(W_e h _{p_i} + U_e [r_Q; Ho_s])} \in \mathbb{R}<br>
+$$</p>
+<p>$$<br>
+o_e = softmax ({t_1, ..., t_n}) \in \mathbb{R}^n<br>
+$$</p>
+<p>预测结束后，得到一个预测矩阵：$$O = uptri(o_so_e^T)\in R^{n*n}$$，注意这里的 uptri 指的是得到该矩阵的上三角矩阵</p>
+<p>这里的损失函数也就是针对每一个真实答案的开始位置 as 和结束位置 ae，最小化 $-log(O_{a_s,a_e})$</p>
+<br>
+<h3 id="3-3-Knowledge-Aided-Mutual-Attention-知识辅助注意力">3.3 Knowledge Aided Mutual Attention 知识辅助注意力</h3>
+<p>注意这东西是用在 <strong>Coarse Memory Layer</strong> 中的，这里利用问题和文章的上下文表示 $C_P, C_Q$ 来进行聚合操作</p>
+<p>注意力聚合也就是计算文章中的每一个 embedding $c_{p_{i}}$ 和问题中的每一个 embedding $c_{q_i}$ 的相似度，这里的相似度方程定义为：<br>
+$$<br>
+f(c _{p_i}, c _{q_j}) = v_f^T [c _{p_i}; c _{q_j} ; c _{p_i} \odot c _{q_j}] \in \mathbb{R}<br>
+$$</p>
+<p>这里的 vf 也就是训练参数，而 $\odot$ 表示元素之间的乘法，但是考虑到此时我们需要将 <strong>外部知识 = 常识引入</strong>，则采用上述式子改进的式子：<br>
+$$<br>
+f^* (c _{p_i}, c _{q_j}) = v_f^T [c ^* _{p_i}; c ^* _{q_j} ; c ^* _{p_i} \odot c ^* _{q_j}] \in \mathbb{R}<br>
+$$</p>
+<p>为得到这里的 c* 作如下操作：</p>
+<ul>
+<li>
+<p>对于当前词汇 w，得到它对应的 Ew，也就是所有（和词汇 w 存在 κ-hop 内同义词关系且在文章内的词在文章中的位置信息）</p>
+</li>
+<li>
+<p>找到 Ew 中所有的词汇对应的 context embedding 的集合，记作 $Z \in R^{n*|E_w|}$</p>
+</li>
+<li>
+<p>计算对应的 c+：<br>
+$$<br>
+\begin{align}<br>
+t_i &amp;= v_c^T \tanh (W_c z_i + U_cc_w) \in \mathbb {R} \\<br>
+c_w ^+ &amp;= Z softmax({t_1, ..., t _{|E_w|}}) \in \mathbb{R} ^d<br>
+\end{align}<br>
+$$</p>
+<p>这里的 vc 和 W 和 U 都是训练参数，将得到的 c+ 和 c 作向量拼接，再通过一个 ReLU 激活函数，最后输出维度为 d，记作 c*</p>
+</li>
+</ul>
+<p>得到 c* 后，我们可以通过上面的公式计算问题和文章的相似度矩阵，记作 A，则此时 A 的 i,j 位置元素也就是文章的第 i 个 embedding 和问题的第 q 个embedding 之间的相似度</p>
+<p>通过 A 来计算（融合了问题信息的文章表示）和（融合了文章信息的问题表示）：<br>
+$$<br>
+\begin{align}<br>
+R_Q &amp;= C_Q \text{ softmax} _r^T (A) \in \mathbb{R} ^{d \times n} \\<br>
+R_P &amp;= C_P \text{ softmax} _c (A) \text{ softmax} _r^T (A) \in \mathbb{R} ^{d \times n}<br>
+\end{align}<br>
+$$</p>
+<p>这里的 softmax r 是只d对行作 softmax，softmax c 是对列</p>
+<p>最后将 $C_P, R_Q, C_P\odot R_Q, R_P\odot R_Q$ 作向量拼接，再扔进一个全连接层 + ReLU 激活函数，注意这里的输出维度还是 d，作为最终结果</p>
+<br>
+<h3 id="3-3-Knowledge-Aided-Self-Attention-知识辅助自注意力">3.3 Knowledge Aided Self Attention 知识辅助自注意力</h3>
+<p>和前面的思路是一样的，但是注意因为作自注意力的时候，实际上大多数文章中的单词和其他单词之间是没啥关系的， 如果用惯用的自注意力的方式会浪费资源</p>
+<p>考虑文章中的单词 pi，对应的 coarse memory 层的输出为 $g_{p_i}$，同理我有这个词对应的外部常识集合 $E_{p_i}$，得到其中的 word 对应的 coarse memory 的集合，记作 Z，这里计算 g+：<br>
+$$<br>
+t_i = v_g^T \tanh (W_g z_i + U_g g _{p_i}) \in \mathbb{R}<br>
+$$</p>
+<p>$$<br>
+g _{p_i}^+ = Z \text{ softmax} ({t_1, ..., t _{|E _{p_i}}}) \in \mathbb{R} ^d<br>
+$$</p>
+<p>注意这里的 g+ 本质上是基于 gpi 的 Z 的信息的融合</p>
+<p>进一步将 g+ 和 g 作拼接，再通过一个全连接层 + ReLU激活，最后得到该部分的输出 H</p>
+<br>
+<br>
+<hr>
+<h2 id="4-experiment-实验部分">4 experiment 实验部分</h2>
+<p>这里的 MRC 部分的数据集用的是 <strong>SQuAD 1.1</strong>，但是考虑到本身提出 KAR 的目标就是要 <strong>利用外部知识（常识）来增强当前 MRC 模型的鲁棒性</strong>，故这里采用 <strong>AddOneSent 和 AddSent</strong> 向 SQuAD 添加噪声，再评估模型</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022054918162.png" alt="image-20231022054918162" style="zoom:50%;" />
+<p>可以看到此时鲁棒性确实增强了</p>
+<p>另一个提出的目标是 <strong>通过数据增强的方法常识在更小的训练集上获得更好的效果</strong>，来看看训练效果和训练的数据集的关系：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022054953766.png" alt="image-20231022054953766" style="zoom:67%;" />
+<p>确实训练集越小此时效果下降越明显，但是还是比现有的几个方法要高，可以热为此时引入常识确实是有帮助的</p>
+<p>下面看一下超参数，特别是常识提取部分的 κ-hop</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055023970.png" alt="image-20231022055023970" style="zoom:60%;" />
+<p>可以看到这里做到 3-hop 就比较好了</p>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210313-paper-note-KAR/" title="KAR: 实现机器阅读理解中对常识知识的显示应用">https://baijn-nan.github.io/2023/10/30/20210313-paper-note-KAR/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3/" rel="tag"><i class="fa fa-tag"></i> 机器阅读理解</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210313-paper-note-KAR/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

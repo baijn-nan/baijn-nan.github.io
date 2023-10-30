@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210319，存档如下  Wei Wu, Fei Wang, Arianna Yuan, Fei Wu and Jiwei Li, Department of Computer Science and Technology, Zhejiang University Computer Science Department, Stanford University, ShannonAI;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CorefQA: 基于QA模式（提出问题 + 片段预测）的共指消解 &#x2F; 指代消解模型">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210319-paper-note-CorefQA/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210319，存档如下  Wei Wu, Fei Wang, Arianna Yuan, Fei Wu and Jiwei Li, Department of Computer Science and Technology, Zhejiang University Computer Science Department, Stanford University, ShannonAI;">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100636083.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100704428.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101704245.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101736590.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101757541.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101844368.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101909090.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:33.212Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器阅读理解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100636083.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210319-paper-note-CorefQA/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210319-paper-note-CorefQA/","path":"2023/10/30/20210319-paper-note-CorefQA/","title":"CorefQA: 基于QA模式（提出问题 + 片段预测）的共指消解 / 指代消解模型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>CorefQA: 基于QA模式（提出问题 + 片段预测）的共指消解 / 指代消解模型 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Model-%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D"><span class="nav-text">2  Model 模型介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-overview"><span class="nav-text">2.1 overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-Input-Representations-%E8%BE%93%E5%85%A5%E8%A1%A8%E7%A4%BA"><span class="nav-text">2.2 Input Representations 输入表示</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-Mention-Proposal-%E6%8C%87%E4%BB%A3%E6%8F%90%E5%87%BA%E6%A8%A1%E5%9D%97"><span class="nav-text">2.3 Mention Proposal 指代提出模块</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#prune-the-candidate-spans"><span class="nav-text">prune the candidate spans</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Mention-Proposal-Pretraining-%E9%A2%84%E8%AE%AD%E7%BB%83"><span class="nav-text">Mention Proposal Pretraining 预训练</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-Mention-Linking-as-Span-Prediction-%E9%80%9A%E8%BF%87%E7%89%87%E6%AE%B5%E9%A2%84%E6%B5%8B%E5%AE%9E%E7%8E%B0%E6%8C%87%E4%BB%A3%E8%81%9A%E7%B1%BB"><span class="nav-text">2.4 Mention Linking as Span Prediction 通过片段预测实现指代聚类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-Antecedent-Pruning-%E5%89%8D%E5%BA%8F%E6%8C%87%E4%BB%A3%E4%BF%AE%E5%89%AA"><span class="nav-text">2.5 Antecedent Pruning 前序指代修剪</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-6-Training-%E6%95%B4%E4%BD%93%E8%AE%AD%E7%BB%83"><span class="nav-text">2.6 Training 整体训练</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-7-Data-Augmentation-using-Question-Answering-Datasets-%E5%88%A9%E7%94%A8-QA-%E6%95%B0%E6%8D%AE%E9%9B%86%E4%BD%9C%E6%95%B0%E6%8D%AE%E5%A2%9E%E5%BC%BA"><span class="nav-text">2.7 Data Augmentation using Question Answering Datasets 利用 QA 数据集作数据增强</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Experiments-%E5%AE%9E%E9%AA%8C%E9%83%A8%E5%88%86"><span class="nav-text">3 Experiments 实验部分</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-CoNLL-2012-%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-text">3.1 CoNLL-2012 数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-GAP-%E6%95%B0%E6%8D%AE%E9%9B%86"><span class="nav-text">3.2 GAP 数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E5%85%B6%E4%BB%96%E8%AF%84%E4%BB%B7"><span class="nav-text">3.3 其他评价</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%84%E7%BB%84%E4%BB%B6%E5%BD%B1%E5%93%8D"><span class="nav-text">各组件影响</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#speaker-%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="nav-text">speaker 的影响</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%AC%E5%9B%9E%E7%8E%87"><span class="nav-text">召回率</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210319-paper-note-CorefQA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="CorefQA: 基于QA模式（提出问题 + 片段预测）的共指消解 / 指代消解模型 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CorefQA: 基于QA模式（提出问题 + 片段预测）的共指消解 / 指代消解模型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3-MRC/" itemprop="url" rel="index"><span itemprop="name">机器阅读理解(MRC)</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>3.7k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>13 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210319，存档如下</p>
+<blockquote>
+<p>Wei Wu, Fei Wang, Arianna Yuan, Fei Wu and Jiwei Li, Department of Computer Science and Technology, Zhejiang University Computer Science Department, Stanford University, ShannonAI; <strong>CorefQA: Coreference Resolution as Query-based Span Prediction</strong></p>
+<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MTEuMDE3NDYucGRm">https://arxiv.org/pdf/1911.01746.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL1NoYW5ub25BSS9Db3JlZlFB">official - tensorflow<i class="fa fa-external-link-alt"></i></span> ** <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL0ZlaVdhbmc5Ni9Db3JlZlFBLXB5dG9yY2g=">pytorch<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<br/>
+<p>共指消解问题至今仍是各类 nlp 任务中绕不开的难题，一方面对文章本身内容中的指代了解不清将导致对整体文章的语义理解出现问题，另一方面随着部分多轮问答式 QA 数据集的兴起，此时后一题提出的问题中可能只包含指代词而不再包含具体的实体名称。</p>
+<p>传统的共指消解模型主要分为以下两个步骤作处理：</p>
+<ul>
+<li>充分考虑整篇文章中的所有的 span，从所有的文本片段中选择出所有可能的 指代 mention</li>
+<li>为每一个当前找到的可能的指代找到它对应的前序指代（antecedent），也就是为当前的指代分类，把它和它指代的对象的其他 mention 放在一起</li>
+</ul>
+<p>但是注意到这样的处理方式存在一定的问题：</p>
+<ul>
+<li>所有的被遗漏的共指词一旦第一次没有被捉住，后面就再也没有机会改正。
+<ul>
+<li>因为此时下游的模型是完全基于已经给出的共指词的，且本身共指的数据集能够提供的改正的信息是有限的（并没有明确地标签标识当前的 span 到底是什么样的共指）</li>
+<li>也就是说此时需要模型能够重新回顾检查遗漏的指代 mention</li>
+</ul>
+</li>
+<li>在大多数模型中，当前的端到端训练的模型只是基于最后输出层的这两个词的上下文表示来为一对共指打分
+<ul>
+<li>也就是说此时本身打分的方式并没有考虑到当前两对共指词的上下文信息（本身其编码得到的上下文信息在最后的输出层表示中的体现是很少的）</li>
+</ul>
+</li>
+</ul>
+<p>为了缓解传统的处理方式带来的问题，本文尝试将原本的 <strong>共指消解问题转化为片段预测任务</strong>，也就是利用 <strong>QA 的方式来训练模型学习多个 mention 之间的指代关系</strong></p>
+<p>首先选出可能的指代 mention，再依据该 mention 的上下文信息来生成问题，模型再尝试从文档中抽取片段以回答这个问题，则此时整个针对于共指消解的问题可以转化为一个针对抽取式 QA 问题的 span prediction 的问题</p>
+<p>这里来看一个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100636083.png" alt="image-20231023100636083" style="zoom:67%;" />
+<p>通过阅读文本 → 不断回答生成的问题 → 此时模型可以不断地扩充可能的指代同一个实体的 mention 的集合</p>
+<p>同时，从第二个传统模型存在的问题出发，此时发挥作用的不再是一个简答地综合上下文信息的模型，而是一个 MRC 类的 span prediction 的模型，也就是说此时最后输出层的输出将能过够更好地将上下文信息进行融合，使得后续基于输出层表示的共指词评分更加准确，更好地辅助模型的训练</p>
+<br>
+<br>
+<hr>
+<h2 id="2-Model-模型介绍">2  Model 模型介绍</h2>
+<br>
+<h3 id="2-1-overview">2.1 overview</h3>
+<p>先来看看模型整体结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100704428.png" alt="image-20231023100704428" style="zoom: 60%;" />
+<p>此时整体模型主要分为两个部分，</p>
+<ul>
+<li><strong>mention proposal model 指代提取模块</strong>：也就是负责从全文中提取出所有可能的指代词 mention</li>
+<li><strong>mention linking model 指代连接模块</strong>：也就是负责为所有提取出来的 mention 作分类，类似于一个聚类的操作，将所有的指向同一个实体的指代综合起来</li>
+</ul>
+<p>设此时输入的文章包含 n 个 token，记作 $X = {x_1, ... , x_n}$，则此时可能的文本片段共有 $N = n*(n+1)/2$ 个<br>
+（共 n+1 个可以插入的空 / 包括头尾，选定一个 为 n+1，再选定结束位置为 n*(n+1)，最后因为一个位置可以重复两遍再 /2），</p>
+<p>此时定义 $e_i$ 为第 i 个可能的文本片段，则此时 $e_i$ 对应着一组开始的 index $FIRST(i)$ 和结束位置的 index $LAST(i)$</p>
+<p>则此时整体的任务即是为所有的可能的 N 个 span 寻找前序 mention，如果此时该 span 并不作任何指代，则将它的前序指代定义为一个 dummy token $\epsilon$</p>
+<br>
+<h3 id="2-2-Input-Representations-输入表示">2.2 Input Representations 输入表示</h3>
+<p>首先需要得到文档 X 的每一个 token 的表示 xi，这里使用 <code>SpanBERT</code> 来完成</p>
+<p>注意到本身叙述者（speaker）的信息对于指代问题是十分重要的（比如一个文本两句话，第一句是你说的，你说的你指的是我，但是第二句是我说的，此时我说的你就是你），但是前序的大多数研究只是将 speaker 的信息简化为一个二元的变量，以标识两个 mention 是否是来自同一个 speaker。</p>
+<p>本文直接将 speaker 的名称和它对应的语句直接作向量拼接操作，在后续的实验部分会证明这样操作的优越性</p>
+<p>同时注意到为了将较长的文档输入 SpanBERT，这里采用了滑动窗口的方式，为每 T/2 个 token 创造一个 T 大小的片段，再各自输入 SpanBERT 来得到 embedding，作为后续的输入表示</p>
+<br>
+<h3 id="2-3-Mention-Proposal-指代提出模块">2.3 Mention Proposal 指代提出模块</h3>
+<p>此时的输入是 上述经过 SpanBERT encode 后的结果，目标为充分考虑文本中可能的 span，并提取出所有可能的指代</p>
+<h4 id="prune-the-candidate-spans">prune the candidate spans</h4>
+<p>首先规定一个 span 的最大长度，记作 L，也就是说只考虑长度在 L 以下的指代（过长的指代确实很怪），为了进一步减小可能的 span 个数，这里需要通过计算所有的 span 的 mention score 来对所有的 候选span 作进一步的修剪</p>
+<p>对于第 i 个可能的 span 计算它的 mention 得分 $s_m(i)$ ：</p>
+<ul>
+<li>
+<p>计算开始位置 $x_{FIRST(i)}$：<br>
+$$<br>
+s_m(x _{FIRST(i)}) = FFNN([x _{FIRST(i)}])<br>
+$$</p>
+</li>
+<li>
+<p>计算结束位置 $x_{LAST(i)}$​：<br>
+$$<br>
+s_m(x _{LAST(i)}) = FFNN([x _{LAST(i)}])<br>
+$$</p>
+</li>
+<li>
+<p>将此时的开始位置和结束位置的两个 embedding 直接作向量拼接再计算：<br>
+$$<br>
+s_m(x _{FIRST(i)}, x _{LAST(i)}) = FFNN_m ([x _{FIRST(i)}, x _{LAST(i)}])<br>
+$$</p>
+</li>
+<li>
+<p>最后计算综合的 mention score，也就是上述三个部分的平均：<br>
+$$<br>
+s_m(i) = [s_m (x _{FIRST(i)}) + s_m (x _{LAST(i)}) + s_m(x _{FIRST(i)}, x _{LAST(i)})]/3<br>
+$$</p>
+<p>这里的 FFNN 是一个前馈神经网络，注意上面用到的三个 FFNN 是独立训练的，各用各的参数</p>
+</li>
+</ul>
+<p>对于一篇文章共 N 个指代，此时只是选择前 λN 个得分最高的 span 作为可能的 mention，进入后续的操作</p>
+<h4 id="Mention-Proposal-Pretraining-预训练">Mention Proposal Pretraining 预训练</h4>
+<p>注意上述的操作需要经过预训练，如果此时直接将所有可能的 span 扔进去让模型从头开始会造成巨大的计算开销。这里的预训练采用三个联合的分类器：</p>
+<ul>
+<li>判断 $x_{FIRST(i)}$ 是否是 mention 的开始</li>
+<li>判断 $x_{LAST(i)}$ 是否是 mention 的结束</li>
+<li>判断 $x_{FIRST(i)}$ 和 $x_{LAST(i)}$ 是否应该合并（也就是说它俩是不是真的来自一个 mention）</li>
+</ul>
+<p>三个分类器采用联合训练的方式，损失函数就用它们再上面的 mention score 的得分情况公式来计算：<br>
+$$<br>
+\begin{align}<br>
+Loss(m) &amp;= \text{sigmoid} (s_m(x _{FIRST(i)})) \\<br>
+&amp;+ \text{sigmoid} (s_m(x _{LAST(i)})) \\<br>
+&amp;+ \text{sigmoid} (s_m(x _{FIRST(i)}, x _{LAST(i)}))<br>
+\end{align}<br>
+$$<br>
+<br></p>
+<h3 id="2-4-Mention-Linking-as-Span-Prediction-通过片段预测实现指代聚类">2.4 Mention Linking as Span Prediction 通过片段预测实现指代聚类</h3>
+<p>输入某一个来自 proposal 的指代 mention，此时 linking 的任务就是寻找到这个 mention 的前序指代，比如此时我已经有了 {特*普，他，总统，川宝，川建国}，此时给定的 mention 是川普，则我的任务就是为这个 mention 找到它的前序 = 川建国，同理川建国的前序也就是川宝</p>
+<p>此时给定 span $e_i$，计算 ei 和前一个 mention ej 的得分 $s_a(i,j)$，而这一步是通过 QA 的模式实现的，也就是基于一个三元组：$${context(X), query(q), answer(a)}$$</p>
+<p>上述的 上下文 context X 也就是输入的文档（注意是整个 document）</p>
+<p>接下来生成 query ：对于给定的 mention ei ，这里使用 ei 所在的那个句子作为 query，记作 $q(e_i)$，注意对于 query 中的 ei 本身用特殊的 token $<mention>$ 作封装</p>
+<p>此时根据上述的 context 和 query 尝试回答问题得到 a，这里可以看作是一个抽取式的 MRC 问题，但是此时的问题可以是没有答案的，将没有答案的情况归类为以下两种情形：</p>
+<ul>
+<li>此时给定的 span ei 本身就不是一个 mention</li>
+<li>ei 确实有所指代，但是这个 指代 并没有其他指向同一个实体的指代 mention</li>
+</ul>
+<p>对于给定的 span ei，它对应的 $q(e_i)$，此时我们想要计算任意一个 span j 是这个 query 的答案的得分，按如下步骤：</p>
+<ul>
+<li>将 query $q(e_i)$ 和上下文 X 作拼接，输入 BERT，用 BERT 的输出作为 $x_{FIRST(i)}$ 和 $x_{LAST(i)}$ 的表示</li>
+<li>将 FIRST 和 LAST 作向量拼接，再输入一个前馈神经网络 FFNN，得到对于问题 i 此时 span j 作为答案的得分：<br>
+$$<br>
+s_a(j \vert i) = FFNN _{j \vert i} [x _{FIRST(j) \vert i}, x _{LAST(j) \vert i}]<br>
+$$</li>
+</ul>
+<p>但是注意到 <strong>上述的打分是单向的</strong>，也就是说只判断了 span j 是否是 query i 的答案，但是如果 span i 和 span j 指向同一个实体，则此时 span i 同理应该是 query j 的答案，此时作进一步操作以实现双向的打分：同理将 span j 所在的句子作为 query，重复上述操作，得到 （span i 为 query j 的答案的得分），记作 $s_a(i|j)$​ ：<br>
+$$<br>
+s_a(i \vert j) = FFNN _{i \vert j} [x _{FIRST(i) \vert j}, x _{LAST(i) \vert j}]<br>
+$$</p>
+<p>注意这里的表示 x 还是来自于加入了 query j 的 BERT 的输出</p>
+<p>最后 span i 和 span j 的得分为上述两个得分的均值：<br>
+$$<br>
+s_a(i,j) = \frac{1}{2} (s_a (j\vert i) + s_a (i \vert j))<br>
+$$</p>
+<p>进一步考虑，如果此时 span i 和 span j 确实指向同一个实体，此时要求：1）span i 和 span j 都是 mention；2)此时它们共指</p>
+<p>则此时定义总体的 overall 得分：<br>
+$$<br>
+s(i, j) = \lambda[s_m(i) + s_m(j)] + (1-\lambda)s_a(i, j)<br>
+$$</p>
+<p>这里的 $\lambda$ 还是超参数</p>
+<br>
+<h3 id="2-5-Antecedent-Pruning-前序指代修剪">2.5 Antecedent Pruning 前序指代修剪</h3>
+<p>注意到此时给定一个文档 X ，含有 n 个 token，则此时可能的 span 是 $O(n^2)$ 级别的，而计算它们两两 span 的得分 $s(i,j)$ 就是 $O(n^4)$ 级别的</p>
+<p>此时考虑对于给定的一个 span i，我只对一部分的 span j 作打分：</p>
+<ul>
+<li>给定 span i，得到 query i，再通过 BERT ，计算 span i 和所有的 span j 的第一轮得分 = span j 确实是 query i 的答案的得分 = $s_a(j|i)$</li>
+<li>选择 $s_a(j|i)$ 得分最高的 C 个 span j 保留，继续反过来计算</li>
+</ul>
+<br>
+<h3 id="2-6-Training-整体训练">2.6 Training 整体训练</h3>
+<p>对于任意一个给定的 span ei，此时我依据它和 span j 的总得分 $s(i,j)$，选择 C 个 span j 作为 span i 的可能的前序 mention。同时这里存在一个 dummy token $\epsilon$ 来标记不存在共指的 mention</p>
+<p>这里通过数据集给出的 gold cluster 来训练模型：对于每一个给定的 ei，此时任意一个 ej 是它的共指的概率为：<br>
+$$<br>
+P(e_j) = \frac{e ^{s(i, j)}} {\sum _{j' \in C} {e ^{s(i, j')}}}<br>
+$$</p>
+<p>这里用优化（所有出现在 gold cluster 中的 mention)对应的对数似然函数来 <strong>端到端地训练模型</strong></p>
+<p>注意此时如果将一个文档中的所有 span 视作结点，则通过 s(i,j) 得到了两个结点 i 和 j 之间的 边 的权重，此时只保留每一个结点对应的所有边中最大的，则对于mention i 此时它构成的连通子图也就是所有和它指向同一个实体的 mention 的集合</p>
+<br>
+<h3 id="2-7-Data-Augmentation-using-Question-Answering-Datasets-利用-QA-数据集作数据增强">2.7 Data Augmentation using Question Answering Datasets 利用 QA 数据集作数据增强</h3>
+<p>注意到中间是通过 QA 的思路来判断两个 mention 是否是共指的，则此时解答 QA 部分的模型的能力同样十分重要</p>
+<p>这里利用 <strong>Quoref</strong> 和 <strong>SQuAD</strong> 两个数据集来对 <strong>mention linking</strong> 模块作预训练</p>
+<br>
+<br>
+<hr>
+<h2 id="3-Experiments-实验部分">3 Experiments 实验部分</h2>
+<br>
+<p>先提一下几个细节的地方：</p>
+<ul>
+<li>针对 mention linking 模块的 speaker 和 mention，这里采用两个特殊的 token $<speaker></speaker>$ 和 $<mention></mention>$ 来处理</li>
+<li>对于 SpanBERT 的部分，选用滑动窗口大小 T = 512</li>
+<li>保留的最大的可能的候选前序mention 个数 C= 50</li>
+</ul>
+<p>这里实验用到的是共指消融的两个很经典的数据集：<strong>CoNLL-2012 + GAP</strong></p>
+<br>
+<h3 id="3-1-CoNLL-2012-数据集">3.1 CoNLL-2012 数据集</h3>
+<ul>
+<li>2,802/343/348 → train / development / test</li>
+<li>包含七种不同的体裁</li>
+</ul>
+<p>训练结果如下：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101704245.png" alt="image-20231023101704245" style="zoom:60%;" />
+<p>可以看到整体的提升还是很明显的（超明显的）</p>
+<br>
+<h3 id="3-2-GAP-数据集">3.2 GAP 数据集</h3>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101736590.png" alt="image-20231023101736590" style="zoom:67%;" />
+<br>
+<h3 id="3-3-其他评价">3.3 其他评价</h3>
+<h4 id="各组件影响">各组件影响</h4>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101757541.png" alt="image-20231023101757541" style="zoom:67%;" />
+<p>可以看到 QA 部分的影响超大，可以认为这里用 QA 的思路来判断两个 mention 是否是共指的想法确实有一定合理性</p>
+<h4 id="speaker-的影响">speaker 的影响</h4>
+<p>前面提到 CorefQA 对 speaker 信息的处理和传统模型是不同的，这里来看看效果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101844368.png" alt="image-20231023101844368" style="zoom:67%;" />
+<p>论文里图咋这样了，，，总之从左到右是黄蓝黑</p>
+<p>可以看到 speaker 人数较多的时候，本文特殊的处理方式优势明显</p>
+<h4 id="召回率">召回率</h4>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101909090.png" alt="image-20231023101909090" style="zoom:67%;" />
+<p>注意这里更改了不同的 λ 以控制被保留的 mention，可以注意到即使一个 mention 一开始被略过了（也就是 λ 比较低的时候）此时它仍然可以被整个模型重新捡回来，故在 λ 比较低的时候整体模型较传统模型的提升是很明显的</p>
+<br>
+<br>
+<br/>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210319-paper-note-CorefQA/" title="CorefQA: 基于QA模式（提出问题 + 片段预测）的共指消解 &#x2F; 指代消解模型">https://baijn-nan.github.io/2023/10/30/20210319-paper-note-CorefQA/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3/" rel="tag"><i class="fa fa-tag"></i> 机器阅读理解</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210319-paper-note-CorefQA/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

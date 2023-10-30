@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210330，存档如下  Yuwei Fang, Siqi Sun, Zhe Gan, Rohit Pillai, Shuohang Wang, Jingjing Liu Microsoft Dynamics 365 AI Research; Hierarchical Graph Network for Multi-hop Question Answering 原文：https:&#x2F;&#x2F;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HGN: 基于分层图网络的多跳阅读理解模型">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210330-paper-note-HGN/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210330，存档如下  Yuwei Fang, Siqi Sun, Zhe Gan, Rohit Pillai, Shuohang Wang, Jingjing Liu Microsoft Dynamics 365 AI Research; Hierarchical Graph Network for Multi-hop Question Answering 原文：https:&#x2F;&#x2F;">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023102208496.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023102242711.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023103151315.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:37.134Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器阅读理解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023102208496.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210330-paper-note-HGN/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210330-paper-note-HGN/","path":"2023/10/30/20210330-paper-note-HGN/","title":"HGN: 基于分层图网络的多跳阅读理解模型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>HGN: 基于分层图网络的多跳阅读理解模型 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Hierarchical-Graph-Network"><span class="nav-text">2 Hierarchical Graph Network</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-overview"><span class="nav-text">2.1 overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-Graph-Construction-%E5%9B%BE%E6%9E%84%E9%80%A0%E6%A8%A1%E5%9D%97"><span class="nav-text">2.2 Graph Construction 图构造模块</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Paragraph-Selection"><span class="nav-text">Paragraph Selection</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Nodes-and-Edges"><span class="nav-text">Nodes and Edges</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-Context-Encoding-%E4%B8%8A%E4%B8%8B%E6%96%87%E7%BC%96%E7%A0%81%E6%A8%A1%E5%9D%97"><span class="nav-text">2.3 Context Encoding 上下文编码模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-Graph-Reasoning-%E5%9B%BE%E6%8E%A8%E7%90%86%E6%A8%A1%E5%9D%97"><span class="nav-text">2.4  Graph Reasoning 图推理模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-Multi-task-Prediction-Module-%E5%A4%9A%E4%BB%BB%E5%8A%A1%E9%A2%84%E6%B5%8B%E6%A8%A1%E5%9D%97"><span class="nav-text">2.5 Multi-task Prediction Module 多任务预测模块</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Experiments"><span class="nav-text">3 Experiments</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210330-paper-note-HGN/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="HGN: 基于分层图网络的多跳阅读理解模型 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          HGN: 基于分层图网络的多跳阅读理解模型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3-MRC/" itemprop="url" rel="index"><span itemprop="name">机器阅读理解(MRC)</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>3.5k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>13 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210330，存档如下</p>
+<blockquote>
+<p>Yuwei Fang, Siqi Sun, Zhe Gan, Rohit Pillai, Shuohang Wang, Jingjing Liu<br>
+Microsoft Dynamics 365 AI Research; <strong>Hierarchical Graph Network for Multi-hop Question Answering</strong></p>
+<p>原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MTEuMDM2MzEucGRm">https://arxiv.org/pdf/1911.03631.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL3l1d2Zhbi9IR04=">official ** pytorch<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<p>多跳阅读理解数据集 HotpotQA 排名第六（2021/3/29）</p>
+<br/>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<br>
+<p>相较于传统的阅读理解问题，多跳阅读理解为模型提出了新的挑战。此时为了正确回答问题，需要模型同时有从多个文档，多个段落收集信息并将各个信息进行一定的逻辑整合推理的能力。看下面一个来自于多跳阅读理解问题的经典数据集 HotpotQA 的例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023102208496.png" alt="image-20231023102208496" style="zoom:67%;" />
+<p>此时为了回答问题需要先通过问题中提到的 “Big Stone Gap” 找到 director（支持文档 S1），再顺次推理得到最后的答案（支持文档 S4），也就是说此时不仅限于传统的阅读理解数据集的要求，同时需要模型能够将多个文档的信息进行整合（比如 S1 和 S4 共同作用）再利用相关信息推理得到最后的答案。</p>
+<p>存在的挑战之一为如何融合不同粒度的信息（这里中间步骤的信息可以是文章 / 段落 / 句子 / 实体）以推理得到最后的答案。某些方法采用实体图（entity graph）的方法，通过在图上进行推理以得到最后的答案。但是注意到这样的操作存在一定的问题：</p>
+<ul>
+<li>部分模型直接选取实体图中的实体作为答案（显然不合理，答案不一定是实体）</li>
+<li>部分模型将实体的表示重新放回原本文档的表示以获得答案 ans span（举例大名鼎鼎的 DFGN），但是此时只是为了得到答案而作的操作，无法利用实体图的特点得到推理过程和对应的 evidence</li>
+<li>同理，大多数模型进行的推理过程比较简单，难以支持较为复杂的问题</li>
+</ul>
+<p>直观来说，想要从一系列文档中得到一个需要多跳推理的阅读理解问题的答案，需要经过以下几个步骤：</p>
+<ul>
+<li>选择出和问题相关的段落</li>
+<li>从段落中取出相关证据 evidence</li>
+<li>利用证据推理得到最后答案</li>
+</ul>
+<p>基于以上的思路，本文提出一个新的帮助多跳阅读理解问题解答和推理的模型：<strong>Hierarchical Graph Network (HGN)</strong>，这里使用构造分层图（hierarchical graph）的形式来整合不同粒度的信息</p>
+<p>这里包含四种类型的结点：<strong>问题 questions + 段落 paragraphs + 句子 sentence + 实体 entities</strong>，首先用预训练模型（BERT / RoBERTa）来进行上下文信息的编码（contextual encoding），得到这些分层图中结点的初始表示；再将上面得到的表示通过一个 GNN 来完成图传播，得到更新的表示后再用于后续的几个子任务。注意到最后的答案不一定就是 GNN 中的实体，此时同时使用一个 span prediction 的模块来得到最后的 ans span</p>
+<br>
+<br/>
+<hr>
+<h2 id="2-Hierarchical-Graph-Network">2 Hierarchical Graph Network</h2>
+<br>
+<h3 id="2-1-overview">2.1 overview</h3>
+<p>先来看看模型整体结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023102242711.png" alt="image-20231023102242711" style="zoom:60%;" />
+<p>此时主要分为四个主要的部分：</p>
+<ul>
+<li><strong>Graph Construction Module 图构造模块</strong>：用于构造分层图（hierarchical graph）以连接不同粒度，不同来源 source 的信息。</li>
+<li><strong>Context  Encoding Module 上下文编码模块</strong>：也就是通过一个  RoBERTa-based 的编码器得到图中各个结点的初始表示</li>
+<li><strong>Graph Reasoning Module 图推理模块</strong>：利用基于图注意力的方法（graph-attention-based）完成结点的表示更新</li>
+<li><strong>Multi-task Prediction Module 多任务预测模块</strong>：同时完成多个子任务以得到最后的答案：选择段落 + 寻找支持证据 + 实体预测 + 提取 answer span</li>
+</ul>
+<br>
+<h3 id="2-2-Graph-Construction-图构造模块">2.2 Graph Construction 图构造模块</h3>
+<p>主要目标是构造分层图，也就是得到里面的结点和边的关系</p>
+<p>这里主要分为两个部分完成：</p>
+<ul>
+<li>选取得到相关的多跳段落（multi-hop paragraphs）</li>
+<li>对选取段落的对应的 句子 / 实体 之间添加边作连接</li>
+</ul>
+<h4 id="Paragraph-Selection">Paragraph Selection</h4>
+<p>首先寻找第一跳的结点，也就是从问题出发得到的初始结点，具体按照以下步骤进行 →</p>
+<p>① 寻找 title 和问题 Q 中的任何一个 phrase 匹配的段落（title matching）</p>
+<p>② 同时训练一个段落评分器（paragraph ranker），具体就是预训练的 RoBERTa 后面接上一个二分类器，判断各个段落内确实有支持证据的概率</p>
+<p>③ 如果此时有多个段落通过 title matching 被选中，则只有评分最高的两个段落会被最后保留</p>
+<p>④ 如果此时 title matching 没有选中任何一个段落，继续搜索段落内出现了 Q 问题中涉及的实体 entity 的段落</p>
+<p>⑤ 如果还是没找到任何一个段落，此时选取通过 ranker 后评分最高的段落</p>
+<p>进一步考察第二跳的结点：第二跳的结点应该是和第一跳结点存在一定的相连关系的实体，但是这里不考虑直接依赖实体匹配（会引入大量噪声），这里利用的是第一跳的段落中的超链接（hyperlink）来寻找可能存在的第二段落，并构建两个结点之间的边，注意这里的边是双向的。</p>
+<p>同理为了避免引入过多噪音，多跳操作的每一个引入新的 paragraph 都通过 ranker 保留前 N 个评分最高的段落，其他舍弃</p>
+<h4 id="Nodes-and-Edges">Nodes and Edges</h4>
+<p>注意此时提取得到的结果本身就是自带一种层级关系的 → 比如段落内包含句子 → 句子包含实体</p>
+<p>此时共存在四种结点：<strong>问题结点 + 段落结点 + 句子结点 + 实体结点</strong></p>
+<p>此时按照如下规则建立结点和结点之间的边的关系（共七种）</p>
+<ul>
+<li>问题结点和段落结点相连（first-hop 的段落）</li>
+<li>问题结点和问题中本身出现的实体结点相连</li>
+<li>将当前段落结点（paragraph node）和该段落的所有句子结点（sentence node）相连</li>
+<li>句子结点通过句子中包含的超链接和其他段落结点相连</li>
+<li>针对每一个句子结点，此时提取出该句子中的所有实体，并将所有实体结点和该句子结点相连</li>
+<li>段落之间相连</li>
+<li>出现在同一个段落的句子之间相连</li>
+</ul>
+<br>
+<h3 id="2-3-Context-Encoding-上下文编码模块">2.3 Context Encoding 上下文编码模块</h3>
+<p>这里给定一个建立好框架的分层图，负责得到所有图中的结点的对应的初始表示（ initial representations）</p>
+<p>将所有选取出的段落 paragraphs 拼接得到上下文 C，再和当前问题 Q 向量拼接 → 扔进一个预训练好的 RoBERTa + 一个跟在后面的 bi-attention layer（也就是双向注意力），此时得到上下文表示 C 和问题表示 Q：$$Q = {q_0 , q_1, ... , q_{m-1}} \ \in R^{m<em>d}$$ $$C = {c_0 , c_1 , ... , c_{n-1}} \in R^{n</em>d}$$<br>
+这里的 m 和 n 分别是问题和上下文的长度，注意这里的每一个 qi 和 ci 都是长度为 d 的向量</p>
+<p>再把这里得到的表示 C 放进一个双向的 LSTM （ BiLSTM ，注意这里是实际上使用的时候是共享参数的），得到的输出记作 $M \in R^{n*2d}$</p>
+<p>此时通过 M 得到 C 中不同的三种结点的不同的表示（段落 paragraph + 句子 sentence + 实体 entity），此时基于 （backward LSTM 的起始结点的隐藏状态）和（forward LSTM 的结束结点的隐藏状态）分别计算 pi 和 si 和 ei：<br>
+$$<br>
+\begin{align}<br>
+p_i &amp;= MLP_1([M[P ^{(i)} _{start}][d:]; M[P ^{(i)} _{end}][d:]]) \\<br>
+s_i &amp;= MLP_2([M[P ^{(i)} _{start}][d:]; M[P ^{(i)} _{end}][d:]]) \\<br>
+e_i &amp;= MLP_3([M[P ^{(i)} _{start}][d:]; M[P ^{(i)} _{end}][d:]])<br>
+\end{align}<br>
+$$</p>
+<p>这里的 $P^{(i)}<em>{start}, S^{(i)}</em>{start}, E^{(i)}<em>{start}$ 分别表示第 i 个段落/ 句子 / 实体结点的起始位置，而 $P^{(i)}</em>{end}, S^{(i)}<em>{end}, E^{(i)}</em>{end}$ 同理对应结束位置，这里的 $[ ; ]$ 也就是向量拼接，得到的拼接结果再通过一个 MLP 层，注意这里的参数不是共享的</p>
+<p>综上，此时得到的 pi 和 si 和 ei 也就是第 i 个 段落 / 句子/ 实体结点的对应的初始表示</p>
+<p>同理这里得到问题结点的初始表示，对于 RoBERTa + 一个跟在后面的 bi-attention layer 给出的输出 Q，再通过一个池化层得到问题 Q 的初始表示：$$q = maxpooling(Q)$$</p>
+<p>注意这里满足维度都是 d，也就是 $$q, p_i , e_i ,s_i  \in R^d$$</p>
+<br>
+<h3 id="2-4-Graph-Reasoning-图推理模块">2.4  Graph Reasoning 图推理模块</h3>
+<p>负责更新此时分层图中的结点表示，也可以理解为将整体的上下文的信息都融入表示。通过在构造的分层图上进行推理实现，这里定义：</p>
+<p>$$P = {p_i} _{i=1} ^{n_p}; \text{ } S = {s_i} _{i=1} ^{n_s}; \text{ } E = {e_i} _{i=1} ^{n_e}; $$</p>
+<p>，注意这里的 np 和 ns 和 ne 分别表示三种结点出现在整个图中的数量，同理定义</p>
+<p>$$H = {q,P,S,E} \in R^{g*d}; \text{ } g = n_p+n_e+n_s+1$$</p>
+<p>这里使用 <strong>Graph Attention Network (GAT)</strong> 来模拟信息在图上传递的过程：GAT 将所有的结点作为输入，对于第 i 个结点的表示 hi，此时通过 i 结点对应的邻居结点 Ni 的情况来更新 hi 的表示得到 h'：<br>
+$$<br>
+h_i' = \text{LeakyRelu} (\sum _{j \in \mathcal{N} _i} {\alpha _{ij} h_j W})<br>
+$$</p>
+<p>这里的 $N_i$ 表示结点 i 的所有的邻居结点的集合，W 是需要学习的权重矩阵，这里的 aij 是注意力系数：<br>
+$$<br>
+\alpha _{ij} = \frac{exp(f([h_i;h_j] w _{e _{ij}}))} {\sum _{k \in \mathcal(N) _i} {exp(f([h_i;h_k] w _{e _{ik}}))}}<br>
+$$</p>
+<p>这里的 $w_{e_{ij}}$ 是关系类型 ij 对应的权重（也就是结点 i 这种结点和 结点 j 这种结点对应相连的时候的对应的关系对应的权重），这里的 $f()$ 是  LeakyRelu 激活函数，经过推理后得到所有结点的更新表示，记作 H'：</p>
+<p>$$H' = {h_0', h_1', ... , h_g'} \in R^{g*d}$$</p>
+<br>
+<p>再基于门控注意力机制对上面的信息作一个融合，得到后续用于作 span 提取的上下文表示集合 G：<br>
+$$<br>
+\begin{align}<br>
+C &amp;= Relu (MW_m) \cdot Relu(H'W' _m)^T \\<br>
+\bar{H} &amp;= Softmax(C) \cdot H' \\<br>
+G &amp;= \sigma([M; \bar{H}] W_s) \cdot Tanh([M; \bar{H}] W_t)<br>
+\end{align}<br>
+$$<br>
+这里的 $W_m, W'_m,W_s,W_t$​ 都是需要学习的权重矩阵</p>
+<br>
+<h3 id="2-5-Multi-task-Prediction-Module-多任务预测模块">2.5 Multi-task Prediction Module 多任务预测模块</h3>
+<p>得到结点的更新表示后用于几个子任务：</p>
+<ul>
+<li>基于 paragraph 结点的段落选择</li>
+<li>基于句子结点的支持证据预测</li>
+<li>基于实体结点和上下文表示 G 的答案预测</li>
+</ul>
+<p>对于 <strong>段落选择任务 = 当前的段落到底有没有包含确实的证据</strong> 和 <strong>支持证据预测任务 = 当前的句子结点到底是不是支持证据</strong>，直接通过两层的 MLP 作为一个分类器来实现：<br>
+$$<br>
+o _{sent} MLP_4(S') \text{ , } o _{para} = MLP_5(P')<br>
+$$</p>
+<p>这里的 $o_{sent} \in R^{n_s}$ 表示每一个句子是否真的是支持证据，$o_{para} \in R^{n_p}$​ 同理</p>
+<p>进一步预测当前实体 E 是不是答案，同理通过一个 MLP：<br>
+$$<br>
+o _{entity} = MLP_6(E')<br>
+$$</p>
+<p>注意这里计算的 $o_{entity}$ 本身并不帮助我们得到预测的答案，只是算算而已，用在损失函数里。注意本身正确答案可能就不是任意一个实体，则此时直接将实体的损失函数记作 0</p>
+<p>真的拿来作答案决策的为：<br>
+$$<br>
+o _{start} = MLP_7 (G) \text{ , } o _{end} = MLP_8(G)<br>
+$$</p>
+<p>这里是从综合上下文表示 G 中选择答案开始和结尾的结点，同理经过两层 MLP，分别预测当前的结点是不是答案的开始 / 结束位置</p>
+<p>同理，这里利用 G 的第一个隐藏表示配合 MLP 来预测答案类型：<br>
+$$<br>
+o _{type} = MLP_9 (G[0])<br>
+$$</p>
+<p>注意如果这里预测出来的答案类型为 yes 或者 no，就直接回答对应的 yes / no，不再返回上面预测出的起始位置 + 结束位置的答案</p>
+<br>
+<p>最后的训练是多个子任务共同训练的：<br>
+$$<br>
+\begin{align}<br>
+\mathcal{L} _{joint} &amp;= \mathcal{L} _{start} + \mathcal{L} _{end} \\<br>
+&amp;+ \lambda _1 \mathcal{L}  _{para} + \lambda_2 \mathcal{L} _{sent} + \lambda_3 \mathcal{L} _{entity} + \lambda_4 \mathcal{L} _{type}<br>
+\end{align}<br>
+$$</p>
+<p>这里的 $\lambda_1, \lambda_2, \lambda_3, \lambda_4$​ 都是超参数，损失函数用的都是交叉熵损失函数（本质都转化为了分类问题）</p>
+<br>
+<br>
+<hr>
+<h2 id="3-Experiments">3 Experiments</h2>
+<br>
+<p>这里用到的数据集是 <strong>HotpotQA</strong>，也就是经典的多跳阅读理解数据集了</p>
+<p>针对这个数据集一般存在两个子任务：</p>
+<ul>
+<li>答案预测</li>
+<li>支持证据预测</li>
+</ul>
+<p>来看看效果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023103151315.png" alt="image-20231023103151315" style="zoom:60%;" />
+<p>作者分析了几个点：</p>
+<ul>
+<li>很多错误集中于（同义但是不同表述的答案），比如 “EPA vs. Environmental Protection Agency” / “American-born vs. U.S. born”，可以认为就还是算是答对了吧这种 ...</li>
+<li>缺乏常识帮助模型进行判断，如果将常识同时加入模型或许会有一定的提升（比如模型不知道 “second” means “Code#02”</li>
+<li>在需要离散推理的部分表现不好，比如一些需要比较两个东西的问题</li>
+<li>可能有的问题存在多个正确的答案，一般模型只能够给出一个</li>
+<li>在多跳推理部分出现错误，或者明明给出了正确的对应的支持证据最后还是给了错误的答案</li>
+</ul>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210330-paper-note-HGN/" title="HGN: 基于分层图网络的多跳阅读理解模型">https://baijn-nan.github.io/2023/10/30/20210330-paper-note-HGN/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3/" rel="tag"><i class="fa fa-tag"></i> 机器阅读理解</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210330-paper-note-HGN/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210311，存档如下  Yilin Niu, Fangkai Jiao, Mantong Zhou, Ting Yao, Jingfang Xu, Minlie Huang, A Self-Training Method for Machine Reading Comprehension with Soft Evidence Extraction 论文原文：https:&#x2F;&#x2F;arxi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Self-Training MRC (STM): 基于软证据提取的机器阅读理解自训练方法">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210312-paper-note-STM/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210311，存档如下  Yilin Niu, Fangkai Jiao, Mantong Zhou, Ting Yao, Jingfang Xu, Minlie Huang, A Self-Training Method for Machine Reading Comprehension with Soft Evidence Extraction 论文原文：https:&#x2F;&#x2F;arxi">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051018029.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051056629.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051131978.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052441091.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052513753.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052532575.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052607856.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052705215.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:18.321Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器阅读理解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051018029.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210312-paper-note-STM/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210312-paper-note-STM/","path":"2023/10/30/20210312-paper-note-STM/","title":"Self-Training MRC (STM): 基于软证据提取的机器阅读理解自训练方法"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Self-Training MRC (STM): 基于软证据提取的机器阅读理解自训练方法 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-background-%E8%AE%BA%E6%96%87%E8%83%8C%E6%99%AF%E4%B8%8E%E6%80%9D%E8%B7%AF"><span class="nav-text">1.1 background 论文背景与思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-self-training-%E8%87%AA%E8%AE%AD%E7%BB%83"><span class="nav-text">1.2 self-training 自训练</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Methods-%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D"><span class="nav-text">2 Methods 模型介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-overview"><span class="nav-text">2.1 overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-Base-Model-%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3%E9%83%A8%E5%88%86%E6%A8%A1%E5%9E%8B"><span class="nav-text">2.2 Base Model  阅读理解部分模型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-1-evidence-extractor-%E8%AF%81%E6%8D%AE%E6%8F%90%E5%8F%96"><span class="nav-text">2.2.1 evidence extractor 证据提取</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#token-level-attention%EF%BC%9A"><span class="nav-text">token-level attention：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#sentence-level-attention"><span class="nav-text">sentence-level attention</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-2-answer-prediction-%E7%AD%94%E6%A1%88%E9%A2%84%E6%B5%8B"><span class="nav-text">2.2.2 answer prediction 答案预测</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-Loss-Function-%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0"><span class="nav-text">2.3 Loss Function 损失函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-1-task-specific-loss-%E4%BB%BB%E5%8A%A1%E9%83%A8%E5%88%86%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0"><span class="nav-text">2.3.1 task-specific loss 任务部分损失函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-2-evidence-loss-%E8%AF%81%E6%8D%AE%E6%8F%90%E5%8F%96%E9%83%A8%E5%88%86%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0"><span class="nav-text">2.3.2 evidence loss 证据提取部分损失函数</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-Self-Training-MRC-STM-%E6%95%B4%E4%BD%93%E6%A8%A1%E5%9E%8B"><span class="nav-text">2.4  Self-Training MRC (STM) 整体模型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Experiments-%E5%AE%9E%E9%AA%8C%E9%83%A8%E5%88%86"><span class="nav-text">3 Experiments 实验部分</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-dataset"><span class="nav-text">3.1 dataset</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-result"><span class="nav-text">3.2 result</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210312-paper-note-STM/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Self-Training MRC (STM): 基于软证据提取的机器阅读理解自训练方法 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Self-Training MRC (STM): 基于软证据提取的机器阅读理解自训练方法
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3-MRC/" itemprop="url" rel="index"><span itemprop="name">机器阅读理解(MRC)</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>3.8k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>14 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210311，存档如下</p>
+<blockquote>
+<p>Yilin Niu, Fangkai Jiao, Mantong Zhou, Ting Yao, Jingfang Xu, Minlie Huang, <strong>A Self-Training Method for Machine Reading Comprehension with Soft Evidence Extraction</strong></p>
+<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzIwMDUuMDUxODkucGRm">https://arxiv.org/pdf/2005.05189.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源代码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL1NwYXJrSmlhby9TZWxmLVRyYWluaW5nLU1SQw==">https://github.com/SparkJiao/Self-Training-MRC （official ** pytorch）<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<br>
+<h3 id="1-1-background-论文背景与思路">1.1 background 论文背景与思路</h3>
+<p>当前大多数经典的机器阅读理解模型（MRC）往往包括以下两个结构：</p>
+<ul>
+<li>证据提取器（evidence extractor）：也就是负责检索出可能对解决这个问题有帮助的部分文本，此时检索的结果可能是一个句子 / 一段片段 etc，著名的 SQuAD 和 CoQA 数据集给出的任务都是这个思路</li>
+<li>答案预测器（ answer predictor）：从前面提取出的片段种割出一个部分作为答案，也就是常见的那种任务为预测答案开始位置和结束位置的论文的思路</li>
+</ul>
+<p>也就是说，此时证据标签（evidence labels）对于整个模型的训练是很重要的，也就是说我需要知道我所提取出的部分是不是真的对的答案的出处。对于 <strong>抽取式</strong> 的阅读理解任务是很好训练的，因为本身的答案也就是从整个文本中进行抽取的。但是这一标签对于 <strong>非抽取式</strong>的机器阅读理解任务往往是难以获得的，比如答案为 Yes/No 的问题，或者一些类似于选择题 / 多选题的形式，本身不存在对应的文中的出处，也就是说只有答案，但是没有答案对应的文章部分的 span，缺少证据标签导致在这类非抽取式任务上难以直接对证据提取器进行训练。</p>
+<p>举一个非抽取式的例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051018029.png" alt="image-20231022051018029" style="zoom:60%;" />
+<p>针对这类非抽取式的机器阅读理解任务，经典方法有：</p>
+<ul>
+<li>人工标注 gold answer：费时间且贵，需要钞能力来雇佣生物型人工智能，不现实</li>
+<li>远程监督：往往会依赖于一些人工手动设置的规则或一些外部资源来生成 distant label ，有效性有待商榷</li>
+<li>强化学习：本身强化学习的训练往往是不稳定的</li>
+</ul>
+<p>为了解决针对非抽取式阅读理解问题缺乏用于训练的证据标签的问题，原文提出了一种 <strong>自训练方法</strong>（Self Training method ，STM），直观来说也就是在迭代的过程中，自动生成证据标签并用来训练我们的证据提取器。每一个迭代中，用正确答案（gold answer）和噪声标签（noisy evidence labels）同时来训练基础的机器阅读理解模型（MRC），再利用这个模型来预测伪标签（也就是我们的 MRC 认为是对的的标签，但是并没有经过人工的验证步骤），并加入监督下一轮的训练。整个过程不需要手动舍设定的规则或外部信息，同时具有较好的可迁移性。</p>
+<br>
+<h3 id="1-2-self-training-自训练">1.2 self-training 自训练</h3>
+<p>开始之前先稍微说说什么是自训练</p>
+<p>自训练本身提出就是为了用在缺少标注的数据上的，通过让模型自己学习，自己创建可能的标签，再不断训练迭代的方式来学习。</p>
+<p>具体思路如下：</p>
+<ul>
+<li>将此时的数据分为训练集和测试集和未标记数据，注意这里的训练集是得到标记的，也就是说一开始需要一定的已标记数据来启动模型，但是不需要标记所有数据，自训练的优势也就是在于可以将未标记数据利用到模型中</li>
+<li>利用训练集中的数据（已标记）来训练模型</li>
+<li>利用当前训练的模型来尝试标记没有人工标记的数据，选择正确率足够高的一些标签作为 “伪标签”，这里的伪标签的选取可以全部都要或者根据一定的置信度加权</li>
+<li>将上一步得到的 “伪标签” 数据和原始的训练数据放到一起，再一同用于训练模型</li>
+<li>重复上面的步骤，直到此时还未被标记的数据本身少于某一个数值，或者此时模型进行的预测不足以获得新的伪标签（比如新的预测对应的置信度都卡住了高不上去了）</li>
+<li>最后在测试集上测试分类器性能，注意这里的测试集是人工标注的数据</li>
+</ul>
+<p>也就是说，此时只是需要少量一部分的已标注数据（一部分作为训练集来启动模型，一部分作为测试集来进行评估），而同时可以利用大量的未标注数据，属于半监督学习的方式。</p>
+<br>
+<br>
+<hr>
+<h2 id="2-Methods-模型介绍">2 Methods 模型介绍</h2>
+<br>
+<h3 id="2-1-overview">2.1 overview</h3>
+<p>先来看看模型的整体结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051056629.png" alt="image-20231022051056629" style="zoom:60%;" />
+<p>此时有两个数据池， U 和 L，沿用自训练的思路，此时 L（labeled data） 中的数据是已经经过了标记的少量数据，而 U（unlabeled data） 中的数据是大量未标注数据，也就是说 U 中的没有对应的证据标签（答案出处）而只有正确答案</p>
+<p>整体 STM 模型的思路如下：</p>
+<ul>
+<li><strong>MRC 模型同时在 U 和 L 两个数据池上进行训练</strong>（注意这里是同时在训练的，也就是对应图中 ① 的两个箭头）</li>
+<li><strong>MRC 对未标注数据池 U 中的数据进行预测</strong>，也就是预测 U 中的只有正确答案的数据其对应的证据标签</li>
+<li><strong>Selector 进行选择</strong>，从上一步 MRC 的所有预测中选择有一定置信度的预测，将<strong>选中的预测从数据池 U 移到 L 中</strong>，这一步也就是选择伪标签并加入训练集以监督下一轮训练的部分</li>
+</ul>
+<br>
+<h3 id="2-2-Base-Model-阅读理解部分模型">2.2 Base Model  阅读理解部分模型</h3>
+<p>先来看一下 STM 中 MRC 部分模型的结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051131978.png" alt="image-20231022051131978" style="zoom:67%;" />
+<p>同理，此时由 三个部分 组成：<strong>编码层（encoder layer）+ 证据提取（evidence extractor）+ 答案预测（answer predict）</strong></p>
+<p>第一个编码层也就是用了文档 D （token 单位的）和问题 Q  的 embedding，没啥好说的，主要看看后两个</p>
+<br>
+<br>
+<h4 id="2-2-1-evidence-extractor-证据提取">2.2.1 evidence extractor 证据提取</h4>
+<p>此时将问题 Q 和文档 D 作为输入，编码层负责获得输入的上下文表示。设此时文档 D 包括句子 S：$D = {S_1 , S_2, ... , S_m}$，而 $h^D_{i,j}$ 表示文档 D 中第 i 个句子中的第 j 个单词的表示，$h^Q_i$ 为问题 Q 中的第 i 个单词的表示。</p>
+<p>encoder 层还是依赖于注意力机制，这里使用了 <strong>token 级别的 attention</strong> 和 <strong>句子级别的 attention</strong> 来获得文档的上下文表示 $h^D$：</p>
+<h5 id="token-level-attention：">token-level attention：</h5>
+<p>也就是通过注意力模块得到句子的上下文表示，这里以句子中的多个 token 为单位</p>
+<p>首先以问题 <strong>Q 为查询向量</strong>，通过打分函数 + softmax 得到权重后融合各个 token，得到最后句子的向量表示 $h_i^D$：<br>
+$$<br>
+h_i^D = \sum _{j} ^{|S_i|} {a _{i,j} h _{i, j} ^D} \text{ , } \alpha _{i, j} \varpropto exp(F^S(h^Q, h^D _{i,j}))<br>
+$$</p>
+<p>再对整个句子作<strong>自注意力</strong>，也就是利用可学习的参数将原句子投影到新的空间作为查询矩阵，这里得到句子本身的自注意力向量表示 $s_i^D$：<br>
+$$<br>
+s_i^D = \sum _j ^{|S_i|} \beta _{i, j} h _{i, j} ^D \text{ , } \beta _{i,j} \varpropto exp(w_sh _{i,j} ^D + b_s)<br>
+$$</p>
+<p>一点小细节，这里原文的打分函数用的是双线性的形式 bilinear form</p>
+<br>
+<h5 id="sentence-level-attention">sentence-level attention</h5>
+<p>也就是以 sentence 句子为单位，通过注意力计算各个句子的权重以得到整个文档 D 的表示 $h^D$：<br>
+$$<br>
+h^D  = \sum _i ^m \gamma_i h_i^D \text{ , } \gamma_i \varpropto exp(F^D (h^Q, s_i^D))<br>
+$$</p>
+<p>注意这里用的是句子 i 本身的自注意力后的向量表示 si 和问题的表示 hQ 来计算得分函数的</p>
+<p>这里其实有一点类似于那种通过问题匹配来寻找答案可能出现的范围的问题，此时这个句子的权重越高说明问题越可能来自于这里</p>
+<br>
+<h4 id="2-2-2-answer-prediction-答案预测">2.2.2 answer prediction 答案预测</h4>
+<p>注意以上两个注意力模块最后的输出实际上是最后的 $h^D$，也就是文档的向量表示，此时将文档的向量表示和问题的向量表示 $h^Q$ 一同输入来进行答案的预测</p>
+<p>如果此时是<strong>抽取式问题</strong>，也就是需要给出文档的一部分内容作为答案，则此时使用两个 MLP 多层感知机来分别预测每一个 token 的位置是 （答案的开始位置）和是（答案的结束位置）的概率，再选取答案</p>
+<p>如果此时是 <strong>Yes/No</strong> 的问题，直接使用一个简单的线性分类器；如果是 <strong>多项选择问题</strong> 则使用 MLP + softmax 的形式给出各个答案的概率</p>
+<br>
+<h3 id="2-3-Loss-Function-损失函数">2.3 Loss Function 损失函数</h3>
+<p>这里定义两个损失函数，分别对应任务的损失函数和证据提取的损失函数</p>
+<br>
+<h4 id="2-3-1-task-specific-loss-任务部分损失函数">2.3.1 task-specific loss 任务部分损失函数</h4>
+<p>这里直接使用的是极大似然法（用的是负对数的那个似然函数）<br>
+$$<br>
+L_A (D, Q, A) = -\log P(\hat {A} = A|D, Q)<br>
+$$</p>
+<p>这里的 A 是正确答案（gold answer)，而 $\hat{A}$ 是我预测的答案</p>
+<br>
+<h4 id="2-3-2-evidence-loss-证据提取部分损失函数">2.3.2 evidence loss 证据提取部分损失函数</h4>
+<p>这里的证据理解为句子级别的，也就是选出 K 个可以作为证据的句子（这里的 K 是一个预先决定的超参数）。注意因为可能有 k 个句子，故这里一步一步地计算 loss：</p>
+<ul>
+<li>选出最可能的那个句子（也就是权重最大的）</li>
+<li>在所有没有被选过的句子上计算 loss，也就是把被选过的句子 mask 掉</li>
+</ul>
+<p>重复上面的步骤 k 次，也就是每一次都从当前剩下的句子里选出一个最大的，再算剩下的。最后的 loss 是上面 k 步 loss 的平均值</p>
+<p>这里利用了一个 <strong>BP-able</strong> 来选择 top-K 最可能为证据的句子。</p>
+<p>考虑：<br>
+$$<br>
+L_E(D, Q, E) = \frac{1}{K} \sum _{k=1} ^K H(D,Q,E,M^k)<br>
+$$</p>
+<p>这里的 M 表示 mask，也就是 $M^k = {M_1^k ,...,M_m^k}$，文章 D 中共 m 个句子，而每一个 $M^k_i \in {0,-\infty }$，表示为第 k 轮是句子 i 的 mask，如果 mask = 0 表示此时这个句子还没有被选中，而选中的句子为 $-\infty$，注意第 k 轮中新被选中的句子的对应 Mk 的 mask 也是 $-\infty$​<br>
+$$<br>
+M_i^k =<br>
+\begin{cases}<br>
+-\infty &amp;i = \arg\max_j (\lambda _j ^{k-1} E_j) \\<br>
+M_i ^{k-1} &amp;otherwise<br>
+\end{cases}<br>
+$$</p>
+<p>这里的 $E_i \in {0,1}$ 用来标识当前的 第 i 个句子是不是真的是证据</p>
+<p>在每一轮都需要选择出当前所有还没有被选择的句子中的一个最可能的句子，则此时在每一轮都计算所有未被选择句子的注意力分布：<br>
+$$<br>
+\lambda _i ^k = \frac{exp(F^D (h^Q, s_i) + M_i^k)} {\sum_j (exp(F^D(h^Q, s_j) + M_j^k))}<br>
+$$</p>
+<p>这里的 si 是句子的自注意力表示，打分函数出来后经过 softmax</p>
+<p>选出句子后计算它的 loss：<br>
+$$<br>
+H(D, Q, E, M^k) = -\log \max _i (\lambda _i ^k \cdot E_i)<br>
+$$</p>
+<p>这里的 $E_i \in {0,1}$ 用来标识当前的 第 i 个句子是不是真的是证据</p>
+<p>H 是对应第 k 步的结果，最后总体的损失函数也就是 k 个 H 的均值</p>
+<br>
+<p>综上，此时总体的损失函数就是上面两种损失函数的加权组合：<br>
+$$<br>
+L = \sum _{(D,Q,A) \in U \cup L} {L_A (D, Q, A) + \eta \sum _{(D,Q,A) \in L} L_E (D,Q,A)}<br>
+$$</p>
+<p>η 本身是一个超参数</p>
+<br>
+<h3 id="2-4-Self-Training-MRC-STM-整体模型">2.4  Self-Training MRC (STM) 整体模型</h3>
+<p>现在来看看整体模型的结构：</p>
+<p>首先，<strong>利用真实答案来训练 MRC 部分的模型</strong>，这里同时用到了 U 和 L 两个数据集，训练 MRC 的时候不需要证据标签，只要直到正确答案就可以</p>
+<p>这里的 MRC 的训练用的是上面那个同时（任务导向）+（证据提取部分导向）的总的损失函数</p>
+<p><strong>进一步通过给定的（D,Q,A），也就是文章+问题+答案 来进行证据标签的标注</strong>，这里标注依赖于：<br>
+$$<br>
+\hat {E} = \arg\min _{E'} L_E {(D, Q, E')}<br>
+$$</p>
+<p>也就是说我本来是依赖真实的（是否为证据 Ei）来计算损失函数，则此时我同样可以来考虑使得损失函数最小的 Ei 是什么样的，由此得到未标记（指的是未标记证据出处)数据的证据标签的估计 $\hat{E}$</p>
+<p>则此时对于 $(D,Q,A,\hat{E})$​，这个组合的置信得分定义为：<br>
+$$<br>
+c(D, Q, A, \hat{E}) = exp(-L_A (D, Q, A)) \cdot exp(-L_E(D, Q, \hat{E}))<br>
+$$</p>
+<p>同时用到了任务导向的损失函数 和 证据标签部分的 loss</p>
+<p>而这里的 <strong>selector 的选择依据</strong>：</p>
+<ul>
+<li>要求组成上面置信得分的两个损失函数都在某一个阈值以下（防止其中一个很低而另一个不行导致的总体得分高，需要两个任务上都差不多不错）</li>
+<li>在满足 1 的情况下，达到置信得分最高</li>
+</ul>
+<p>一个小细节，在初始的时候数据池 L 实际上是空的，而证据提取器的训练是由远程监督完成的</p>
+<p>整体模型的流程如下所示：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052441091.png" alt="image-20231022052441091" style="zoom:70%;" />
+<br>
+<br>
+<hr>
+<h2 id="3-Experiments-实验部分">3 Experiments 实验部分</h2>
+<br>
+<h3 id="3-1-dataset">3.1 dataset</h3>
+<p><strong>Yes/No Question Answering (YNQA)</strong> ：二元选择回答的数据集，非抽取，包括如下几个：</p>
+<ul>
+<li>CoQA</li>
+<li>BoolQ</li>
+<li>MS MARCO</li>
+</ul>
+<p><strong>Multiple-choice MRC</strong>：多项选择的数据集</p>
+<ul>
+<li>RACE</li>
+<li>DREAM</li>
+<li>MultiRC</li>
+</ul>
+<p><strong>Open-domain QA (ODQA)</strong>：开放</p>
+<ul>
+<li>Quasar-T</li>
+</ul>
+<br>
+<h3 id="3-2-result">3.2 result</h3>
+<p>看看在几个类型上的结果：</p>
+<p>对于二元选择：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052513753.png" alt="image-20231022052513753" style="zoom:67%;" />
+<p>多项选择：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052532575.png" alt="image-20231022052532575" style="zoom:55%;" />
+<p>开放：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052607856.png" alt="image-20231022052607856" style="zoom:60%;" />
+<p>由于用到的是自学习，这里验证了一下 <strong>Error propagation</strong> 的问题，也就是一开始就预测错了，但是又被拿去作训练，导致整个模型坚定不移地学着错的东西</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052705215.png" alt="image-20231022052705215" style="zoom:67%;" />
+<p>约有 4% 的错误的证据反而被复用了（就是又被拿去学了），但是它们中有接近一半的在后面的 tire 又被纠正了，在此可以认为 STM 并不会陷入严重的 error propagation 导致整个的崩溃</p>
+<br>
+<br>
+<br/>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210312-paper-note-STM/" title="Self-Training MRC (STM): 基于软证据提取的机器阅读理解自训练方法">https://baijn-nan.github.io/2023/10/30/20210312-paper-note-STM/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3/" rel="tag"><i class="fa fa-tag"></i> 机器阅读理解</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210312-paper-note-STM/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

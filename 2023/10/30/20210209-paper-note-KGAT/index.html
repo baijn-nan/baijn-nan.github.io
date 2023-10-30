@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210209，存档如下  Xiang Wang, Xiangnan He, Yixin Cao, Meng Liu and Tat-Seng Chua (2019). KGAT: Knowledge Graph Attention Network for Recommendation. Paper in ACM DL or Paper in arXiv. In KDD&#39;19, Anc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="KGAT: 融合知识图谱的 CKG 表示 + 图注意力机制的推荐系统">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGAT/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210209，存档如下  Xiang Wang, Xiangnan He, Yixin Cao, Meng Liu and Tat-Seng Chua (2019). KGAT: Knowledge Graph Attention Network for Recommendation. Paper in ACM DL or Paper in arXiv. In KDD&#39;19, Anc">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021015348175.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021015659273.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021015735207.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021020411312.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021020513201.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021021908777.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021021957298.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021022046385.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:08:48.900Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="推荐系统">
+<meta property="article:tag" content="图模型">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021015348175.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGAT/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGAT/","path":"2023/10/30/20210209-paper-note-KGAT/","title":"KGAT: 融合知识图谱的 CKG 表示 + 图注意力机制的推荐系统"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>KGAT: 融合知识图谱的 CKG 表示 + 图注意力机制的推荐系统 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E4%BB%BB%E5%8A%A1%E8%A7%A3%E9%87%8A"><span class="nav-text">2 任务解释</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E5%AE%9A%E4%B9%89"><span class="nav-text">2.1 定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E6%A8%A1%E5%9E%8B%E7%BB%93%E6%9E%84%EF%BC%88framework%EF%BC%89"><span class="nav-text">2.2 模型结构（framework）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%A8%A1%E5%9E%8B%E8%A7%A3%E9%87%8A"><span class="nav-text">3 模型解释</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-embedding-layer-%E5%B5%8C%E5%85%A5%E5%B1%82"><span class="nav-text">3.1 embedding layer 嵌入层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Attentive-Embedding-Propagation-Layers"><span class="nav-text">3.2 Attentive Embedding Propagation Layers</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-1-%E4%BF%A1%E6%81%AF%E4%BC%A0%E6%92%AD-Information-Propagation"><span class="nav-text">3.2.1 信息传播 - Information Propagation</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-2-%E5%9F%BA%E4%BA%8E%E7%9F%A5%E8%AF%86%E7%9A%84%E6%B3%A8%E6%84%8F%E5%8A%9B-Knowledge-aware-Attention"><span class="nav-text">3.2.2 基于知识的注意力 - Knowledge-aware Attention</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-3-%E4%BF%A1%E6%81%AF%E8%81%9A%E5%90%88-Information-Aggregation"><span class="nav-text">3.2.3 信息聚合 - Information Aggregation</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E9%A2%84%E6%B5%8B%E5%B1%82%EF%BC%88prediction-layer%EF%BC%89"><span class="nav-text">3.3 预测层（prediction layer）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E6%A8%A1%E5%9E%8B%E5%AD%A6%E4%B9%A0"><span class="nav-text">4 模型学习</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGAT/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="KGAT: 融合知识图谱的 CKG 表示 + 图注意力机制的推荐系统 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          KGAT: 融合知识图谱的 CKG 表示 + 图注意力机制的推荐系统
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">推荐系统</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/%E5%9B%BE%E6%A8%A1%E5%9E%8B-%E6%8E%A8%E8%8D%90/" itemprop="url" rel="index"><span itemprop="name">图模型+推荐</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>3.8k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>14 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210209，存档如下</p>
+<blockquote>
+<p>Xiang Wang, Xiangnan He, Yixin Cao, Meng Liu and Tat-Seng Chua (2019). <strong>KGAT: Knowledge Graph Attention Network for Recommendation</strong>. Paper in ACM DL or Paper in arXiv. In KDD'19, Anchorage, Alaska, USA, August 4-8, 2019.</p>
+<p>原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MDUuMDc4NTQucGRm">https://arxiv.org/pdf/1905.07854.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL3hpYW5nd2FuZzEyMjMva25vd2xlZGdlX2dyYXBoX2F0dGVudGlvbl9uZXR3b3Jr">tensorflow official<i class="fa fa-external-link-alt"></i></span>（tensorflow / official）** <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL0x1bmFCbGFjay9LR0FULXB5dG9yY2g=">pytorch<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<p>​</p>
+<p>​</p>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<p>传统 CF （协同过滤）算法存在一定的问题：数据稀疏，冷启动，且难以将大量辅助信息（side information）加入利用，例如用户本身特征，物品特征，文本信息，社交网络信息等。</p>
+<p>当前的一种利用 side information 的解决方式为将其转化为有监督学习问题：也就是利用 embedding 将物品和用户都利用向量表示，再输入有监督学习的模型中进行处理（比如给定用户和物品，判断用户是否会点击物品的二分类问题，此时的损失函数本身就是交叉熵函数；经过 embedding 以后就是一个简单的有监督问题。）但是这样的处理方式存在一定的问题：其往往先通过 embedding，在下游推荐问题中（也就是有监督问题的处理中）往往考察的是（当前我给出的物品 item 和用户 user 过去发生过交互的物品的相似度），也就是类似于（基于物品的协同过滤）的思路；而难以将（基于用户的协同过滤），也就是寻找到和当前用户相似的用户，再进行推荐的方法进行融合。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021015348175.png" alt="image-20231021015348175"></p>
+<p>比如上图，此时想要为用户 u1 进行推荐，传统 CF 的方法能够帮助找到用户 u4 和 u5，因为他们和 u1 一样都对物品 i1 发生过行为；而利用了 side information 的有监督学习的方法往往能够找到 i2，因为其与用户曾经发生过行为的物品 i1 存在相似之处（都由 e1 导演（和 e1 的关系 r 都是类别 r2），这里的 e1 就是 side information，被利用起来了)。</p>
+<p>但是注意，此时图中仍存在没有被利用起来的信息：比如这里的 u2 和 u3 应该是和 u1 相似的用户（因为 i1 和 i2 是相似的物品）但是难以被 CF 或有监督学习的方法捕捉；同理 i3 和 i4 同理也被忽略了：此时 i3 和 i4 同理和 i1 一样都与 e1 存在交互（虽然交互的 r 联系类型不同）。<br>
+也就是说上述的方法难以捕捉到一种高阶的关系（high-order relationship），但是捕捉这样的关系同理为整体模型带来了挑战 →</p>
+<ul>
+<li>更多的实体将被引入模型带来计算的巨大压力，也就是到底选择多少的高阶关系参与进入模型训练的问题；</li>
+<li>并不是所有的高阶关系都合适，此时需要模型对这些高阶关系进行一定的筛选 / 给予其不同的权重（不然对于 i3 i4 这种被忽略的情况，似乎直接不对 r 分类就可以解决）。简单来说，需要模型给不同的高阶关系以不同的权重，在后续通过注意力机制的方式解决。</li>
+</ul>
+<p>解决： 提出 <strong>collaborative knowledge graph (CKG)方法</strong>，一般可以分为两个思路：</p>
+<ul>
+<li>基于路径的方法（path-based）：本身两个节点之间可能的路径很多，缺点在于需要人工手动设计 meta-path / meta-graph，且并没有针对推荐问题进行优化。</li>
+<li>基于规则的方法（regularization-based ），注意并不是直接将高阶关系加入到优化推荐模型中，而是以隐式方法对它们进行编码。此时一方面难以保证确实捕捉到了长距离的关系，另一方面难以保证捕捉到的长距离关系确实是有意义的（也就是难以得到较好的解释性）</li>
+</ul>
+<p>本文提出一个新的思路：<strong>知识图注意力网络（Knowledge Graph Attention Network (KGAT)）</strong>，具体优势如下：</p>
+<ul>
+<li>以端到端的方式实现建模，且较好地捕捉整体 KG 中的高阶关系</li>
+<li>以显式的方式进行，保障模型的可解释性</li>
+<li>采用了注意力机制，自动学习权重</li>
+<li>不需要像 meta-path / meta-graph 那样要求手动设计路径，优于基于路径的方法</li>
+</ul>
+<br/>
+<br/>
+<hr>
+<h2 id="2-任务解释">2 任务解释</h2>
+<h3 id="2-1-定义">2.1 定义</h3>
+<ul>
+<li>
+<p><strong>user-item 二部图（User-Item Bipartite Graph）</strong>：也就是用户和物品的历史行为记录，类似于用户-物品矩阵，但是本身以图的形式展示。定义$$\mathcal{G_1} = \lbrace (u, y_{u,i}, i) | u\in U , i\in I\rbrace$$ 这里的 U 和 I 分别表示用户和物品集合，注意此时只是讨论用户和物品之间的关系，仅限于传统 CF 讨论的关系。如果此时存在联系，则对应的 $y_{u,i} = 1$， 否则为 0。</p>
+</li>
+<li>
+<p><strong>知识图谱（Knowledge Graph）</strong> 也就是更为自由的可以由不同的类型的实体组成的整体异构信息网，本身由节点和有向边组成，节点表示实体 entity，边表示关系 relationship。将此时传统 CF 难以利用的辅助信息都融入知识图谱中进行利用（也就是 side information）</p>
+</li>
+<li>
+<p><strong>CKG（Collaborative Knowledge Graph）</strong> 也就是一个二部图和 KG 的结合体。考虑整合关系：$$\mathcal{G} = \lbrace (h,r,t) | h,t \in \epsilon',  r\in \mathcal{R}'\rbrace$$ 注意这里：$\epsilon' = \epsilon \cup \mathcal{U},\text{ } R' = R\cup\lbrace interact\rbrace \text{ }$,  ε 本身是实体 entity 集合， R 是关系集合。直观理解就是上面那个图（搬过来在下面放好放好 ↓）：在下面部分作为普通的知识图谱的同时，特别地将物品集合提出来，针对物品集合再创建 用户 - 物品 矩阵的部分，可以看作是在正常的知识图谱上接了一个 CF 的稀疏矩阵的形式。</p>
+</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021015659273.png" alt="image-20231021015659273"></p>
+<p>​</p>
+<h3 id="2-2-模型结构（framework）">2.2 模型结构（framework）</h3>
+<p><strong>输入：</strong> 构造好的 CKG，记作 $\mathcal{G}$，对应的 CF 的用户-物品矩阵 $\mathcal{G_1}$ 和知识图谱 $\mathcal{G_2}$<br>
+<strong>输出：</strong> 能够预测用户 u 点击物品 i 的概率的 prediction function</p>
+<p>基本模型结构如下图：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021015735207.png" alt="image-20231021015735207"></p>
+<p>此时分为三个主要的组成部分：</p>
+<ul>
+<li><strong>CKG embedding layer</strong>：利用构造的 CKG 结构进行嵌入表示，也就是通过 embedding 得到各个实体的向量表示。</li>
+<li><strong>attentive embedding propagation layer</strong>：通过邻居节点递归地传播 embedding来增强表示 → 通过基于知识的注意力来计算权重 → 信息聚合</li>
+<li><strong>prediction layer</strong>：也就是预测层，注意这里想要的是用户是否会点击物品，归一化后得到概率。</li>
+</ul>
+<p>​</p>
+<p>​</p>
+<hr>
+<h2 id="3-模型解释">3 模型解释</h2>
+<h3 id="3-1-embedding-layer-嵌入层">3.1 embedding layer 嵌入层</h3>
+<p>也就是通过 CKG 得到实体的向量表示。在这里使用的是 Trans 系的 embedding 方式（原论文用到的是 <strong>TransR</strong>）</p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021020411312.png" alt="image-20231021020411312"></p>
+<p>具体 Trans 系的方法还是用的很多的，这里就只简单提两句，<span class="exturl" data-url="aHR0cHM6Ly96aHVhbmxhbi56aGlodS5jb20vcC8zMjk5MzA0NA==">具体参考<i class="fa fa-external-link-alt"></i></span></p>
+<p>直观来说可以理解为，我构建一个针对三元组的评分标准：$$g(h,r,t) = || W_re_h + e_r - W_re_t||_2^2$$，此时三元组的得分 $g(h,r,t)$ 越低，我认为这个三元组是越可信的（也就是 h 和 t 之间更可能确实存在关系 r）</p>
+<p>则此时我通过不断优化下面的损失函数来训练模型得到一个更好的 embedding 表示：</p>
+<p>$$\mathcal{L}<em>{KG} = \sum</em>{(h, r, t, t')\in \mathcal{T}}{-\ln{\sigma(g(h,r,t')-g(h, r,t))}}$$</p>
+<p>也就是说上述的 loss 越小，说明 sigmoid 函数出来的结果越贴近 1，也就是 sigmoid 内部的结果很大，也就是 我随意选择的 t’ 构成的三元组（也就是随机替换掉一个有效实体构造的实际上无效的三元组 = 噪声)的得分要比正常的三元组的得分高很多，此时分越高就是越不可信的。</p>
+<br/>
+<h3 id="3-2-Attentive-Embedding-Propagation-Layers">3.2 Attentive Embedding Propagation Layers</h3>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021020513201.png" alt="image-20231021020513201"></p>
+<p>这里主要分为三个部分。输入的是 embedding 结束的 u 和 i （实体）</p>
+<br/>
+<h4 id="3-2-1-信息传播-Information-Propagation">3.2.1 信息传播 - Information Propagation</h4>
+<p>考虑：此时如果从 a 指向 b，尾节点的信息同样可以用来丰富头节点 a 的信息，此时利用 ego 网络的思路：<br>
+对于一个实体 h，此时用 $N_h$ 来表示所有以 h 为头节点的三元组的集合，也就是节点 h 的 ego 网络：$N_h = \lbrace (h,r,t) | (h,r,t)\in\mathcal{G}\rbrace$</p>
+<p>衡量 h 的 ego 网络的 embedding 表达方式，定义：$$e_{N_h} = \sum_{(h,r,t)\in N_h}{\pi(h,r,t) e_t}$$，这里的 $\pi(h,r,t)$ 也就是这个三元组对应的权重，用以控制有多少的尾节点的信息 et 可以通过 r 传递给头节点 h。也就是说（所有以 h 为头节点的三元组的集合 = h 的 ego 网络）的 e（也就是 embedding 表示） 定义为（这些三元组的尾节点的 embedding 表示的线性组合）</p>
+<br/>
+<h4 id="3-2-2-基于知识的注意力-Knowledge-aware-Attention">3.2.2 基于知识的注意力 - Knowledge-aware Attention</h4>
+<p>这里利用基于知识的注意力来计算前面需要的 $\pi(h,r,t)$：$$\pi(h,r,t) = (W_re_t)^Ttanh((W_re_h+e_r))$$ $$\pi(h,r,t) = \frac{exp(\pi(h,r,t))}{\sum_{(h,r',t')\in N_h}{exp(\pi(h,r',t'))}}$$<br>
+这里的 $W_r\in R^{d\times d}$，<br>
+则如上的计算可以理解为：到底<strong>有多少尾节点 t 的信息可以通过关系 r 传递给头节点 h，主要取决于在关系 r 空间上 h 和 t 的距离</strong>。此时距离越近越容易将 t 的信息传递给 h，在 h 的 ego 网络的 embedding 中得到更大的表示权重。<br>
+注意最后还是要 softmax 归一化得到权重。</p>
+<br>
+<h4 id="3-2-3-信息聚合-Information-Aggregation">3.2.3 信息聚合 - Information Aggregation</h4>
+<p>考虑聚合头节点本身的 embedding（也就是 eh）的信息和头节点对应的 ego 网络的 embedding（也就是 $e_{N_h}$） 来重新得到 h 结点的 embedding 表示。此时定义 h 头节点的新的 embedding 表示：$$e_h^{(1)} = f(e_h, e_{N_h})$$，这里的 $f(.)$ 可以使用以下三种可能的聚合器：</p>
+<ul>
+<li><strong>GCN 聚合</strong>：先将两个向量相加，再进行非线性的转换$$f_{GCN} = LeakyReLU(W(e_h+e_{N_h}))$$</li>
+<li><strong>GraphSage 聚合</strong>：将两个表示方法直接先接在一起，再通过非线性的转换：$$f_{GraphSage} = LeakyReLU(W(e_h||e_{N_h}))$$</li>
+<li><strong>Bi-Interaction 聚合</strong>：某种程度上是以上两种方式的合体：$$f_{Bi-Interaction} = LeakyReLU(W_1(e_h+e_{N_h}))+LeakyReLU(W_2(e_h \odot e_{N_h} ))$$，注意这里满足 $W_1, W_2 \in R^{d'\times d}$，$\odot$指的是元素一一对应相乘</li>
+</ul>
+<p>这里采用迭代的方式，也就是重复上面的过程多次：用当前的 $e_h^{(l-1)}$ 代替 eh 来计算新的 $e_h^{(l)}$，也就是满足：$$e_{N_h}^{l-1} = \sum_{(h,r,t)\in N_h} \pi(h,r,t) e_t^{(l-1)}$$ $$e_h^{(l)} = f(e_h^{(l-1)}, e_{N_h}^{(l-1)})$$</p>
+<p>注意此时对于 $e_h^{(l-1)}$，就确实是存储了节点 h 的 (l-1) 跳（l-1-hop）的信息的：举个例子，对于计算$e_h^{(1)}$的时候，因为综合了$e_{N_h}^{(0)}$ 的信息，也就是综合了 h 结点的一跳的尾节点 $e_t^{(0)}$ 的信息；但是计算 $e_h^{(2)}$ 的时候，同理会用到 h 结点的一条的尾节点更新后的信息，也就是 $e_t^{(1)}$，但是计算 $e_t^{(1)}$ 的时候，本身会用到 h 的 尾节点 t 的一跳的尾节点的信息，也就是 h 的两跳的尾节点的信息。</p>
+<p>通过不断的传递和迭代，此时将结点 h 的多跳的信息都传入了 h 的 embedding 编码中。且通过注意力机制保证了不同信息的不同权重。也就是说，既实现了高阶信息的传递，同时利用注意力机制让模型自动地为不同的高阶信息赋予不同的权重。</p>
+<br/>
+<h3 id="3-3-预测层（prediction-layer）">3.3 预测层（prediction layer）</h3>
+<p>3.2 部分经过 L 次迭代后，此时可以得到每一个 用户 u 和物品 i 的各 L 个不同的表示（包含着不同的 L 跳的信息）</p>
+<p>$$\lbrace e_u^{(1)}, ..., e_u^{(L)}\rbrace ;\text{ } \text{ } \text{ } \text{ } \lbrace e_i^{(1)}, ..., e_i^{(L)}\rbrace$$</p>
+<p>加上原来的表示 embedding，直接采用 <strong>层聚合机制</strong> 将 L+1 个表示进行拼接，得到每一个 用户 u 和物品 i 的最终表示，记作 $e_u^<em>, e_i^</em>$ $$e_u^* = e_u^{(0)}|| ... || e_u^{(L)}; \text{ } \text{ } \text{ } \text{ } e_i^* = e_i^{(0)}|| ... || e_i^{(L)}$$</p>
+<p>也就是说此时既保证了原来结点的特征（也就是 L = 0 的初始的 embedding 的结果）参与了结点的最终表示；同时可以通过调整 L 控制让多远的信息参与进入结点的 embedding 表示，以控制信息传播（propagation）的强度。</p>
+<p>预测部分就比较简单了，直接通过 u 和 i 的最终表示的内积来进行预测：$$\hat{y}(u,i) = {e_u^<em>}^T e_i^</em>$$</p>
+<br/>
+<br/>
+<hr>
+<h2 id="4-模型学习">4 模型学习</h2>
+<p>综上各个部分的损失函数：</p>
+<p>$$\mathcal{L}_{KG} = \sum _{(h, r, t, t) \in \mathcal{T}} {- \ln{\sigma(g(h,r,t')-g(h, r,t))}}$$</p>
+<p>$$\mathcal{L}_{CF} = \sum _{(u, i,j)\in\mathcal{O}}{-\ln{\sigma(\hat{y}(u,i) - \hat{y}(u,j))}}$$</p>
+<p>这里的 i 是确实和 u 发生了交互的物品，j 是没有和 u 发生交互的商品，分别用模型去预测 u 是否会和 i j 发生交互，如果一个模型效果不错，对应 i 的yhat 应该大，而对应 j 的应该小，整体经过 sigmoid 函数后应该贴近 1，取对数后贴近 0 ，此时损失函数的值较小。</p>
+<p>整体的损失函数应该就是 <strong>embedding 层的损失函数（也就是 KG 部分的损失函数)+ 推荐部分 CF 的 BPR loss + L2正则化</strong></p>
+<p>$$\mathcal{L} _{KGAT} = \mathcal{L} _{KG} + \mathcal{L} _{CF} + \lambda||\Theta||^2_2$$</p>
+<p>具体训练的时候还是采用梯度下降的方式。</p>
+<p><strong>实验结果</strong>：在所利用的三个数据集上均有提升，具体实验在这里不赘述了，参考原文。</p>
+<p>注意和同为（依赖异构网络图的模型）的 RippleNet 相比也是有所提升的；</p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021021908777.png" alt="image-20231021021908777"></p>
+<br>
+<p>最后提一下中间的几个点：</p>
+<p><strong>超参数 L 的选取</strong>：也就是到底吸纳多远的信息进入模型训练：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021021957298.png" alt="image-20231021021957298"></p>
+<p>注意并不一定是越远的信息均加入就会越好，原文提及对于 Yelp 数据集这类不是这么稀疏的数据集（densest），如果 L 过大反而容易造成重合+引入更多的噪声。</p>
+<blockquote>
+<p>It is worthwhile pointing out that KGAT slightly outperforms some baselines in the densest user group (e.g., the &lt; 2057 group of Yelp2018). One possible reason is that the preferences of users with too many interactions are too general to capture. High-order connectivity could introduce more noise into the user preferences, thus leading to the negative effect.</p>
+</blockquote>
+<br>
+<p><strong>多种聚合方式的选取（aggregator）</strong></p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021022046385.png" alt="image-20231021022046385"></p>
+<p>Bi-Interaction 作为前两种的综合好像效果不错，当然具体实验的时候如果时间允许还是均尝试一下比较好，个人感觉有时候特定数据集上的提升和开销比起来还是性价比太低 ...</p>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGAT/" title="KGAT: 融合知识图谱的 CKG 表示 + 图注意力机制的推荐系统">https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGAT/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 推荐系统</a>
+              <a href="/tags/%E5%9B%BE%E6%A8%A1%E5%9E%8B/" rel="tag"><i class="fa fa-tag"></i> 图模型</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGAT/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

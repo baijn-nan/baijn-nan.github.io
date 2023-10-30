@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210209，存档如下：  Knowledge Graph Convolutional Networks for Recommender Systems Hongwei Wang, Miao Zhao, Xing Xie, Wenjie Li, Minyi Guo. In Proceedings of The 2019 Web Conference (WWW 2019) 论文原文（a">
+<meta property="og:type" content="article">
+<meta property="og:title" content="KGCN: 知识图谱 + 图卷积神经网络的推荐系统">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGCN/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210209，存档如下：  Knowledge Graph Convolutional Networks for Recommender Systems Hongwei Wang, Miao Zhao, Xing Xie, Wenjie Li, Minyi Guo. In Proceedings of The 2019 Web Conference (WWW 2019) 论文原文（a">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021065929449.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021070742505.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021070837756.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021070901792.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:08:51.585Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="推荐系统">
+<meta property="article:tag" content="图模型">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021065929449.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGCN/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGCN/","path":"2023/10/30/20210209-paper-note-KGCN/","title":"KGCN: 知识图谱 + 图卷积神经网络的推荐系统"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>KGCN: 知识图谱 + 图卷积神经网络的推荐系统 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%A8%A1%E5%9E%8B%E8%A7%A3%E9%87%8A"><span class="nav-text">2 模型解释</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E9%97%AE%E9%A2%98%E5%8F%99%E8%BF%B0"><span class="nav-text">2.1 问题叙述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-KGCN-layer"><span class="nav-text">2.2 KGCN layer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E6%A8%A1%E5%9E%8B%E5%AD%A6%E4%B9%A0"><span class="nav-text">2.3 模型学习</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%B5%8B%E8%AF%95"><span class="nav-text">3 测试</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGCN/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="KGCN: 知识图谱 + 图卷积神经网络的推荐系统 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          KGCN: 知识图谱 + 图卷积神经网络的推荐系统
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">推荐系统</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/%E5%9B%BE%E6%A8%A1%E5%9E%8B-%E6%8E%A8%E8%8D%90/" itemprop="url" rel="index"><span itemprop="name">图模型+推荐</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>10 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210209，存档如下：</p>
+<blockquote>
+<p><strong>Knowledge Graph Convolutional Networks for Recommender Systems</strong><br>
+Hongwei Wang, Miao Zhao, Xing Xie, Wenjie Li, Minyi Guo.<br>
+In Proceedings of The 2019 Web Conference (WWW 2019)</p>
+<p>论文原文（arXiv）：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MDQuMTI1NzV2MS5wZGY=">https://arxiv.org/pdf/1904.12575v1.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2h3d2FuZzU1L0tHQ04=">tensorflow / official*<i class="fa fa-external-link-alt"></i></span>； <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL3p6YWVib2svS0dDTi1weXRvcmNo">pytorch<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br/>
+<br/>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<br/>
+<p>（先日常嘲协同过滤系算法</p>
+<p>协同过滤类的方法（CF-based methods）存在一定的不足之处，例如数据稀疏与冷启动问题。为缓解部分问题，当前大多采用知识图谱（KG）的思路，即将物品属性，用户信息，社交网络关系等多种可以辅助决策的属性（attribute）通过知识图谱的方式结合，以得到能够较好融合 side information 的网络，并同时建立各个实体之间，实体与属性之间的关系。</p>
+<p>知识图谱，在此多以异构信息网络的形式，主要有以下几个优点：</p>
+<ul>
+<li>利用更多的 side information 数据信息以帮助决策，可以更好地发掘用户的潜在兴趣</li>
+<li>此时各个实体之间存在多种多样的关系，能够帮助提高用户推荐的多样性（diversity）</li>
+<li>推荐结果具有较好的解释性</li>
+</ul>
+<p>然而将知识图谱与推荐系统本身进行融合的工作本身面临诸多挑战，当前大多使用 embedding 的方法进行融合（KGE），即将各个实体与关系转化为一定维度的向量表示（<span class="exturl" data-url="aHR0cHM6Ly96aHVhbmxhbi56aGlodS5jb20vcC8xMTQ0NzAxNDE=">主流模型参考这里<i class="fa fa-external-link-alt"></i></span>），但存在训练目标与下游任务不匹配的问题：以 Trans 系算法为例，在进行 embedding 时的训练往往基于头结点，关系与尾结点的运算关系，更适用于单纯基于 KG 的下游任务，而和推荐系统最终推荐 / 点击预测的目标是不匹配的。</p>
+<p>同理，基于路径的方法同样存在其问题，人工设计  meta-path 与 meta-graph 往往要求一定的专家建议，且有效性与全面性难以得到保证（<span class="exturl" data-url="aHR0cHM6Ly93d3cubGVpcGhvbmUuY29tL25ld3MvMjAxNzA5L2tlZnZRUGsxRk15YkNsZWIuaHRtbA==">KDD2017 这篇<i class="fa fa-external-link-alt"></i></span> 就是典型的基于路径的方法，注意下游任务往往又是回到矩阵分解 / 分解因子机的）</p>
+<p>其他方法，如 RippleNet 同样存在一定的问题（<a href="https://baijn-nan.github.io/2023/10/18/20210208-paper-note-RippleNet/">RippleNet 笔记</a>）：首先其降低了关系 R 的重要性，其直接的 $v^TRh$ 的计算方式难以捕捉关系带来的信息；其次，随着整个 ripple 的范围的扩大，此时加入模型训练的实体会大幅增多，带来巨大的计算负担和冗余。</p>
+<p>原文提出一种融合 KG 特点与图卷积神经网络的模型（KGCN），也就是在计算 KG 中某一个给定的 entity 的表示时，将邻居信息与偏差一并结合进来。主要体现出如下的优势：</p>
+<ul>
+<li>通过邻居信息的综合，可以更好地捕捉局部邻域结构（local proximity structure）并储存在各 entity 中</li>
+<li>不同邻居的权重取决于之间的关系和特定的用户 u，可以更好地体现用户的个性化兴趣，以展示 entity 的特点</li>
+</ul>
+<br>
+<br>
+<hr>
+<h2 id="2-模型解释">2 模型解释</h2>
+<br>
+<h3 id="2-1-问题叙述">2.1 问题叙述</h3>
+<p>本质上还是基于知识图谱的推荐系统，考虑此时已经得到一个构造好的，由 （实体，关系，实体）的三元组组成的知识图谱，记作 $\mathcal{G}$</p>
+<p>给定 用户 - 物品矩阵 $Y$（本身是一个稀疏矩阵） 和知识图谱 $\mathcal{G}$ ，判断用户 u 是否会对物品 v 有兴趣，也就是需要学习到一个预测方程（prediction function）：$$\hat{y}_{u,v} = \mathcal{F}(u,v |  \text{ } \Theta,Y,\mathcal{G} )$$，这里的 $\Theta$ 定义为整个模型的学习参数的集合。</p>
+<br>
+<h3 id="2-2-KGCN-layer">2.2 KGCN layer</h3>
+<p><strong>符号定义</strong>：</p>
+<ul>
+<li>$N(v)$：所有和实体 v 直接相连的（也就是一跳内的）所有实体的集合</li>
+<li>$r_{e_i, e_j}$：实体 ei 和 ej 之间的关系</li>
+<li>定义函数 $g$：某个函数，可以使得 $R^d \times R^d \to R$（比如内积），用来计算用户 u 和某个关系 r 之间的分数：$$\pi_r^u= g(r,u) $$，这里的 $d$ 是 KG 的 embedding 表示的维度。注意这里的现实含义可以理解为（计算用户对不同的关系的偏好程度），比如某个用户非常在意影片的演员，则他对于 star 这类的 relationship 会有更多的关注，也会更愿意看他喜欢的演员的电影；而对于不是很在意演员的用户，可能对导演 director 之类的 relationship 反而有更多的帮助，这里的 g 函数即用于衡量用户对于不同关系的偏好程度。</li>
+</ul>
+<p><strong>利用邻居信息的线性组合来刻画结点 v 的邻域信息</strong>，定义为：$$v_{N(v)}^u = \sum_{e\in N(v)}{ \pi_{r_{v,e}}^u e}$$，注意这里的权重 $\pi$ 同时和（v，e 两个结点之间的关系）和（此时对应的用户 u 的特点）有关。这里的权重也就是 v 对应的 N(v) 中的所有实体 e 和关系 r 的 g 函数得分再归一化，计算如下：</p>
+<p>$$\pi_{r_{v,e}}^u = \frac{exp(\pi_{r_{v,e}}^u)}{\sum_{e\in N(v)} {exp(\pi_{r_{v,e}}^u)}}$$</p>
+<blockquote>
+<p>个人感觉这里实际上和 KGAT 的第二部分有点像（<a href="https://baijn-nan.github.io/2023/10/21/20210209-paper-note-KGAT/">KGAT 笔记</a>），在 KGAT 中以 v 结点周围的 N(v) （这里的 N(v) 是所有以 v 为头结点的三元组的集合）中的实体 e （也就是尾节点）的线性组合来表示 v，具体计算各个 e 的权重的时候用的是注意力机制，可以理解为，此时决定权重的是在关系 r 的空间上，要被表示的头结点和尾节点的相似程度。但是这里更多地考虑了当前关系 r 对于用户 u 的重要性（通过上面的得分函数 g）</p>
+</blockquote>
+<p><strong>控制邻居个数</strong>：注意可能会出现某一个结点 v 存在过多的邻居的情况，会为整体的模型的计算带来巨大的压力。此时定义一个超参数 $K$，对于每一个结点 v，只是选取 K 个邻居进行计算。也就是说，此时 v 的邻域表示记作$v_{S(v)}^u$，且满足：</p>
+<p>$$S(v) \to  \lbrace e| e\in N(v)\rbrace \text{ },\text{ }\text{ } |S(v)| = \mathcal{K}$$</p>
+<p><strong>将原 embedding 与邻域表示结合起来</strong>：这里提供了几个可以用的聚合器（aggregators）：</p>
+<ul>
+<li>Sum aggregator:</li>
+</ul>
+<p>$$agg _{sum} = \sigma(W \cdot (v + v ^u _{S(v)}) + b)$$</p>
+<ul>
+<li>Concat aggregator:</li>
+</ul>
+<p>$$agg _{concat} = \sigma(W \cdot concat(v, v ^u _{S(v)}) + b)$$</p>
+<ul>
+<li>Neighbor aggregator:</li>
+</ul>
+<p>$$agg _{neighbor} = \sigma(W \cdot v ^u _{S(v)} + b)$$</p>
+<p>注意最后一个 neighbor 的聚合器直接就是利用邻域表示来代替 v 结点的表示。</p>
+<p><strong>预测层</strong>：得到各个结点的表示后，同理使用 u  v 的内积搭配 sigmoid 函数作点击概率预测，就不再赘述了。</p>
+<br/>
+<p><strong>summary</strong><br>
+下图为上面计算方法的一个示例，这里的 K = 2：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021065929449.png" style="zoom:70%" />
+<p>在参数迭代的过程中，比如对于第 h+1 次迭代，就是用第 h 次迭代时得到的实体 e 的 embedding 表示作为初始值，再更新计算当前结点 v 的邻域表示，再和第 h 次得到的 v 的邻域表示进行 aggregate，得到第 h+1 次结点 v 的邻域表示。</p>
+<blockquote>
+<p>个人感觉这段就是很像 KGAT（<a href="https://baijn-nan.github.io/2023/10/21/20210209-paper-note-KGAT/">KGAT 笔记</a>），KGAT 是每轮参数迭代的时候也是通过多次迭代的方式（以一个超参数控制）融合多跳位置的信息，再扔进去预测；这里同理，比如第 2 次训练的时候，要用到 v 的邻域 e‘ 的第一次训练的结果，而 e’ 的第一次训练的结果是包含了 e’ 的再邻域的，也就是此时将 v 的二跳的 entity 的信息综合到 v 中了，也就是可以实现多跳位置的信息的捕捉。具体看后面模型学习部分的算法流程，通过一个超参数 H 来确定要吸收几跳的信息。也就是将（得到邻域表示 + 原本表示 → 融合）的过程重复 H 遍，再往下一个流程走。</p>
+<p>此时个人感觉最大的区别还是在（邻居的权重）的计算方式上，此时是通过一个和关系，和 u 有关的得分函数 g 来计算的；而 KGAT 是通过图注意力机制，考察的是在关系 r 这个空间上，尾节点 t 和头结点 h 之间的相似程度，越相似越容易得到更大的权重，但没有考虑不同 u 对于不同 r 的偏重是不同的。</p>
+</blockquote>
+<br>
+<h3 id="2-3-模型学习">2.3 模型学习</h3>
+<p>整体模型的损失函数：</p>
+<p>$$\mathcal{L} = \sum _{u \in \mathcal{U}} {(\sum _{v:y _{uv}=1} \mathcal{J}(y _{uv}, \hat{y} _{uv}) - \sum _{i=1} ^{T^u} {E _{v_i \sim P(v_i)} \mathcal{J} (y _{uv_i}, \hat{y}  _{uv_i})})} + \lambda||\mathcal{F}||_2^2$$</p>
+<p>注意，在衡量的时候本身一个用户 u 没有发生过行为的物品数量是要远远大于发生过行为的物品数量的，对于类别不平衡问题，这里采用的是负采样。本质上损失函数就是交叉熵函数，前面部分是考虑了负采样的分布的交叉熵损失函数（也就是最后的推荐行为的损失函数 = 预测用户是否会点击 = 二分类问题)，最后带一个 L2 正则项减轻过拟合。</p>
+<p><strong>整体模型的迭代过程</strong>：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021070742505.png" style="zoom:80%"/>
+<p>这里的 $\mathcal{M}[h]$ 就是不断得到 v 对应的邻域，注意随着迭代的 h 的次数上升，是不断将多跳范围的信息都融合进入了 v 的 embedding 的。</p>
+<br/>
+<br/>
+<hr>
+<h2 id="3-测试">3 测试</h2>
+<p>实验用的数据集：还是传统的老三样</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021070837756.png" style="zoom:75%"/>
+<p>注意这里的 K 都不是很大，一般只要选择一部分的邻居来计算邻域表示本身的效果就不错。同理 H 选取也不大，如果过多跳的信息融入，一方面是计算很大，另一方面会导致重合（也就是每一个 v 都是它为中心的一大块范围的信息的融合，则不同的 v 之间会有趋同的倾向，反而是向模型中引入了噪音)。</p>
+<p>这里用 F1 和 AUC 来评价：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021070901792.png" alt="image-20231021070901792"></p>
+<p>注意这里选择不同的 aggregator （上面给了三种选择) 结果还是存在一定的差异的；</p>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGCN/" title="KGCN: 知识图谱 + 图卷积神经网络的推荐系统">https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGCN/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 推荐系统</a>
+              <a href="/tags/%E5%9B%BE%E6%A8%A1%E5%9E%8B/" rel="tag"><i class="fa fa-tag"></i> 图模型</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGCN/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210208，存档如下  RippleNet: Propagating User Preferences on the Knowledge Graph for Recommender Systems Hongwei Wang, Fuzheng Zhang, Jialin Wang, Miao Zhao, Wenjie Li, Xing Xie, Minyi Guo The 27th">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RippleNet: 知识图谱+用户偏好传播的推荐系统">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210208-paper-note-RippleNet/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210208，存档如下  RippleNet: Propagating User Preferences on the Knowledge Graph for Recommender Systems Hongwei Wang, Fuzheng Zhang, Jialin Wang, Miao Zhao, Wenjie Li, Xing Xie, Minyi Guo The 27th">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018012238468.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018012238468.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018013048938.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018013007536.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:08:46.410Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="推荐系统">
+<meta property="article:tag" content="图模型">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018012238468.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210208-paper-note-RippleNet/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210208-paper-note-RippleNet/","path":"2023/10/30/20210208-paper-note-RippleNet/","title":"RippleNet: 知识图谱+用户偏好传播的推荐系统"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>RippleNet: 知识图谱+用户偏好传播的推荐系统 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-background"><span class="nav-text">1 background</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-RippleNet"><span class="nav-text">2 RippleNet</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E6%95%B4%E4%BD%93%E6%A1%86%E6%9E%B6"><span class="nav-text">2.1 整体框架</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-RippleSet"><span class="nav-text">2.2 RippleSet</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E5%81%8F%E5%A5%BD%E4%BC%A0%E6%92%AD"><span class="nav-text">2.3 偏好传播</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E8%AE%AD%E7%BB%83%E7%AD%96%E7%95%A5"><span class="nav-text">3 训练策略</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E5%90%8E%E7%BB%AD%E8%AE%A8%E8%AE%BA"><span class="nav-text">4 后续讨论</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210208-paper-note-RippleNet/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="RippleNet: 知识图谱+用户偏好传播的推荐系统 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RippleNet: 知识图谱+用户偏好传播的推荐系统
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">推荐系统</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/%E5%9B%BE%E6%A8%A1%E5%9E%8B-%E6%8E%A8%E8%8D%90/" itemprop="url" rel="index"><span itemprop="name">图模型+推荐</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>2.6k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>9 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210208，存档如下</p>
+<blockquote>
+<p><strong>RippleNet: Propagating User Preferences on the Knowledge Graph for Recommender Systems</strong><br>
+Hongwei Wang, Fuzheng Zhang, Jialin Wang, Miao Zhao, Wenjie Li, Xing Xie, Minyi Guo<br>
+The 27th ACM International Conference on Information and Knowledge Management (CIKM 2018)</p>
+<p>原文(arXiv): <span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE4MDMuMDM0Njd2NC5wZGY=">https://arxiv.org/pdf/1803.03467v4.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码: <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2h3d2FuZzU1L1JpcHBsZU5ldA==">tensorflow / official<i class="fa fa-external-link-alt"></i></span> -  <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL3FpYmluYy9SaXBwbGVOZXQtUHlUb3JjaA==">pytorch<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>	
+<p>​</p>
+<p>​</p>
+<hr>
+<h2 id="1-background">1 background</h2>
+<p>传统基于协同过滤 (CF) 的推荐系统算法普遍存在 <strong>数据稀疏 (用户 - 物品矩阵)</strong> 和 <strong>冷启动</strong> 两个问题，且往往难以充分利用所提供的数据，如用户社交数据（social networks），用户 / 物品特征（user / item attributes），文本信息（context）</p>
+<p>为解决协同过滤带来的问题并将更多的信息（side information）引入推荐系统，利用知识图谱（KG）往往是一个能够较好地综合各类信息的选择。此时将各类实体（entity）标识为点，将实体之间的关系（relationship）标识为边（有向边，比如用户 A 关注 B 需要用有向的关系进行表示），同时考虑到存在多种不同类别的实体（可以是用户可以是物品可以是某一个tag）和不同类别的关系（用户与商品的交互，用户之间的关注关系等），构造异构信息网络，即能够较好地将不同的信息综合进入整体的信息网络。则此时一条信息可以表示为一个三元组：<strong>（头节点H，关系R，尾节点T）</strong></p>
+<p>利用知识图谱的推荐系统按实现思路在此分为两类：</p>
+<ul>
+<li>
+<p><strong>基于 embedding 的方法</strong>：也就是利用知识图谱嵌入的方法（KGE）先学习到各个实体 / 关系的嵌入 = 用一定维度的向量来表示各个结点和边，再利用向量表示来进行推荐任务（比如计算某一个物品和用户以前好评的物品的相似度 // 对于两个向量这是很好处理的 // 以决定是否需要将这个物品向用户进行推荐 etc）</p>
+<ul>
+<li>embedding 的方法分为 Trans 系的方法或基于异构信息网络的方法等，（具体的建议关键字 KGE / <span class="exturl" data-url="aHR0cHM6Ly96aHVhbmxhbi56aGlodS5jb20vcC8xMTQ0NzAxNDE=">扫盲参考<i class="fa fa-external-link-alt"></i></span>），后续推荐系统的任务基于 CF 等均可。</li>
+</ul>
+</li>
+<li>
+<p><strong>基于路径 path 的方法</strong>: 也就是将物品与用户构建为一个巨大的异构图，利用路径进行推荐（比如 meta-path / meta-graph 的方法，构建结束后再利用矩阵分解 + 分解因子机等方法进行推荐任务，<span class="exturl" data-url="aHR0cHM6Ly93d3cubGVpcGhvbmUuY29tL25ld3MvMjAxNzA5L2tlZnZRUGsxRk15YkNsZWIuaHRtbA==">参考<i class="fa fa-external-link-alt"></i></span>）但是注意此时的缺点在于要人工设计 meta-graph / meta-path，繁琐是一方面，有效性或全面性本身有待商榷。</p>
+</li>
+</ul>
+<p>在如上讨论的基础上，本文提出了新的基于知识图谱与用户偏好传播的推荐系统：<strong>RippleNet</strong>，几个优点如下：</p>
+<ul>
+<li>结合知识图谱表示，能够较好地综合辅助信息（side information）</li>
+<li>本身是端到端（end-to-end）的模型，也就是说采用的是<strong>联合训练</strong>的思路，此时embedding的部分和下游推荐系统的部分是统一用最后的损失函数训练的，换言之可以解决（明明最后的下游问题是推荐系统，但是 embedding 部分训练实际上只是一个对尾节点的预测）所带来的不匹配的问题（这也正是依次训练的缺点，<span class="exturl" data-url="aHR0cHM6Ly93d3cubXNyYS5jbi96aC1jbi9uZXdzL2ZlYXR1cmVzL2VtYmVkZGluZy1rbm93bGVkZ2UtZ3JhcGgtaW4tcmVjb21tZW5kYXRpb24tc3lzdGVtLWlp">参考<i class="fa fa-external-link-alt"></i></span>）</li>
+<li>采用了偏好传播的思路，能够更好地挖掘用户的潜在兴趣（而不单纯只是讨论用户发生了行为的那些物品，具体通过多跳的方式实现）</li>
+<li>本身针对点击预测问题，也就是给定用户和物品，预测用户是否会对物品感兴趣（本身是一个二分类问题，最后输出层应该是 softmax = 对点击概率的预测）</li>
+</ul>
+<p>​</p>
+<p>​</p>
+<hr>
+<h2 id="2-RippleNet">2 RippleNet</h2>
+<h3 id="2-1-整体框架">2.1 整体框架</h3>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018012238468.png" alt="RippleNet_model_structure"></p>
+<p>注意这里还是分为 <strong>embedding</strong> 和 <strong>推荐任务</strong> 两个部分，首先给定一个物品（item）和一个用户（user），物品经过 embedding 后的向量不断地和 KG 中该用户周围 h 跳的物品的 embedding 进行交互运算（注意这里的 H = 也就是具体用到几跳的信息本质上是一个超参数，取值后面会讨论），最后<strong>组成该用户的embedding</strong>（图中灰色的 user embedding)，再和前面的 item embedding 一起计算点击概率</p>
+<p>​</p>
+<h3 id="2-2-RippleSet">2.2 RippleSet</h3>
+<p>定义用户 u 的第 k 跳对应相关的实体集合（直观理解就是从用户出发，向外至少需要经过 k 步所有可以达到的实体的集合），表示为：</p>
+<p>$$\mathcal{E}_u^k= \lbrace t | (h,r,t) \in \mathcal{G} \text{  }and\text{  }h \in \mathcal{E_u^{k-1} } \rbrace $$</p>
+<p>同理定义用户 u 的第 k 跳对应的 ripple set：</p>
+<p>$$\mathcal{S}_u^k = \lbrace (h,r,t)|(h,r,t) \in \mathcal{G} \text{  } and \text{  } h\in \mathcal{E}_u^{k-1} \rbrace \qquad  k = 1,2,...,H$$</p>
+<p>​</p>
+<h3 id="2-3-偏好传播">2.3 偏好传播</h3>
+<p>先再放一遍整体模型的图（摆好摆好：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018012238468.png" alt="RippleNet_model_structure"></p>
+<p>先看 <strong>embedding 部分</strong>：可以采用 Trans 系列的嵌入方式，也可以直接用语义匹配等，假设此时物品 v 通过 embedding 后得到了 $v \in R^d$ (也就是得到了一个 d 维的向量表示)<br>
+考虑用户 u 的一跳的 ripple set，也就是和用户 u 在 KG 上直接相连的物品作为 h 所得到的三元组，记作 $(h_i, r_i, t_i)$，这里的 hi 也就是和 u 直接相连的物品。注意此时三元组内各个元素的大小：$$h_i \in R^d , t_i \in R^d , r_i \in R^{d\times d}$$</p>
+<p><strong>再看 Rh 和 softmax 部分</strong>：对于每一个三元组，计算对应的一个概率 $p_i$（实际上可以看作是计算每一个 i 对应的相关性以后归一化得到各个的权重，实质上衡量的是在关系 r 上，我给定的商品$v$ 和用户一跳发生过行为的物品 $h_i$ 之间的相似度）：</p>
+<p>$$p_i = softmax(v^{T}R_{i}h_{i}) = \frac{exp(v^TR_ih_i)}{\sum_{(h,r,t) \in S_u^1}{exp(v^TRh)}}$$</p>
+<p>注意此时考察的是 <strong>在关系 R 上，我给定的物品$v$ 和 用户$u$本身在 KG 上相连的物品$h_i$的相似度</strong>，也就是说不同关系下的评价是不同的。举例，如果两家餐馆存在（位于同一地区）的关系，另外两家参观存在（属于同一菜系）的关系，我们可以认为后者的关系更能够证明两家餐馆可能是相似的。</p>
+<p><strong>接下来是 t 部分</strong>：也就是利用前面得到的每一个 i 的对应权重 $p_i$，计算所有的 $S_u^1$ 中三元组尾结点 $t_i$ 的加权和：$$o_u^1 = \sum_{(h_i, r_i,t_i)\in \mathcal{S}_u^1}{p_it_i}$$</p>
+<p>注意这里的 $o_u^1$ 本身是 t 的一个加权和，而 t 是和 用户 u 在 KG 上存在一定相关关系的物品。也就是说，这里的 o 按照 CF 的思路，<strong>可以作为用户 u 的一个表示</strong>：也就是利用 用户 u 相关的产品来表示 u 用户的特征。</p>
+<p><strong>重复，得到用户表示 user embedding</strong>： 后续同理，不断重复上面的步骤，一直得到 $o_u^H$，（这里的 H 是一个超参数），则每一个 $o_u^h$ 本身都可以作为用户 u 的一个嵌入，也就是对用户 u 进行 embedding 的结果。此时将得到的 H 个向量作相加：$$u = o_u^1 + o_u^2 + ... + o_u^H$$这里的 u 也就是用户 u 的一个 embedding 表示，对应图上的 user embedding。</p>
+<p><strong>最后计算用户和物品 embedding 的相似度，完成推荐</strong>：这里直接采用向量积配合 Sigmoid 函数的形式：</p>
+<p>$$\hat{y}_{uv} = \sigma(u^Tv) = \frac{1}{1+exp(-u^Tv)}$$</p>
+<p>最后得到的就是该用户 u 对该物品 v 的点击概率</p>
+<p>​</p>
+<p>​</p>
+<hr>
+<h2 id="3-训练策略">3 训练策略</h2>
+<p>还是用梯度下降的方式进行整体的模型训练</p>
+<p>具体损失函数的推导略，原论文讲得还是比较清楚的，根本思想是需要最大化后验概率，同时将 KGE 部分（物品 v 的 embedding 部分）的似然函数包括进去，以实现端到端的训练，具体损失函数如下：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018013048938.png" alt="image-20231018013048938"></p>
+<p>注意各个符号含义：</p>
+<ul>
+<li>$V / E$:  所有的物品（item）和实体（entity）的 embedding 矩阵</li>
+<li>$R$：关系 r 的 embedding 矩阵（是 dxd 大小的）</li>
+<li>$y_{uv}$: 用户 u 和物品 v 到底有没有交互（真实的交互情况，也就是 0/1）</li>
+<li>$\lambda_1, \lambda_2$: 防止过拟合用的正则项</li>
+</ul>
+<p>也就是说，整体的 损失函数 是由三个部分组成的：第一部分是预测结果的交叉熵损失函数（也就是用户到底会不会点击的 0/1 二分类问题）；第二部分是知识图谱本身 embedding 的损失，第三部分是参数正则化损失</p>
+<p>得到损失函数后，直接利用梯度下降的方法进行模型训练</p>
+<p>整体的模型训练过程如下：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018013007536.png" alt="image-20231018013007536"></p>
+<p>​</p>
+<p>​</p>
+<hr>
+<h2 id="4-后续讨论">4 后续讨论</h2>
+<p>​</p>
+<p>这里就不赘述实验结果了，具体参考原文</p>
+<p><strong>如何选择适合的超参数 H？</strong></p>
+<p>如果跳数过大，一方面整体涉及的实体会过多，导致计算困难；另一方面会出现实体的重合（也就是发散得太远了导致不同的 ripple 之间出现重合的部分），会为整体模型引入噪音。如果过小又不能够更好地挖掘用户的潜在兴趣。论文建议 H 跳数不宜过大（在论文使用的三个数据集中 H = 2，3 就已经可以得到比较好的效果）<br>
+具体选择的时候还是可以直接通过实验来选择（每一个 H 都试一试，调参），但是一般都不会过大，并不会带来太大的计算负担</p>
+<p><strong>每一跳的时候对涉及的三元组进行采样</strong></p>
+<p>注意到如果此时 H 较大，容易涉及到过多的实体；也就是说此时可以对每一跳涉及到的三元组作采样，只使用部分三元组来训练模型，防止带来过大的计算负担。对于论文使用的数据集，每一跳的时候用 16 / 32 的 ripple set 进行模型训练就已经可以得到较好的效果。</p>
+<p>​</p>
+<p>​</p>
+<hr>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210208-paper-note-RippleNet/" title="RippleNet: 知识图谱+用户偏好传播的推荐系统">https://baijn-nan.github.io/2023/10/30/20210208-paper-note-RippleNet/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 推荐系统</a>
+              <a href="/tags/%E5%9B%BE%E6%A8%A1%E5%9E%8B/" rel="tag"><i class="fa fa-tag"></i> 图模型</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210208-paper-note-RippleNet/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>

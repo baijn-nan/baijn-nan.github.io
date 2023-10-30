@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/ico_themes/chidouren.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/ico_themes/chidouren.ico">
+  <link rel="mask-icon" href="/ico_themes/chidouren.ico" color="#222">
+  <link rel="manifest" href="/ico_themes/chidouren.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arial:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha256-CTSx/A06dm1B063156EVh15m6Y67pAjZZaQc89LLSrU=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"baijn-nan.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":true,"version":"8.18.2","exturl":true,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="原文写于 20210318，存档如下  Yichen Jiang, Nitish Joshi, Yen-Chun Chen Mohit Bansal ; UNC Chapel Hill Explore, Propose, and Assemble: An Interpretable Model for Multi-Hop Reading Comprehension 论文原文：https:&#x2F;&#x2F;arx">
+<meta property="og:type" content="article">
+<meta property="og:title" content="EPAr: 探索+提议+组装：多跳阅读理解的可解释模型">
+<meta property="og:url" content="https://baijn-nan.github.io/2023/10/30/20210318-paper-note-EPAr/index.html">
+<meta property="og:site_name" content="baijnNAN MagicMountain">
+<meta property="og:description" content="原文写于 20210318，存档如下  Yichen Jiang, Nitish Joshi, Yen-Chun Chen Mohit Bansal ; UNC Chapel Hill Explore, Propose, and Assemble: An Interpretable Model for Multi-Hop Reading Comprehension 论文原文：https:&#x2F;&#x2F;arx">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023095120511.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023095156568.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023095246334.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100056573.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100117712.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100142190.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100211603.png">
+<meta property="article:published_time" content="2023-10-31T03:59:59.000Z">
+<meta property="article:modified_time" content="2023-10-30T12:09:30.541Z">
+<meta property="article:author" content="baijnNAN">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="机器阅读理解">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png">
+
+
+<link rel="canonical" href="https://baijn-nan.github.io/2023/10/30/20210318-paper-note-EPAr/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"https://baijn-nan.github.io/2023/10/30/20210318-paper-note-EPAr/","path":"2023/10/30/20210318-paper-note-EPAr/","title":"EPAr: 探索+提议+组装：多跳阅读理解的可解释模型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>EPAr: 探索+提议+组装：多跳阅读理解的可解释模型 | baijnNAN MagicMountain</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">baijnNAN MagicMountain</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-anchor fa-fw"></i>About</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-introduction"><span class="nav-text">1 introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Model-%E6%A8%A1%E5%9E%8B%E7%BB%93%E6%9E%84"><span class="nav-text">2 Model 模型结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-overview"><span class="nav-text">2.1 overview</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-Retrieval-and-Encoding-%E6%A3%80%E7%B4%A2%E5%92%8C%E7%BC%96%E7%A0%81"><span class="nav-text">2.2 Retrieval and Encoding 检索和编码</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#retrieval-%E6%94%AF%E6%8C%81%E6%96%87%E6%A1%A3%E7%9A%84%E9%A2%84%E7%AD%9B%E9%80%89"><span class="nav-text">retrieval 支持文档的预筛选</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#encoding-%E7%BC%96%E7%A0%81%E8%A1%A8%E7%A4%BA"><span class="nav-text">encoding 编码表示</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-Document-Explorer-DE-%E6%96%87%E6%A1%A3%E6%8E%A2%E7%B4%A2"><span class="nav-text">2.3 Document Explorer (DE) 文档探索</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Read-Unit"><span class="nav-text">Read Unit</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Write-Unit"><span class="nav-text">Write Unit</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#T-hop-reasoning-tree"><span class="nav-text">T-hop + reasoning tree</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-Answer-Proposer-AP-%E7%AD%94%E6%A1%88%E6%8F%90%E8%AE%AE"><span class="nav-text">2.4 Answer Proposer (AP) 答案提议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-5-Evidence-Assembler-EA-%E8%AF%81%E6%8D%AE%E7%BB%84%E8%A3%85"><span class="nav-text">2.5 Evidence Assembler (EA) 证据组装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-6-Joint-Optimization-%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83"><span class="nav-text">2.6  Joint Optimization 模型训练</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Experiments-and-Results-%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C"><span class="nav-text">3 Experiments and Results 实验结果</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="baijnNAN"
+      src="/ico_themes/nisepanda.jpg">
+  <p class="site-author-name" itemprop="name">baijnNAN</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2JhaWpuLW5hbg==" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;baijn-nan"><i class="fab fa-github fa-fw"></i>GitHub</span>
+      </span>
+      <span class="links-of-author-item">
+        <span class="exturl" data-url="bWFpbHRvOmppbmduYW5iYWkxMDMyMjFAZ21haWwuY29t" title="Mail → mailto:jingnanbai103221@gmail.com"><i class="fa fa-envelope fa-fw"></i>Mail</span>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <span class="exturl cc-opacity" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210318-paper-note-EPAr/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
+      <meta itemprop="name" content="baijnNAN">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="EPAr: 探索+提议+组装：多跳阅读理解的可解释模型 | baijnNAN MagicMountain">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          EPAr: 探索+提议+组装：多跳阅读理解的可解释模型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/" itemprop="url" rel="index"><span itemprop="name">NLP</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/NLP/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3-MRC/" itemprop="url" rel="index"><span itemprop="name">机器阅读理解(MRC)</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="Word count in article">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">Word count in article: </span>
+      <span>4.4k</span>
+    </span>
+    <span class="post-meta-item" title="Reading time">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">Reading time &asymp;</span>
+      <span>16 mins.</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>原文写于 20210318，存档如下</p>
+<blockquote>
+<p>Yichen Jiang, Nitish Joshi, Yen-Chun Chen Mohit Bansal ; UNC Chapel Hill <strong>Explore, Propose, and Assemble: An Interpretable Model for Multi-Hop Reading Comprehension</strong></p>
+<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MDYuMDUyMTAucGRm">https://arxiv.org/pdf/1906.05210.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2ppYW5neWNUYXJoZWVsL0VQQXI=">https://github.com/jiangycTarheel/EPAr<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<br>
+<p>多跳阅读理解问题为当前的阅读理解问题提出了新的挑战，在这里首先解释以下什么是多跳阅读理解问题，这里还是借用 CogQA 论文里的例子：</p>
+<p><strong>多跳阅读理解问题</strong> 可以直观地理解为需要多次跳转，将不同的信息进行进一步整合才能得到答案的阅读理解问题。举个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png" alt="image-20231021084007009" style="zoom: 80%;" />
+<p>这个问题本身问的是导演，但是没有给出电影的名字，首先需要后面的信息去推断是哪一部电影，才能进一步去寻找该电影的导演。直观理解就是此时需要从多个文档中收集信息并经过一定的多重推导过程才能得到最后答案。</p>
+<p>简单来说，正确求解多跳阅读理解问题需要模型掌握（将来自于不同位置的信息作联合 + 统一分析）的能力，需要模型定位不同的信息（这里的信息是分散在不同的位置的），对相关的信息作整合，再将问题和文本的信息作联系。这样的任务为当前的机器阅读理解模型提出了几个新的挑战：</p>
+<ul>
+<li>此时输入的文本往往较长（甚至是多文档的，跨文档的），而大多数 MRC 模型往往难以对这么长的文本直接作处理，也就是说此时或许需要先提取问题和文本之间的逻辑关系，再有选择地构造逻辑链，再作下一步处理</li>
+<li>由于此时本身是多跳的阅读理解问题，即使在已经给定了相关的逻辑链的情况下，也需要模型能够将分布在不同位置的信息作整合，再最后给出答案</li>
+<li>考虑此时可能存在很多不同的逻辑链均能够连接分散的证据信息，需要模型衡量不同逻辑链 / 路径的不同的权重并将它们所提供的信息作整理</li>
+</ul>
+<p>传统的模型往往从如下几个思路出发来解决上述的问题：</p>
+<ul>
+<li>只着重阅读和问题相关的部分文档，而不是直接阅读全部部分的文档</li>
+<li>阅读过程中每一个 hop 只阅读一个文档，并更新整体的记忆细胞，再选择下一个文档来阅读</li>
+<li>再进行推断部分，从词语级别的角度来顺着逻辑链条来进行逻辑推断并预测最后的答案</li>
+</ul>
+<p>但是注意到上面的模型本身是存在缺陷的，举个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023095120511.png" alt="image-20231023095120511" style="zoom:80%;" />
+<p>注意上面的例子，如果此时一个问题存在多个可能的推理路径，以上传统模型的思路会造成问题：此时通过问题文本定位到文档一，但是文档一出发可以有两条可能的路径，分别对应文档 2 和 3，而此时的模型并没有能力判断到底那一条推断路径是正确的，或者可能发现某一条路径后就直接沿着推断，而并没有关注可能的多条逻辑路径。也就是说，我们希望模型可以衡量不同的推断路径的权重并综合不同路径表示的不同的信息</p>
+<p>本文提出的解决思路为：将前述 搜索文档并寻找逻辑路径 的部分循环执行多次，以得到多条发散的逻辑路径，也就是从一个点发散的，类似于树的结构。再进一步基于这个树的结构来寻找最终的预测答案：寻找所有的 根 → 叶子 的路径的综合表示，则此时得到不同的跨文档的推断路径表示，再根据这样的表示和问题之间的相关关系来寻找最后正确的路径，以引向正确的答案。通过这样的树的结构，也就将原本的跨文档的，分散的信息作了进一步的综合，不同的路径表示的也就是不同的推断逻辑。得到这样的综合信息表示后，原本的多跳阅读理解问题也就可以转化为一个简单的 QA 问题。</p>
+<p>基于上述思路，原文将三个部分作整合，提出新模型 <strong>EPAr (Explore-Propose-Assemble reader)</strong>，以通过探索（explore）+ 提议（propose）+ 整合（assemble）三个模块来实现对多跳阅读理解问题的解答</p>
+<br>
+<br>
+<hr>
+<h2 id="2-Model-模型结构">2 Model 模型结构</h2>
+<br>
+<h3 id="2-1-overview">2.1 overview</h3>
+<p>先来看看模型的整体结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023095156568.png" alt="image-20231023095156568" style="zoom:60%;" />
+<p>整个模型可以分为三个部分：</p>
+<ul>
+<li><strong>Document Explorer (DE) 文档搜索</strong>：本身是一个 T-hop 的文档搜索模型，每次选择一个文档进行阅读并更新 memory cell，再循环地选择不同的文档作为下一个阅读目标，任务为搜索所有相关的信息并组成可能的逻辑推断链条（reasoning chain）</li>
+<li><strong>Answer Proposer (AP) 答案提议</strong>：也就是基于上一步得到的逻辑链条进行逻辑推断（词级别的推断），并给出可能的答案预测</li>
+<li><strong>Evidence Assembler (EA) 证据组装</strong>：也就是同时综合所有可能的逻辑推断链条给出的证据，敲定最后的答案</li>
+</ul>
+<p>此时整体模型实际上模拟的是人类的阅读行为：先通过粗读（也就是 DE 部分）得到大概的逻辑链条，再通过当前掌握的逻辑给出几个可能的答案（AP 部分），最后通过精读敲定答案</p>
+<p>这里三个模块都有对应的损失，最后训练的时候是整体训练的，最小化三个模型的损失和</p>
+<p>进一步注意，由于原论文实验的数据集主要为 <strong>WikiHop 和 MedHop</strong>，这两个数据集对应的问题是分为两个部分的：1）subject，例如 The Haunted Castle，是问题对应的对象，记作 $q_{sub}$；2）body，也就是具体问题，一般指示的是问题对象 subject 和答案之间的关系，例如 located in the administrative territorial entity，记作 $q_{bod}$；</p>
+<p>每一个问题对应一个候选答案的集合，记作 $A = {c_1,...,c_L}$（注意这里是给出了候选答案集合的，不是抽取式的确定 span，有点让模型做选择题的意思 / 这里用到的 WikiHop 也本身就是（问题三元组，答案选择题）的形式），每一个问题存在一个 gold answer，记作 $a$，此时三者之间满足逻辑：$q_{bod}$ 表示 $q_{sub}$ 和 $a$ 之间的关系</p>
+<br>
+<h3 id="2-2-Retrieval-and-Encoding-检索和编码">2.2 Retrieval and Encoding 检索和编码</h3>
+<h4 id="retrieval-支持文档的预筛选">retrieval 支持文档的预筛选</h4>
+<p>令此时给定的文档 D 共有 N 篇，注意到如果将全部的文档都扔进系统会带来巨大的计算开销，故这里先采用一个 <strong>2-hop 的文档检索</strong> 对所有文档作筛检处理：</p>
+<ul>
+<li>首先选取和给定的问题有最短的 TF-IDF 距离的文档（这也就是 1-hop）</li>
+<li>再计算所有余下文档和第一个文档之间的 TF-IDF 距离，选择最近的 $N'-1$ 篇文档（也就是 2-hop）</li>
+</ul>
+<p>此时得到的 N‘ 篇文档则是我们会扔进模型的支持文档。注意这里预先作 retrieval 操作的意义：1）大大减少了计算开销；  2）通过预先缩小 DE 部分的搜索范围，使得 DE 部分的训练更有效</p>
+<h4 id="encoding-编码表示">encoding 编码表示</h4>
+<p>这里采用 GloVe embedding 来得到文档和问题的表示（词级别），编码维度记作 d，则此时输出三个矩阵：$X\in R^{N' * K * d}; Q_{sub} \in R^{J_s<em>d}; Q_{bod} \in R^{J_b</em>d}$</p>
+<p>再进行以下处理以得到不同角度下的信息表示：</p>
+<ul>
+<li>
+<p>通过一个 <strong>双向 LSTM-RNN</strong> 来得到文档和问题的上下文表示，隐藏单元个数设为 v，此时对于 N' 个候选文档的集合：$H = {h_1,...,h_{N'}} ； h_i \in R^{K<em>2v}$，同理对于问题：$U_{sub} \in R^{J_s</em>2v}；U_{bod} \in R^{J_b*2v}$</p>
+</li>
+<li>
+<p>利用 <strong>自注意力模块</strong> 得到  N’ 个支持文档的压缩综合表示，记作 $P = {p_1, ... , p_{N'}}$（<span class="exturl" data-url="aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L20wXzQ2NTIyNjg4L2FydGljbGUvZGV0YWlscy8xMTQ1MDE3MjA=">自注意力部分看这里<i class="fa fa-external-link-alt"></i></span>）</p>
+</li>
+<li>
+<p>对于候选答案集合 A 中的任意一个候选答案 ci，找到 ci 在支持文档集合 H 中第一次被提及的位置（也就是 H 中第一个提及了 ci 的文档）（这里作者表示用了不同位置的 mention 做实验，结果差距不大），将该文档中对 ci 包含的几个词（这里的 ci 可以是多个单词）的 embedding 做 <strong>平均</strong>（也就是多个向量的元素对元素的平均，得到一个新的向量），将平均的 embedding 作为候选答案 ci 的 embedding</p>
+</li>
+</ul>
+<br>
+<h3 id="2-3-Document-Explorer-DE-文档探索">2.3 Document Explorer (DE) 文档探索</h3>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023095246334.png" alt="image-20231023095246334" style="zoom:80%;" />
+<p>本质是一个层级的记忆网络，主体利用的为 GRU，目标是通过循环建立多文档的逻辑链（reasoning chain）。在每一步的时候都选择一个和当前的记忆状态相关联的文档并更新内部记忆</p>
+<h4 id="Read-Unit">Read Unit</h4>
+<p>先计算一个衡量候选文档（这里用前面得到的文档自注意力处理后的 P 来表示）和当前记忆状态 m 相关程度的分布，这里采用的是双线性的方法计算相似度，具体如下：<br>
+$$<br>
+\begin{align}<br>
+&amp;x_n = p_n^T W_r m^t \\<br>
+&amp;\chi  = \text{softmax}(x) \\<br>
+&amp;P(d_i) = \chi_i<br>
+\end{align}<br>
+$$</p>
+<p>得到分布 P 后，通过<strong>采样</strong>的方式选取出一个文档来作为后续处理的目标文档，记作 di（注意这里每次只是对一个文档进行操作）</p>
+<h4 id="Write-Unit">Write Unit</h4>
+<p>计算上一步得到的目标文档 di 中每一个词表示 hi 和当前记忆状态 m 的相关程度，并得到一个关联程度的分布 ω，计算方式如下：<br>
+$$<br>
+\begin{align}<br>
+w_k &amp;= h_k^T W_w m \\<br>
+\omega &amp;= \text{softmax}(w)<br>
+\end{align}<br>
+$$</p>
+<p>通过分布 ω  对每一个词表示 hi 作加权整合，得到进一步的文档 di 的表示 $\tilde{h}$​，将这一表示和当前的记忆状态 m 一起扔进 GRU，更新记忆状态 m<br>
+$$<br>
+\begin{align}<br>
+\tilde{h} &amp;= \sum _{k=1} ^K h_k\omega_k \\<br>
+m ^{t+1} &amp;= GRU(\tilde{h}, m^t)<br>
+\end{align}<br>
+$$</p>
+<h4 id="T-hop-reasoning-tree">T-hop + reasoning tree</h4>
+<p>此时将上述步骤重复 T 次，要求每一次选择的目标文档 di 都是没有被选择过的，则此时可以得到 T 个不重复的文档组成的序列，记作 $\hat{H} = {\hat{h}_1, ... , \hat{h}_T}$，每更新一次记忆状态 m 就选取出一个文档 hi，上述序列展示了 T-hop 的一个文档选取，且得到的序列 $\hat{H}$ 本身也就是一条文档的逻辑推断链条（reasoning chain）</p>
+<p>将上述步骤再重复多次，此时可以得到多个 reasoning chain，组成文档搜索的 reasoning tree，此时每一个从根到叶子的路径都是一个可能的答案推断逻辑</p>
+<br>
+<h3 id="2-4-Answer-Proposer-AP-答案提议">2.4 Answer Proposer (AP) 答案提议</h3>
+<p>每一次选取一条 reasoning tree 中的路径（也就是一条 reasoning chain）作为输入，并从这条 chain 的最后一个文档 $h_T$ 中给出一个可能的答案</p>
+<p>此时记最后一个文档 $h_T\in R^{K*2v}$，则先将 h_T 放入一个 <strong>LSTM-RNN</strong> 并经过注意力编码（注意这里是前面的 T-1 个文档参与的注意力）以得到 ${h_1,...,h_{T-1}}$-aware 的表示，记作 y</p>
+<p>同时计算文档表示 $h_T$ 中每一个词 hi 和当前的问题表示之间的相关关系，以得到相似程度的分布，并利用对应的权重计算得到新的词表示的集合，记作 $\tilde{h}_T = {h_T^1, ... , h_T^K}$</p>
+<p>此时选择所有的候选答案集 A 中和上述得到的 $\tilde{h}_T$ 最为相似的候选答案 ci 作为此时给出的预测答案</p>
+<p>注意这里的计算方式：<br>
+$$<br>
+\begin{align}<br>
+e_i^k &amp;= v^T \tanh(W_h \hat{h} ^i _{cct} + W_s s^k + b) \\<br>
+a^k &amp;= \text{softmax}(e^k) ; \text{ } c^k = \sum_i {a_i^k h^i _{cct}} \\<br>
+y^k &amp;= LSTM(\hat{h} _T ^{k-1} , s ^{k-1}, c ^{k-1}) \\<br>
+w^k &amp;= \alpha(y^k, u_s) + \alpha(y^k, u_b); \text{ } \epsilon = \text{softmax}(\omega) \\<br>
+a &amp;= \sum _{k-1} ^K \hat{h}_T^k \epsilon_k; \text{ } Score_l = \beta(c_l, a)<br>
+\end{align}<br>
+$$</p>
+<p>这里的 $\hat{h}<em>{cct}^i = [\hat{h}</em>{1,..., T-1}]$ 是所有的前 T-1 个文档的向量拼接（在词的 dimension 上拼接)，$u_s$ 和 $u_b$ 分别是 $U_{sub}$ 和 $U_{bod}$ 的最终表示，$s^k$ 是 LSTM 第 k 步隐藏层的输出，此时计算每一个 $c_l \in A$ 对应的 $score_l$，选择得分最高的 $c_l$ 作为此时的答案预测结果</p>
+<p>注意这里得到了整个逻辑链条上的文档的综合表示，也就是说并不是只考察了整个逻辑链条的最后 leaf 的文档 $h_T$，而是将整个逻辑链条的序列均纳入考虑，并综合表示了 root 文档和 leaf 文档之间的交互关系</p>
+<p>综上，此时不断从 reasoning tree 中选择不同的 reasoning chain，重复进行 AP 的操作，则可以得到多个逻辑链条对应的多个预测答案 $c_l$</p>
+<br>
+<h3 id="2-5-Evidence-Assembler-EA-证据组装">2.5 Evidence Assembler (EA) 证据组装</h3>
+<p>注意因为此时存在多个可能的逻辑推理链条，可以得到多个可能的答案。这里通过 EA 来实现多条逻辑链提供的信息的聚合，并进一步从上面得到的多个 $c_l$ 中拍板得到最终的预测结果</p>
+<p>首先将所有的包含了任意一个候选答案 $c_l$ 的句子都提取出来，组成一个新的文档 h’，这里的 文档 h’ 也就是一个信息高度集中的文档。进一步利用一个双向注意力流模型（bidirectional attention flow model (Seo et al., 2017)）来计算文档 h' 中每一个词的权重，并得到加权的词表示，记作 $\tilde{h'} = {h'^1,...,h'^K}$</p>
+<p>最后计算每一个候选答案 $c_l$ 和这里的 $\tilde{h'}$ 的相似度，选择相似度最高的一个答案为最终预测</p>
+<br>
+<h3 id="2-6-Joint-Optimization-模型训练">2.6  Joint Optimization 模型训练</h3>
+<p>这里先得到每一个部分（共三个部分）的损失函数，再整体优化三个损失函数的加和</p>
+<p>注意到 DE 实际上存在一个按分布 sample 文档的步骤，故这里使用弱监督的方式来评价。这里用（同问题有着最近的 TF-IDF 距离的文档）来监督每条 reasoning chain 的第一个文档，再用（至少提到了一次正确答案的文档）来监督每条 reasoning chain 的最后一个文档，这样的评判方式可以让 DE 学会如何从问题出发，通过某种逻辑链寻找到正确答案。注意在监督最后一个文档的时候，提到了正确答案的文档可能有很多，这里采用随机抽样的方式选择一个</p>
+<p>而对于 AP 和 EA 部分，由于给出的直接就是候选答案，则直接用交叉熵函数来作为损失函数</p>
+<br>
+<br>
+<hr>
+<h2 id="3-Experiments-and-Results-实验结果">3 Experiments and Results 实验结果</h2>
+<br>
+<p>这里选用的数据集为 <strong>WikiHop</strong> 和 <strong>MedHop</strong>，这里的两个数据集均包含需要多跳推理才能解答的多跳阅读理解问题，且在 WikiHop 中是标名了当前的答案是否需要多跳获得的（也就是 single 或 multiple 的标签）</p>
+<p>来看看在 WikiHop 上的结果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100056573.png" alt="image-20231023100056573" style="zoom:70%;" />
+<p>可以看到提升还是有的，但是到底算不算特别出色有点尴尬（</p>
+<p>注意到这里 WikiHop 数据集标注了是否是多跳阅读理解问题，来看看效果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100117712.png" alt="image-20231023100117712" style="zoom:80%;" />
+<p>可以看到上述的方法在解决多跳阅读理解问题上确实提升明显</p>
+<p>再看看MedHop：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100142190.png" alt="image-20231023100142190" style="zoom:80%;" />
+<p>注意到这里整体模型的设计使得最后答案选择的 <strong>可解释性</strong> 得到了保障（最后倒数几页终于提到题目里的可解释模型了 ...）由于此时最后被选择到的答案对应的 reasoning chain 是十分明确的，此时可以通过被选定的 reasoning chain 很清楚地了解到机器对当前答案的推断思路</p>
+<p>来一个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100211603.png" alt="image-20231023100211603" style="zoom:65%;" />
+<p>这个例子本身存在多条可能的推断路径，且指向了多个不同的答案，可以明显地展示出当前模型设计的优势</p>
+<br>
+<br>
+<br>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>Post author:  </strong>baijnNAN
+  </li>
+  <li class="post-copyright-link">
+      <strong>Post link: </strong>
+      <a href="https://baijn-nan.github.io/2023/10/30/20210318-paper-note-EPAr/" title="EPAr: 探索+提议+组装：多跳阅读理解的可解释模型">https://baijn-nan.github.io/2023/10/30/20210318-paper-note-EPAr/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <span class="exturl" data-url="aHR0cHM6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LW5jLXNhLzQuMC9kZWVkLnpo"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</span> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"><i class="fa fa-tag"></i> NLP</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E9%98%85%E8%AF%BB%E7%90%86%E8%A7%A3/" rel="tag"><i class="fa fa-tag"></i> 机器阅读理解</a>
+          </div>
+
+        
+
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2023</span>
+    <span class="with-love">
+      <i class="fa fa-anchor"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">baijnNAN</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quicklink/2.3.0/quicklink.umd.js" integrity="sha256-yvJQOINiH9fWemHn0vCA5lsHWJaHs6/ZmO+1Ft04SvM=" crossorigin="anonymous"></script>
+  <script class="next-config" data-name="quicklink" type="application/json">{"enable":true,"home":true,"archive":true,"delay":true,"timeout":3000,"priority":true,"url":"https://baijn-nan.github.io/2023/10/30/20210318-paper-note-EPAr/"}</script>
+  <script src="/js/third-party/quicklink.js"></script>
+
+</body>
+</html>
