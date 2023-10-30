@@ -449,7 +449,7 @@ var mySwiper = new Swiper('.swiper',{
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20221125-summary-patternmatchKMP/">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210209-paper-note-KGAT/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
@@ -467,7 +467,7 @@ var mySwiper = new Swiper('.swiper',{
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/10/30/20221125-summary-patternmatchKMP/" class="post-title-link" itemprop="url">模式匹配：从 BF 到 KMP（图解 + 代码）</a>
+          <a href="/2023/10/30/20210209-paper-note-KGAT/" class="post-title-link" itemprop="url">KGAT: 融合知识图谱的 CKG 表示 + 图注意力机制的推荐系统</a>
         </h2>
 
         <div class="post-meta-container">
@@ -478,7 +478,7 @@ var mySwiper = new Swiper('.swiper',{
       </span>
       <span class="post-meta-item-text">Posted on</span>
 
-      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+      <time title="Created: 2023-10-30 23:59:31" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:31-04:00">2023-10-30</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -486,11 +486,15 @@ var mySwiper = new Swiper('.swiper',{
       </span>
       <span class="post-meta-item-text">In</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E5%9F%BA%E7%A1%80%E6%95%B4%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">基础整理</span></a>
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
         </span>
           , 
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E5%9F%BA%E7%A1%80%E6%95%B4%E7%90%86/%E7%AE%97%E6%B3%95%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">算法基础</span></a>
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">推荐系统</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/%E5%9B%BE%E6%A8%A1%E5%9E%8B-%E6%8E%A8%E8%8D%90/" itemprop="url" rel="index"><span itemprop="name">图模型+推荐</span></a>
         </span>
     </span>
 
@@ -500,14 +504,14 @@ var mySwiper = new Swiper('.swiper',{
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">Word count in article: </span>
-      <span>3.3k</span>
+      <span>3.8k</span>
     </span>
     <span class="post-meta-item" title="Reading time">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">Reading time &asymp;</span>
-      <span>12 mins.</span>
+      <span>14 mins.</span>
     </span>
 </div>
 
@@ -518,14 +522,15 @@ var mySwiper = new Swiper('.swiper',{
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>原文写于 20221125，存档如下</p>
+          <p>原文写于 20210209，存档如下</p>
 <blockquote>
-<p>KMP 真的一看就懂一做就错三天全忘 好像青年痴呆</p>
-<p>遂烂笔头之</p>
+<p>Xiang Wang, Xiangnan He, Yixin Cao, Meng Liu and Tat-Seng Chua (2019). <strong>KGAT: Knowledge Graph Attention Network for Recommendation</strong>. Paper in ACM DL or Paper in arXiv. In KDD'19, Anchorage, Alaska, USA, August 4-8, 2019.</p>
+<p>原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MDUuMDc4NTQucGRm">https://arxiv.org/pdf/1905.07854.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL3hpYW5nd2FuZzEyMjMva25vd2xlZGdlX2dyYXBoX2F0dGVudGlvbl9uZXR3b3Jr">tensorflow official<i class="fa fa-external-link-alt"></i></span>（tensorflow / official）** <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL0x1bmFCbGFjay9LR0FULXB5dG9yY2g=">pytorch<i class="fa fa-external-link-alt"></i></span></p>
 </blockquote>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/10/30/20221125-summary-patternmatchKMP/#more" rel="contents">
+              <a class="btn" href="/2023/10/30/20210209-paper-note-KGAT/#more" rel="contents">
                 Read more &raquo;
               </a>
             </div>
@@ -556,7 +561,7 @@ var mySwiper = new Swiper('.swiper',{
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20231019-casual-adbuninstall/">
+    <link itemprop="mainEntityOfPage" href="https://baijn-nan.github.io/2023/10/30/20210208-paper-note-RippleNet/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/ico_themes/nisepanda.jpg">
@@ -574,7 +579,7 @@ var mySwiper = new Swiper('.swiper',{
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/10/30/20231019-casual-adbuninstall/" class="post-title-link" itemprop="url">adb 调试清理安卓系统预装 (附三星禁用list - OneUI5.1 + 安卓13)</a>
+          <a href="/2023/10/30/20210208-paper-note-RippleNet/" class="post-title-link" itemprop="url">RippleNet: 知识图谱+用户偏好传播的推荐系统</a>
         </h2>
 
         <div class="post-meta-container">
@@ -585,7 +590,7 @@ var mySwiper = new Swiper('.swiper',{
       </span>
       <span class="post-meta-item-text">Posted on</span>
 
-      <time title="Created: 2023-10-30 23:59:59" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:59-04:00">2023-10-30</time>
+      <time title="Created: 2023-10-30 23:59:30" itemprop="dateCreated datePublished" datetime="2023-10-30T23:59:30-04:00">2023-10-30</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -593,11 +598,15 @@ var mySwiper = new Swiper('.swiper',{
       </span>
       <span class="post-meta-item-text">In</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/friends%E6%97%A5%E5%B8%B8/" itemprop="url" rel="index"><span itemprop="name">friends日常</span></a>
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">论文笔记</span></a>
         </span>
           , 
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/friends%E6%97%A5%E5%B8%B8/%E6%88%91%E5%92%8C%E6%88%91%E7%9A%84%E4%B8%89%E6%A1%91/" itemprop="url" rel="index"><span itemprop="name">我和我的三桑</span></a>
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index"><span itemprop="name">推荐系统</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/%E5%9B%BE%E6%A8%A1%E5%9E%8B-%E6%8E%A8%E8%8D%90/" itemprop="url" rel="index"><span itemprop="name">图模型+推荐</span></a>
         </span>
     </span>
 
@@ -607,14 +616,14 @@ var mySwiper = new Swiper('.swiper',{
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">Word count in article: </span>
-      <span>1.4k</span>
+      <span>2.6k</span>
     </span>
     <span class="post-meta-item" title="Reading time">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">Reading time &asymp;</span>
-      <span>5 mins.</span>
+      <span>9 mins.</span>
     </span>
 </div>
 
@@ -625,15 +634,17 @@ var mySwiper = new Swiper('.swiper',{
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
-<p>找工焦虑，转移注意力嚯嚯！</p>
+          <p>原文写于 20210208，存档如下</p>
+<blockquote>
+<p><strong>RippleNet: Propagating User Preferences on the Knowledge Graph for Recommender Systems</strong><br>
+Hongwei Wang, Fuzheng Zhang, Jialin Wang, Miao Zhao, Wenjie Li, Xing Xie, Minyi Guo<br>
+The 27th ACM International Conference on Information and Knowledge Management (CIKM 2018)</p>
+<p>原文(arXiv): <span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE4MDMuMDM0Njd2NC5wZGY=">https://arxiv.org/pdf/1803.03467v4.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码: <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2h3d2FuZzU1L1JpcHBsZU5ldA==">tensorflow / official<i class="fa fa-external-link-alt"></i></span> -  <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL3FpYmluYy9SaXBwbGVOZXQtUHlUb3JjaA==">pytorch<i class="fa fa-external-link-alt"></i></span></p>
 </blockquote>
-<p>年初三桑更新多了预装游戏助推器，会跟着所有 google play 注册的游戏自启动，本来不太在意的但 pjsk 三周年更新后老是打歌途中反复跳通知 ... 断了第二次 fc 后痛定思痛，今天白刀子必须见血（舔</p>
-<p>target：以 (相对) 安全 / 不root留保修/ 可恢复 的方式清理不需要的预装app</p>
-<p>系统：三星s21国行 / OneUI5.1 / 安卓 13 + win10</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/10/30/20231019-casual-adbuninstall/#more" rel="contents">
+              <a class="btn" href="/2023/10/30/20210208-paper-note-RippleNet/#more" rel="contents">
                 Read more &raquo;
               </a>
             </div>
