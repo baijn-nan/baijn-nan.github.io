@@ -1596,221 +1596,6 @@ $$</p>
       </tags>
   </entry>
   <entry>
-    <title>Self-Training MRC (STM): 基于软证据提取的机器阅读理解自训练方法</title>
-    <url>/2023/10/30/20210312-paper-note-STM/</url>
-    <content><![CDATA[<p>原文写于 20210311，存档如下</p>
-<blockquote>
-<p>Yilin Niu, Fangkai Jiao, Mantong Zhou, Ting Yao, Jingfang Xu, Minlie Huang, <strong>A Self-Training Method for Machine Reading Comprehension with Soft Evidence Extraction</strong></p>
-<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzIwMDUuMDUxODkucGRm">https://arxiv.org/pdf/2005.05189.pdf<i class="fa fa-external-link-alt"></i></span></p>
-<p>源代码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL1NwYXJrSmlhby9TZWxmLVRyYWluaW5nLU1SQw==">https://github.com/SparkJiao/Self-Training-MRC （official ** pytorch）<i class="fa fa-external-link-alt"></i></span></p>
-</blockquote>
-<span id="more"></span>
-<br>
-<br>
-<hr>
-<h2 id="1-introduction">1 introduction</h2>
-<br>
-<h3 id="1-1-background-论文背景与思路">1.1 background 论文背景与思路</h3>
-<p>当前大多数经典的机器阅读理解模型（MRC）往往包括以下两个结构：</p>
-<ul>
-<li>证据提取器（evidence extractor）：也就是负责检索出可能对解决这个问题有帮助的部分文本，此时检索的结果可能是一个句子 / 一段片段 etc，著名的 SQuAD 和 CoQA 数据集给出的任务都是这个思路</li>
-<li>答案预测器（ answer predictor）：从前面提取出的片段种割出一个部分作为答案，也就是常见的那种任务为预测答案开始位置和结束位置的论文的思路</li>
-</ul>
-<p>也就是说，此时证据标签（evidence labels）对于整个模型的训练是很重要的，也就是说我需要知道我所提取出的部分是不是真的对的答案的出处。对于 <strong>抽取式</strong> 的阅读理解任务是很好训练的，因为本身的答案也就是从整个文本中进行抽取的。但是这一标签对于 <strong>非抽取式</strong>的机器阅读理解任务往往是难以获得的，比如答案为 Yes/No 的问题，或者一些类似于选择题 / 多选题的形式，本身不存在对应的文中的出处，也就是说只有答案，但是没有答案对应的文章部分的 span，缺少证据标签导致在这类非抽取式任务上难以直接对证据提取器进行训练。</p>
-<p>举一个非抽取式的例子：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051018029.png" alt="image-20231022051018029" style="zoom:60%;" />
-<p>针对这类非抽取式的机器阅读理解任务，经典方法有：</p>
-<ul>
-<li>人工标注 gold answer：费时间且贵，需要钞能力来雇佣生物型人工智能，不现实</li>
-<li>远程监督：往往会依赖于一些人工手动设置的规则或一些外部资源来生成 distant label ，有效性有待商榷</li>
-<li>强化学习：本身强化学习的训练往往是不稳定的</li>
-</ul>
-<p>为了解决针对非抽取式阅读理解问题缺乏用于训练的证据标签的问题，原文提出了一种 <strong>自训练方法</strong>（Self Training method ，STM），直观来说也就是在迭代的过程中，自动生成证据标签并用来训练我们的证据提取器。每一个迭代中，用正确答案（gold answer）和噪声标签（noisy evidence labels）同时来训练基础的机器阅读理解模型（MRC），再利用这个模型来预测伪标签（也就是我们的 MRC 认为是对的的标签，但是并没有经过人工的验证步骤），并加入监督下一轮的训练。整个过程不需要手动舍设定的规则或外部信息，同时具有较好的可迁移性。</p>
-<br>
-<h3 id="1-2-self-training-自训练">1.2 self-training 自训练</h3>
-<p>开始之前先稍微说说什么是自训练</p>
-<p>自训练本身提出就是为了用在缺少标注的数据上的，通过让模型自己学习，自己创建可能的标签，再不断训练迭代的方式来学习。</p>
-<p>具体思路如下：</p>
-<ul>
-<li>将此时的数据分为训练集和测试集和未标记数据，注意这里的训练集是得到标记的，也就是说一开始需要一定的已标记数据来启动模型，但是不需要标记所有数据，自训练的优势也就是在于可以将未标记数据利用到模型中</li>
-<li>利用训练集中的数据（已标记）来训练模型</li>
-<li>利用当前训练的模型来尝试标记没有人工标记的数据，选择正确率足够高的一些标签作为 “伪标签”，这里的伪标签的选取可以全部都要或者根据一定的置信度加权</li>
-<li>将上一步得到的 “伪标签” 数据和原始的训练数据放到一起，再一同用于训练模型</li>
-<li>重复上面的步骤，直到此时还未被标记的数据本身少于某一个数值，或者此时模型进行的预测不足以获得新的伪标签（比如新的预测对应的置信度都卡住了高不上去了）</li>
-<li>最后在测试集上测试分类器性能，注意这里的测试集是人工标注的数据</li>
-</ul>
-<p>也就是说，此时只是需要少量一部分的已标注数据（一部分作为训练集来启动模型，一部分作为测试集来进行评估），而同时可以利用大量的未标注数据，属于半监督学习的方式。</p>
-<br>
-<br>
-<hr>
-<h2 id="2-Methods-模型介绍">2 Methods 模型介绍</h2>
-<br>
-<h3 id="2-1-overview">2.1 overview</h3>
-<p>先来看看模型的整体结构：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051056629.png" alt="image-20231022051056629" style="zoom:60%;" />
-<p>此时有两个数据池， U 和 L，沿用自训练的思路，此时 L（labeled data） 中的数据是已经经过了标记的少量数据，而 U（unlabeled data） 中的数据是大量未标注数据，也就是说 U 中的没有对应的证据标签（答案出处）而只有正确答案</p>
-<p>整体 STM 模型的思路如下：</p>
-<ul>
-<li><strong>MRC 模型同时在 U 和 L 两个数据池上进行训练</strong>（注意这里是同时在训练的，也就是对应图中 ① 的两个箭头）</li>
-<li><strong>MRC 对未标注数据池 U 中的数据进行预测</strong>，也就是预测 U 中的只有正确答案的数据其对应的证据标签</li>
-<li><strong>Selector 进行选择</strong>，从上一步 MRC 的所有预测中选择有一定置信度的预测，将<strong>选中的预测从数据池 U 移到 L 中</strong>，这一步也就是选择伪标签并加入训练集以监督下一轮训练的部分</li>
-</ul>
-<br>
-<h3 id="2-2-Base-Model-阅读理解部分模型">2.2 Base Model  阅读理解部分模型</h3>
-<p>先来看一下 STM 中 MRC 部分模型的结构：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051131978.png" alt="image-20231022051131978" style="zoom:67%;" />
-<p>同理，此时由 三个部分 组成：<strong>编码层（encoder layer）+ 证据提取（evidence extractor）+ 答案预测（answer predict）</strong></p>
-<p>第一个编码层也就是用了文档 D （token 单位的）和问题 Q  的 embedding，没啥好说的，主要看看后两个</p>
-<br>
-<br>
-<h4 id="2-2-1-evidence-extractor-证据提取">2.2.1 evidence extractor 证据提取</h4>
-<p>此时将问题 Q 和文档 D 作为输入，编码层负责获得输入的上下文表示。设此时文档 D 包括句子 S：$D = {S_1 , S_2, ... , S_m}$，而 $h^D_{i,j}$ 表示文档 D 中第 i 个句子中的第 j 个单词的表示，$h^Q_i$ 为问题 Q 中的第 i 个单词的表示。</p>
-<p>encoder 层还是依赖于注意力机制，这里使用了 <strong>token 级别的 attention</strong> 和 <strong>句子级别的 attention</strong> 来获得文档的上下文表示 $h^D$：</p>
-<h5 id="token-level-attention：">token-level attention：</h5>
-<p>也就是通过注意力模块得到句子的上下文表示，这里以句子中的多个 token 为单位</p>
-<p>首先以问题 <strong>Q 为查询向量</strong>，通过打分函数 + softmax 得到权重后融合各个 token，得到最后句子的向量表示 $h_i^D$：<br>
-$$<br>
-h_i^D = \sum _{j} ^{|S_i|} {a _{i,j} h _{i, j} ^D} \text{ , } \alpha _{i, j} \varpropto exp(F^S(h^Q, h^D _{i,j}))<br>
-$$</p>
-<p>再对整个句子作<strong>自注意力</strong>，也就是利用可学习的参数将原句子投影到新的空间作为查询矩阵，这里得到句子本身的自注意力向量表示 $s_i^D$：<br>
-$$<br>
-s_i^D = \sum _j ^{|S_i|} \beta _{i, j} h _{i, j} ^D \text{ , } \beta _{i,j} \varpropto exp(w_sh _{i,j} ^D + b_s)<br>
-$$</p>
-<p>一点小细节，这里原文的打分函数用的是双线性的形式 bilinear form</p>
-<br>
-<h5 id="sentence-level-attention">sentence-level attention</h5>
-<p>也就是以 sentence 句子为单位，通过注意力计算各个句子的权重以得到整个文档 D 的表示 $h^D$：<br>
-$$<br>
-h^D  = \sum _i ^m \gamma_i h_i^D \text{ , } \gamma_i \varpropto exp(F^D (h^Q, s_i^D))<br>
-$$</p>
-<p>注意这里用的是句子 i 本身的自注意力后的向量表示 si 和问题的表示 hQ 来计算得分函数的</p>
-<p>这里其实有一点类似于那种通过问题匹配来寻找答案可能出现的范围的问题，此时这个句子的权重越高说明问题越可能来自于这里</p>
-<br>
-<h4 id="2-2-2-answer-prediction-答案预测">2.2.2 answer prediction 答案预测</h4>
-<p>注意以上两个注意力模块最后的输出实际上是最后的 $h^D$，也就是文档的向量表示，此时将文档的向量表示和问题的向量表示 $h^Q$ 一同输入来进行答案的预测</p>
-<p>如果此时是<strong>抽取式问题</strong>，也就是需要给出文档的一部分内容作为答案，则此时使用两个 MLP 多层感知机来分别预测每一个 token 的位置是 （答案的开始位置）和是（答案的结束位置）的概率，再选取答案</p>
-<p>如果此时是 <strong>Yes/No</strong> 的问题，直接使用一个简单的线性分类器；如果是 <strong>多项选择问题</strong> 则使用 MLP + softmax 的形式给出各个答案的概率</p>
-<br>
-<h3 id="2-3-Loss-Function-损失函数">2.3 Loss Function 损失函数</h3>
-<p>这里定义两个损失函数，分别对应任务的损失函数和证据提取的损失函数</p>
-<br>
-<h4 id="2-3-1-task-specific-loss-任务部分损失函数">2.3.1 task-specific loss 任务部分损失函数</h4>
-<p>这里直接使用的是极大似然法（用的是负对数的那个似然函数）<br>
-$$<br>
-L_A (D, Q, A) = -\log P(\hat {A} = A|D, Q)<br>
-$$</p>
-<p>这里的 A 是正确答案（gold answer)，而 $\hat{A}$ 是我预测的答案</p>
-<br>
-<h4 id="2-3-2-evidence-loss-证据提取部分损失函数">2.3.2 evidence loss 证据提取部分损失函数</h4>
-<p>这里的证据理解为句子级别的，也就是选出 K 个可以作为证据的句子（这里的 K 是一个预先决定的超参数）。注意因为可能有 k 个句子，故这里一步一步地计算 loss：</p>
-<ul>
-<li>选出最可能的那个句子（也就是权重最大的）</li>
-<li>在所有没有被选过的句子上计算 loss，也就是把被选过的句子 mask 掉</li>
-</ul>
-<p>重复上面的步骤 k 次，也就是每一次都从当前剩下的句子里选出一个最大的，再算剩下的。最后的 loss 是上面 k 步 loss 的平均值</p>
-<p>这里利用了一个 <strong>BP-able</strong> 来选择 top-K 最可能为证据的句子。</p>
-<p>考虑：<br>
-$$<br>
-L_E(D, Q, E) = \frac{1}{K} \sum _{k=1} ^K H(D,Q,E,M^k)<br>
-$$</p>
-<p>这里的 M 表示 mask，也就是 $M^k = {M_1^k ,...,M_m^k}$，文章 D 中共 m 个句子，而每一个 $M^k_i \in {0,-\infty }$，表示为第 k 轮是句子 i 的 mask，如果 mask = 0 表示此时这个句子还没有被选中，而选中的句子为 $-\infty$，注意第 k 轮中新被选中的句子的对应 Mk 的 mask 也是 $-\infty$​<br>
-$$<br>
-M_i^k =<br>
-\begin{cases}<br>
--\infty &amp;i = \arg\max_j (\lambda _j ^{k-1} E_j) \\<br>
-M_i ^{k-1} &amp;otherwise<br>
-\end{cases}<br>
-$$</p>
-<p>这里的 $E_i \in {0,1}$ 用来标识当前的 第 i 个句子是不是真的是证据</p>
-<p>在每一轮都需要选择出当前所有还没有被选择的句子中的一个最可能的句子，则此时在每一轮都计算所有未被选择句子的注意力分布：<br>
-$$<br>
-\lambda _i ^k = \frac{exp(F^D (h^Q, s_i) + M_i^k)} {\sum_j (exp(F^D(h^Q, s_j) + M_j^k))}<br>
-$$</p>
-<p>这里的 si 是句子的自注意力表示，打分函数出来后经过 softmax</p>
-<p>选出句子后计算它的 loss：<br>
-$$<br>
-H(D, Q, E, M^k) = -\log \max _i (\lambda _i ^k \cdot E_i)<br>
-$$</p>
-<p>这里的 $E_i \in {0,1}$ 用来标识当前的 第 i 个句子是不是真的是证据</p>
-<p>H 是对应第 k 步的结果，最后总体的损失函数也就是 k 个 H 的均值</p>
-<br>
-<p>综上，此时总体的损失函数就是上面两种损失函数的加权组合：<br>
-$$<br>
-L = \sum _{(D,Q,A) \in U \cup L} {L_A (D, Q, A) + \eta \sum _{(D,Q,A) \in L} L_E (D,Q,A)}<br>
-$$</p>
-<p>η 本身是一个超参数</p>
-<br>
-<h3 id="2-4-Self-Training-MRC-STM-整体模型">2.4  Self-Training MRC (STM) 整体模型</h3>
-<p>现在来看看整体模型的结构：</p>
-<p>首先，<strong>利用真实答案来训练 MRC 部分的模型</strong>，这里同时用到了 U 和 L 两个数据集，训练 MRC 的时候不需要证据标签，只要直到正确答案就可以</p>
-<p>这里的 MRC 的训练用的是上面那个同时（任务导向）+（证据提取部分导向）的总的损失函数</p>
-<p><strong>进一步通过给定的（D,Q,A），也就是文章+问题+答案 来进行证据标签的标注</strong>，这里标注依赖于：<br>
-$$<br>
-\hat {E} = \arg\min _{E'} L_E {(D, Q, E')}<br>
-$$</p>
-<p>也就是说我本来是依赖真实的（是否为证据 Ei）来计算损失函数，则此时我同样可以来考虑使得损失函数最小的 Ei 是什么样的，由此得到未标记（指的是未标记证据出处)数据的证据标签的估计 $\hat{E}$</p>
-<p>则此时对于 $(D,Q,A,\hat{E})$​，这个组合的置信得分定义为：<br>
-$$<br>
-c(D, Q, A, \hat{E}) = exp(-L_A (D, Q, A)) \cdot exp(-L_E(D, Q, \hat{E}))<br>
-$$</p>
-<p>同时用到了任务导向的损失函数 和 证据标签部分的 loss</p>
-<p>而这里的 <strong>selector 的选择依据</strong>：</p>
-<ul>
-<li>要求组成上面置信得分的两个损失函数都在某一个阈值以下（防止其中一个很低而另一个不行导致的总体得分高，需要两个任务上都差不多不错）</li>
-<li>在满足 1 的情况下，达到置信得分最高</li>
-</ul>
-<p>一个小细节，在初始的时候数据池 L 实际上是空的，而证据提取器的训练是由远程监督完成的</p>
-<p>整体模型的流程如下所示：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052441091.png" alt="image-20231022052441091" style="zoom:70%;" />
-<br>
-<br>
-<hr>
-<h2 id="3-Experiments-实验部分">3 Experiments 实验部分</h2>
-<br>
-<h3 id="3-1-dataset">3.1 dataset</h3>
-<p><strong>Yes/No Question Answering (YNQA)</strong> ：二元选择回答的数据集，非抽取，包括如下几个：</p>
-<ul>
-<li>CoQA</li>
-<li>BoolQ</li>
-<li>MS MARCO</li>
-</ul>
-<p><strong>Multiple-choice MRC</strong>：多项选择的数据集</p>
-<ul>
-<li>RACE</li>
-<li>DREAM</li>
-<li>MultiRC</li>
-</ul>
-<p><strong>Open-domain QA (ODQA)</strong>：开放</p>
-<ul>
-<li>Quasar-T</li>
-</ul>
-<br>
-<h3 id="3-2-result">3.2 result</h3>
-<p>看看在几个类型上的结果：</p>
-<p>对于二元选择：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052513753.png" alt="image-20231022052513753" style="zoom:67%;" />
-<p>多项选择：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052532575.png" alt="image-20231022052532575" style="zoom:55%;" />
-<p>开放：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052607856.png" alt="image-20231022052607856" style="zoom:60%;" />
-<p>由于用到的是自学习，这里验证了一下 <strong>Error propagation</strong> 的问题，也就是一开始就预测错了，但是又被拿去作训练，导致整个模型坚定不移地学着错的东西</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052705215.png" alt="image-20231022052705215" style="zoom:67%;" />
-<p>约有 4% 的错误的证据反而被复用了（就是又被拿去学了），但是它们中有接近一半的在后面的 tire 又被纠正了，在此可以认为 STM 并不会陷入严重的 error propagation 导致整个的崩溃</p>
-<br>
-<br>
-<br/>
-]]></content>
-      <categories>
-        <category>论文笔记</category>
-        <category>NLP</category>
-        <category>机器阅读理解(MRC)</category>
-      </categories>
-      <tags>
-        <tag>NLP</tag>
-        <tag>机器阅读理解</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>KAR: 实现机器阅读理解中对常识知识的显示应用</title>
     <url>/2023/10/30/20210313-paper-note-KAR/</url>
     <content><![CDATA[<p>原文写于 20210313，存档如下</p>
@@ -2365,225 +2150,6 @@ $$</p>
       </tags>
   </entry>
   <entry>
-    <title>CorefQA: 基于QA模式（提出问题 + 片段预测）的共指消解 / 指代消解模型</title>
-    <url>/2023/10/30/20210319-paper-note-CorefQA/</url>
-    <content><![CDATA[<p>原文写于 20210319，存档如下</p>
-<blockquote>
-<p>Wei Wu, Fei Wang, Arianna Yuan, Fei Wu and Jiwei Li, Department of Computer Science and Technology, Zhejiang University Computer Science Department, Stanford University, ShannonAI; <strong>CorefQA: Coreference Resolution as Query-based Span Prediction</strong></p>
-<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MTEuMDE3NDYucGRm">https://arxiv.org/pdf/1911.01746.pdf<i class="fa fa-external-link-alt"></i></span></p>
-<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL1NoYW5ub25BSS9Db3JlZlFB">official - tensorflow<i class="fa fa-external-link-alt"></i></span> ** <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL0ZlaVdhbmc5Ni9Db3JlZlFBLXB5dG9yY2g=">pytorch<i class="fa fa-external-link-alt"></i></span></p>
-</blockquote>
-<span id="more"></span>
-<br>
-<br>
-<hr>
-<h2 id="1-introduction">1 introduction</h2>
-<br/>
-<p>共指消解问题至今仍是各类 nlp 任务中绕不开的难题，一方面对文章本身内容中的指代了解不清将导致对整体文章的语义理解出现问题，另一方面随着部分多轮问答式 QA 数据集的兴起，此时后一题提出的问题中可能只包含指代词而不再包含具体的实体名称。</p>
-<p>传统的共指消解模型主要分为以下两个步骤作处理：</p>
-<ul>
-<li>充分考虑整篇文章中的所有的 span，从所有的文本片段中选择出所有可能的 指代 mention</li>
-<li>为每一个当前找到的可能的指代找到它对应的前序指代（antecedent），也就是为当前的指代分类，把它和它指代的对象的其他 mention 放在一起</li>
-</ul>
-<p>但是注意到这样的处理方式存在一定的问题：</p>
-<ul>
-<li>所有的被遗漏的共指词一旦第一次没有被捉住，后面就再也没有机会改正。
-<ul>
-<li>因为此时下游的模型是完全基于已经给出的共指词的，且本身共指的数据集能够提供的改正的信息是有限的（并没有明确地标签标识当前的 span 到底是什么样的共指）</li>
-<li>也就是说此时需要模型能够重新回顾检查遗漏的指代 mention</li>
-</ul>
-</li>
-<li>在大多数模型中，当前的端到端训练的模型只是基于最后输出层的这两个词的上下文表示来为一对共指打分
-<ul>
-<li>也就是说此时本身打分的方式并没有考虑到当前两对共指词的上下文信息（本身其编码得到的上下文信息在最后的输出层表示中的体现是很少的）</li>
-</ul>
-</li>
-</ul>
-<p>为了缓解传统的处理方式带来的问题，本文尝试将原本的 <strong>共指消解问题转化为片段预测任务</strong>，也就是利用 <strong>QA 的方式来训练模型学习多个 mention 之间的指代关系</strong></p>
-<p>首先选出可能的指代 mention，再依据该 mention 的上下文信息来生成问题，模型再尝试从文档中抽取片段以回答这个问题，则此时整个针对于共指消解的问题可以转化为一个针对抽取式 QA 问题的 span prediction 的问题</p>
-<p>这里来看一个例子：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100636083.png" alt="image-20231023100636083" style="zoom:67%;" />
-<p>通过阅读文本 → 不断回答生成的问题 → 此时模型可以不断地扩充可能的指代同一个实体的 mention 的集合</p>
-<p>同时，从第二个传统模型存在的问题出发，此时发挥作用的不再是一个简答地综合上下文信息的模型，而是一个 MRC 类的 span prediction 的模型，也就是说此时最后输出层的输出将能过够更好地将上下文信息进行融合，使得后续基于输出层表示的共指词评分更加准确，更好地辅助模型的训练</p>
-<br>
-<br>
-<hr>
-<h2 id="2-Model-模型介绍">2  Model 模型介绍</h2>
-<br>
-<h3 id="2-1-overview">2.1 overview</h3>
-<p>先来看看模型整体结构：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100704428.png" alt="image-20231023100704428" style="zoom: 60%;" />
-<p>此时整体模型主要分为两个部分，</p>
-<ul>
-<li><strong>mention proposal model 指代提取模块</strong>：也就是负责从全文中提取出所有可能的指代词 mention</li>
-<li><strong>mention linking model 指代连接模块</strong>：也就是负责为所有提取出来的 mention 作分类，类似于一个聚类的操作，将所有的指向同一个实体的指代综合起来</li>
-</ul>
-<p>设此时输入的文章包含 n 个 token，记作 $X = {x_1, ... , x_n}$，则此时可能的文本片段共有 $N = n*(n+1)/2$ 个<br>
-（共 n+1 个可以插入的空 / 包括头尾，选定一个 为 n+1，再选定结束位置为 n*(n+1)，最后因为一个位置可以重复两遍再 /2），</p>
-<p>此时定义 $e_i$ 为第 i 个可能的文本片段，则此时 $e_i$ 对应着一组开始的 index $FIRST(i)$ 和结束位置的 index $LAST(i)$</p>
-<p>则此时整体的任务即是为所有的可能的 N 个 span 寻找前序 mention，如果此时该 span 并不作任何指代，则将它的前序指代定义为一个 dummy token $\epsilon$</p>
-<br>
-<h3 id="2-2-Input-Representations-输入表示">2.2 Input Representations 输入表示</h3>
-<p>首先需要得到文档 X 的每一个 token 的表示 xi，这里使用 <code>SpanBERT</code> 来完成</p>
-<p>注意到本身叙述者（speaker）的信息对于指代问题是十分重要的（比如一个文本两句话，第一句是你说的，你说的你指的是我，但是第二句是我说的，此时我说的你就是你），但是前序的大多数研究只是将 speaker 的信息简化为一个二元的变量，以标识两个 mention 是否是来自同一个 speaker。</p>
-<p>本文直接将 speaker 的名称和它对应的语句直接作向量拼接操作，在后续的实验部分会证明这样操作的优越性</p>
-<p>同时注意到为了将较长的文档输入 SpanBERT，这里采用了滑动窗口的方式，为每 T/2 个 token 创造一个 T 大小的片段，再各自输入 SpanBERT 来得到 embedding，作为后续的输入表示</p>
-<br>
-<h3 id="2-3-Mention-Proposal-指代提出模块">2.3 Mention Proposal 指代提出模块</h3>
-<p>此时的输入是 上述经过 SpanBERT encode 后的结果，目标为充分考虑文本中可能的 span，并提取出所有可能的指代</p>
-<h4 id="prune-the-candidate-spans">prune the candidate spans</h4>
-<p>首先规定一个 span 的最大长度，记作 L，也就是说只考虑长度在 L 以下的指代（过长的指代确实很怪），为了进一步减小可能的 span 个数，这里需要通过计算所有的 span 的 mention score 来对所有的 候选span 作进一步的修剪</p>
-<p>对于第 i 个可能的 span 计算它的 mention 得分 $s_m(i)$ ：</p>
-<ul>
-<li>
-<p>计算开始位置 $x_{FIRST(i)}$：<br>
-$$<br>
-s_m(x _{FIRST(i)}) = FFNN([x _{FIRST(i)}])<br>
-$$</p>
-</li>
-<li>
-<p>计算结束位置 $x_{LAST(i)}$​：<br>
-$$<br>
-s_m(x _{LAST(i)}) = FFNN([x _{LAST(i)}])<br>
-$$</p>
-</li>
-<li>
-<p>将此时的开始位置和结束位置的两个 embedding 直接作向量拼接再计算：<br>
-$$<br>
-s_m(x _{FIRST(i)}, x _{LAST(i)}) = FFNN_m ([x _{FIRST(i)}, x _{LAST(i)}])<br>
-$$</p>
-</li>
-<li>
-<p>最后计算综合的 mention score，也就是上述三个部分的平均：<br>
-$$<br>
-s_m(i) = [s_m (x _{FIRST(i)}) + s_m (x _{LAST(i)}) + s_m(x _{FIRST(i)}, x _{LAST(i)})]/3<br>
-$$</p>
-<p>这里的 FFNN 是一个前馈神经网络，注意上面用到的三个 FFNN 是独立训练的，各用各的参数</p>
-</li>
-</ul>
-<p>对于一篇文章共 N 个指代，此时只是选择前 λN 个得分最高的 span 作为可能的 mention，进入后续的操作</p>
-<h4 id="Mention-Proposal-Pretraining-预训练">Mention Proposal Pretraining 预训练</h4>
-<p>注意上述的操作需要经过预训练，如果此时直接将所有可能的 span 扔进去让模型从头开始会造成巨大的计算开销。这里的预训练采用三个联合的分类器：</p>
-<ul>
-<li>判断 $x_{FIRST(i)}$ 是否是 mention 的开始</li>
-<li>判断 $x_{LAST(i)}$ 是否是 mention 的结束</li>
-<li>判断 $x_{FIRST(i)}$ 和 $x_{LAST(i)}$ 是否应该合并（也就是说它俩是不是真的来自一个 mention）</li>
-</ul>
-<p>三个分类器采用联合训练的方式，损失函数就用它们再上面的 mention score 的得分情况公式来计算：<br>
-$$<br>
-\begin{align}<br>
-Loss(m) &amp;= \text{sigmoid} (s_m(x _{FIRST(i)})) \\<br>
-&amp;+ \text{sigmoid} (s_m(x _{LAST(i)})) \\<br>
-&amp;+ \text{sigmoid} (s_m(x _{FIRST(i)}, x _{LAST(i)}))<br>
-\end{align}<br>
-$$<br>
-<br></p>
-<h3 id="2-4-Mention-Linking-as-Span-Prediction-通过片段预测实现指代聚类">2.4 Mention Linking as Span Prediction 通过片段预测实现指代聚类</h3>
-<p>输入某一个来自 proposal 的指代 mention，此时 linking 的任务就是寻找到这个 mention 的前序指代，比如此时我已经有了 {特*普，他，总统，川宝，川建国}，此时给定的 mention 是川普，则我的任务就是为这个 mention 找到它的前序 = 川建国，同理川建国的前序也就是川宝</p>
-<p>此时给定 span $e_i$，计算 ei 和前一个 mention ej 的得分 $s_a(i,j)$，而这一步是通过 QA 的模式实现的，也就是基于一个三元组：$${context(X), query(q), answer(a)}$$</p>
-<p>上述的 上下文 context X 也就是输入的文档（注意是整个 document）</p>
-<p>接下来生成 query ：对于给定的 mention ei ，这里使用 ei 所在的那个句子作为 query，记作 $q(e_i)$，注意对于 query 中的 ei 本身用特殊的 token $<mention>$ 作封装</p>
-<p>此时根据上述的 context 和 query 尝试回答问题得到 a，这里可以看作是一个抽取式的 MRC 问题，但是此时的问题可以是没有答案的，将没有答案的情况归类为以下两种情形：</p>
-<ul>
-<li>此时给定的 span ei 本身就不是一个 mention</li>
-<li>ei 确实有所指代，但是这个 指代 并没有其他指向同一个实体的指代 mention</li>
-</ul>
-<p>对于给定的 span ei，它对应的 $q(e_i)$，此时我们想要计算任意一个 span j 是这个 query 的答案的得分，按如下步骤：</p>
-<ul>
-<li>将 query $q(e_i)$ 和上下文 X 作拼接，输入 BERT，用 BERT 的输出作为 $x_{FIRST(i)}$ 和 $x_{LAST(i)}$ 的表示</li>
-<li>将 FIRST 和 LAST 作向量拼接，再输入一个前馈神经网络 FFNN，得到对于问题 i 此时 span j 作为答案的得分：<br>
-$$<br>
-s_a(j \vert i) = FFNN _{j \vert i} [x _{FIRST(j) \vert i}, x _{LAST(j) \vert i}]<br>
-$$</li>
-</ul>
-<p>但是注意到 <strong>上述的打分是单向的</strong>，也就是说只判断了 span j 是否是 query i 的答案，但是如果 span i 和 span j 指向同一个实体，则此时 span i 同理应该是 query j 的答案，此时作进一步操作以实现双向的打分：同理将 span j 所在的句子作为 query，重复上述操作，得到 （span i 为 query j 的答案的得分），记作 $s_a(i|j)$​ ：<br>
-$$<br>
-s_a(i \vert j) = FFNN _{i \vert j} [x _{FIRST(i) \vert j}, x _{LAST(i) \vert j}]<br>
-$$</p>
-<p>注意这里的表示 x 还是来自于加入了 query j 的 BERT 的输出</p>
-<p>最后 span i 和 span j 的得分为上述两个得分的均值：<br>
-$$<br>
-s_a(i,j) = \frac{1}{2} (s_a (j\vert i) + s_a (i \vert j))<br>
-$$</p>
-<p>进一步考虑，如果此时 span i 和 span j 确实指向同一个实体，此时要求：1）span i 和 span j 都是 mention；2)此时它们共指</p>
-<p>则此时定义总体的 overall 得分：<br>
-$$<br>
-s(i, j) = \lambda[s_m(i) + s_m(j)] + (1-\lambda)s_a(i, j)<br>
-$$</p>
-<p>这里的 $\lambda$ 还是超参数</p>
-<br>
-<h3 id="2-5-Antecedent-Pruning-前序指代修剪">2.5 Antecedent Pruning 前序指代修剪</h3>
-<p>注意到此时给定一个文档 X ，含有 n 个 token，则此时可能的 span 是 $O(n^2)$ 级别的，而计算它们两两 span 的得分 $s(i,j)$ 就是 $O(n^4)$ 级别的</p>
-<p>此时考虑对于给定的一个 span i，我只对一部分的 span j 作打分：</p>
-<ul>
-<li>给定 span i，得到 query i，再通过 BERT ，计算 span i 和所有的 span j 的第一轮得分 = span j 确实是 query i 的答案的得分 = $s_a(j|i)$</li>
-<li>选择 $s_a(j|i)$ 得分最高的 C 个 span j 保留，继续反过来计算</li>
-</ul>
-<br>
-<h3 id="2-6-Training-整体训练">2.6 Training 整体训练</h3>
-<p>对于任意一个给定的 span ei，此时我依据它和 span j 的总得分 $s(i,j)$，选择 C 个 span j 作为 span i 的可能的前序 mention。同时这里存在一个 dummy token $\epsilon$ 来标记不存在共指的 mention</p>
-<p>这里通过数据集给出的 gold cluster 来训练模型：对于每一个给定的 ei，此时任意一个 ej 是它的共指的概率为：<br>
-$$<br>
-P(e_j) = \frac{e ^{s(i, j)}} {\sum _{j' \in C} {e ^{s(i, j')}}}<br>
-$$</p>
-<p>这里用优化（所有出现在 gold cluster 中的 mention)对应的对数似然函数来 <strong>端到端地训练模型</strong></p>
-<p>注意此时如果将一个文档中的所有 span 视作结点，则通过 s(i,j) 得到了两个结点 i 和 j 之间的 边 的权重，此时只保留每一个结点对应的所有边中最大的，则对于mention i 此时它构成的连通子图也就是所有和它指向同一个实体的 mention 的集合</p>
-<br>
-<h3 id="2-7-Data-Augmentation-using-Question-Answering-Datasets-利用-QA-数据集作数据增强">2.7 Data Augmentation using Question Answering Datasets 利用 QA 数据集作数据增强</h3>
-<p>注意到中间是通过 QA 的思路来判断两个 mention 是否是共指的，则此时解答 QA 部分的模型的能力同样十分重要</p>
-<p>这里利用 <strong>Quoref</strong> 和 <strong>SQuAD</strong> 两个数据集来对 <strong>mention linking</strong> 模块作预训练</p>
-<br>
-<br>
-<hr>
-<h2 id="3-Experiments-实验部分">3 Experiments 实验部分</h2>
-<br>
-<p>先提一下几个细节的地方：</p>
-<ul>
-<li>针对 mention linking 模块的 speaker 和 mention，这里采用两个特殊的 token $<speaker></speaker>$ 和 $<mention></mention>$ 来处理</li>
-<li>对于 SpanBERT 的部分，选用滑动窗口大小 T = 512</li>
-<li>保留的最大的可能的候选前序mention 个数 C= 50</li>
-</ul>
-<p>这里实验用到的是共指消融的两个很经典的数据集：<strong>CoNLL-2012 + GAP</strong></p>
-<br>
-<h3 id="3-1-CoNLL-2012-数据集">3.1 CoNLL-2012 数据集</h3>
-<ul>
-<li>2,802/343/348 → train / development / test</li>
-<li>包含七种不同的体裁</li>
-</ul>
-<p>训练结果如下：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101704245.png" alt="image-20231023101704245" style="zoom:60%;" />
-<p>可以看到整体的提升还是很明显的（超明显的）</p>
-<br>
-<h3 id="3-2-GAP-数据集">3.2 GAP 数据集</h3>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101736590.png" alt="image-20231023101736590" style="zoom:67%;" />
-<br>
-<h3 id="3-3-其他评价">3.3 其他评价</h3>
-<h4 id="各组件影响">各组件影响</h4>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101757541.png" alt="image-20231023101757541" style="zoom:67%;" />
-<p>可以看到 QA 部分的影响超大，可以认为这里用 QA 的思路来判断两个 mention 是否是共指的想法确实有一定合理性</p>
-<h4 id="speaker-的影响">speaker 的影响</h4>
-<p>前面提到 CorefQA 对 speaker 信息的处理和传统模型是不同的，这里来看看效果：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101844368.png" alt="image-20231023101844368" style="zoom:67%;" />
-<p>论文里图咋这样了，，，总之从左到右是黄蓝黑</p>
-<p>可以看到 speaker 人数较多的时候，本文特殊的处理方式优势明显</p>
-<h4 id="召回率">召回率</h4>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101909090.png" alt="image-20231023101909090" style="zoom:67%;" />
-<p>注意这里更改了不同的 λ 以控制被保留的 mention，可以注意到即使一个 mention 一开始被略过了（也就是 λ 比较低的时候）此时它仍然可以被整个模型重新捡回来，故在 λ 比较低的时候整体模型较传统模型的提升是很明显的</p>
-<br>
-<br>
-<br/>
-]]></content>
-      <categories>
-        <category>论文笔记</category>
-        <category>NLP</category>
-        <category>机器阅读理解(MRC)</category>
-      </categories>
-      <tags>
-        <tag>NLP</tag>
-        <tag>机器阅读理解</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>HGN: 基于分层图网络的多跳阅读理解模型</title>
     <url>/2023/10/30/20210330-paper-note-HGN/</url>
     <content><![CDATA[<p>原文写于 20210330，存档如下</p>
@@ -2900,6 +2466,225 @@ $$</p>
       <tags>
         <tag>NLP</tag>
         <tag>机器推理Reasoning</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>CorefQA: 基于QA模式（提出问题 + 片段预测）的共指消解 / 指代消解模型</title>
+    <url>/2023/10/30/20210319-paper-note-CorefQA/</url>
+    <content><![CDATA[<p>原文写于 20210319，存档如下</p>
+<blockquote>
+<p>Wei Wu, Fei Wang, Arianna Yuan, Fei Wu and Jiwei Li, Department of Computer Science and Technology, Zhejiang University Computer Science Department, Stanford University, ShannonAI; <strong>CorefQA: Coreference Resolution as Query-based Span Prediction</strong></p>
+<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MTEuMDE3NDYucGRm">https://arxiv.org/pdf/1911.01746.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL1NoYW5ub25BSS9Db3JlZlFB">official - tensorflow<i class="fa fa-external-link-alt"></i></span> ** <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL0ZlaVdhbmc5Ni9Db3JlZlFBLXB5dG9yY2g=">pytorch<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<br/>
+<p>共指消解问题至今仍是各类 nlp 任务中绕不开的难题，一方面对文章本身内容中的指代了解不清将导致对整体文章的语义理解出现问题，另一方面随着部分多轮问答式 QA 数据集的兴起，此时后一题提出的问题中可能只包含指代词而不再包含具体的实体名称。</p>
+<p>传统的共指消解模型主要分为以下两个步骤作处理：</p>
+<ul>
+<li>充分考虑整篇文章中的所有的 span，从所有的文本片段中选择出所有可能的 指代 mention</li>
+<li>为每一个当前找到的可能的指代找到它对应的前序指代（antecedent），也就是为当前的指代分类，把它和它指代的对象的其他 mention 放在一起</li>
+</ul>
+<p>但是注意到这样的处理方式存在一定的问题：</p>
+<ul>
+<li>所有的被遗漏的共指词一旦第一次没有被捉住，后面就再也没有机会改正。
+<ul>
+<li>因为此时下游的模型是完全基于已经给出的共指词的，且本身共指的数据集能够提供的改正的信息是有限的（并没有明确地标签标识当前的 span 到底是什么样的共指）</li>
+<li>也就是说此时需要模型能够重新回顾检查遗漏的指代 mention</li>
+</ul>
+</li>
+<li>在大多数模型中，当前的端到端训练的模型只是基于最后输出层的这两个词的上下文表示来为一对共指打分
+<ul>
+<li>也就是说此时本身打分的方式并没有考虑到当前两对共指词的上下文信息（本身其编码得到的上下文信息在最后的输出层表示中的体现是很少的）</li>
+</ul>
+</li>
+</ul>
+<p>为了缓解传统的处理方式带来的问题，本文尝试将原本的 <strong>共指消解问题转化为片段预测任务</strong>，也就是利用 <strong>QA 的方式来训练模型学习多个 mention 之间的指代关系</strong></p>
+<p>首先选出可能的指代 mention，再依据该 mention 的上下文信息来生成问题，模型再尝试从文档中抽取片段以回答这个问题，则此时整个针对于共指消解的问题可以转化为一个针对抽取式 QA 问题的 span prediction 的问题</p>
+<p>这里来看一个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100636083.png" alt="image-20231023100636083" style="zoom:67%;" />
+<p>通过阅读文本 → 不断回答生成的问题 → 此时模型可以不断地扩充可能的指代同一个实体的 mention 的集合</p>
+<p>同时，从第二个传统模型存在的问题出发，此时发挥作用的不再是一个简答地综合上下文信息的模型，而是一个 MRC 类的 span prediction 的模型，也就是说此时最后输出层的输出将能过够更好地将上下文信息进行融合，使得后续基于输出层表示的共指词评分更加准确，更好地辅助模型的训练</p>
+<br>
+<br>
+<hr>
+<h2 id="2-Model-模型介绍">2  Model 模型介绍</h2>
+<br>
+<h3 id="2-1-overview">2.1 overview</h3>
+<p>先来看看模型整体结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023100704428.png" alt="image-20231023100704428" style="zoom: 60%;" />
+<p>此时整体模型主要分为两个部分，</p>
+<ul>
+<li><strong>mention proposal model 指代提取模块</strong>：也就是负责从全文中提取出所有可能的指代词 mention</li>
+<li><strong>mention linking model 指代连接模块</strong>：也就是负责为所有提取出来的 mention 作分类，类似于一个聚类的操作，将所有的指向同一个实体的指代综合起来</li>
+</ul>
+<p>设此时输入的文章包含 n 个 token，记作 $X = {x_1, ... , x_n}$，则此时可能的文本片段共有 $N = n*(n+1)/2$ 个<br>
+（共 n+1 个可以插入的空 / 包括头尾，选定一个 为 n+1，再选定结束位置为 n*(n+1)，最后因为一个位置可以重复两遍再 /2），</p>
+<p>此时定义 $e_i$ 为第 i 个可能的文本片段，则此时 $e_i$ 对应着一组开始的 index $FIRST(i)$ 和结束位置的 index $LAST(i)$</p>
+<p>则此时整体的任务即是为所有的可能的 N 个 span 寻找前序 mention，如果此时该 span 并不作任何指代，则将它的前序指代定义为一个 dummy token $\epsilon$</p>
+<br>
+<h3 id="2-2-Input-Representations-输入表示">2.2 Input Representations 输入表示</h3>
+<p>首先需要得到文档 X 的每一个 token 的表示 xi，这里使用 <code>SpanBERT</code> 来完成</p>
+<p>注意到本身叙述者（speaker）的信息对于指代问题是十分重要的（比如一个文本两句话，第一句是你说的，你说的你指的是我，但是第二句是我说的，此时我说的你就是你），但是前序的大多数研究只是将 speaker 的信息简化为一个二元的变量，以标识两个 mention 是否是来自同一个 speaker。</p>
+<p>本文直接将 speaker 的名称和它对应的语句直接作向量拼接操作，在后续的实验部分会证明这样操作的优越性</p>
+<p>同时注意到为了将较长的文档输入 SpanBERT，这里采用了滑动窗口的方式，为每 T/2 个 token 创造一个 T 大小的片段，再各自输入 SpanBERT 来得到 embedding，作为后续的输入表示</p>
+<br>
+<h3 id="2-3-Mention-Proposal-指代提出模块">2.3 Mention Proposal 指代提出模块</h3>
+<p>此时的输入是 上述经过 SpanBERT encode 后的结果，目标为充分考虑文本中可能的 span，并提取出所有可能的指代</p>
+<h4 id="prune-the-candidate-spans">prune the candidate spans</h4>
+<p>首先规定一个 span 的最大长度，记作 L，也就是说只考虑长度在 L 以下的指代（过长的指代确实很怪），为了进一步减小可能的 span 个数，这里需要通过计算所有的 span 的 mention score 来对所有的 候选span 作进一步的修剪</p>
+<p>对于第 i 个可能的 span 计算它的 mention 得分 $s_m(i)$ ：</p>
+<ul>
+<li>
+<p>计算开始位置 $x_{FIRST(i)}$：<br>
+$$<br>
+s_m(x _{FIRST(i)}) = FFNN([x _{FIRST(i)}])<br>
+$$</p>
+</li>
+<li>
+<p>计算结束位置 $x_{LAST(i)}$​：<br>
+$$<br>
+s_m(x _{LAST(i)}) = FFNN([x _{LAST(i)}])<br>
+$$</p>
+</li>
+<li>
+<p>将此时的开始位置和结束位置的两个 embedding 直接作向量拼接再计算：<br>
+$$<br>
+s_m(x _{FIRST(i)}, x _{LAST(i)}) = FFNN_m ([x _{FIRST(i)}, x _{LAST(i)}])<br>
+$$</p>
+</li>
+<li>
+<p>最后计算综合的 mention score，也就是上述三个部分的平均：<br>
+$$<br>
+s_m(i) = [s_m (x _{FIRST(i)}) + s_m (x _{LAST(i)}) + s_m(x _{FIRST(i)}, x _{LAST(i)})]/3<br>
+$$</p>
+<p>这里的 FFNN 是一个前馈神经网络，注意上面用到的三个 FFNN 是独立训练的，各用各的参数</p>
+</li>
+</ul>
+<p>对于一篇文章共 N 个指代，此时只是选择前 λN 个得分最高的 span 作为可能的 mention，进入后续的操作</p>
+<h4 id="Mention-Proposal-Pretraining-预训练">Mention Proposal Pretraining 预训练</h4>
+<p>注意上述的操作需要经过预训练，如果此时直接将所有可能的 span 扔进去让模型从头开始会造成巨大的计算开销。这里的预训练采用三个联合的分类器：</p>
+<ul>
+<li>判断 $x_{FIRST(i)}$ 是否是 mention 的开始</li>
+<li>判断 $x_{LAST(i)}$ 是否是 mention 的结束</li>
+<li>判断 $x_{FIRST(i)}$ 和 $x_{LAST(i)}$ 是否应该合并（也就是说它俩是不是真的来自一个 mention）</li>
+</ul>
+<p>三个分类器采用联合训练的方式，损失函数就用它们再上面的 mention score 的得分情况公式来计算：<br>
+$$<br>
+\begin{align}<br>
+Loss(m) &amp;= \text{sigmoid} (s_m(x _{FIRST(i)})) \\<br>
+&amp;+ \text{sigmoid} (s_m(x _{LAST(i)})) \\<br>
+&amp;+ \text{sigmoid} (s_m(x _{FIRST(i)}, x _{LAST(i)}))<br>
+\end{align}<br>
+$$<br>
+<br></p>
+<h3 id="2-4-Mention-Linking-as-Span-Prediction-通过片段预测实现指代聚类">2.4 Mention Linking as Span Prediction 通过片段预测实现指代聚类</h3>
+<p>输入某一个来自 proposal 的指代 mention，此时 linking 的任务就是寻找到这个 mention 的前序指代，比如此时我已经有了 {特*普，他，总统，川宝，川建国}，此时给定的 mention 是川普，则我的任务就是为这个 mention 找到它的前序 = 川建国，同理川建国的前序也就是川宝</p>
+<p>此时给定 span $e_i$，计算 ei 和前一个 mention ej 的得分 $s_a(i,j)$，而这一步是通过 QA 的模式实现的，也就是基于一个三元组：$${context(X), query(q), answer(a)}$$</p>
+<p>上述的 上下文 context X 也就是输入的文档（注意是整个 document）</p>
+<p>接下来生成 query ：对于给定的 mention ei ，这里使用 ei 所在的那个句子作为 query，记作 $q(e_i)$，注意对于 query 中的 ei 本身用特殊的 token $<mention>$ 作封装</p>
+<p>此时根据上述的 context 和 query 尝试回答问题得到 a，这里可以看作是一个抽取式的 MRC 问题，但是此时的问题可以是没有答案的，将没有答案的情况归类为以下两种情形：</p>
+<ul>
+<li>此时给定的 span ei 本身就不是一个 mention</li>
+<li>ei 确实有所指代，但是这个 指代 并没有其他指向同一个实体的指代 mention</li>
+</ul>
+<p>对于给定的 span ei，它对应的 $q(e_i)$，此时我们想要计算任意一个 span j 是这个 query 的答案的得分，按如下步骤：</p>
+<ul>
+<li>将 query $q(e_i)$ 和上下文 X 作拼接，输入 BERT，用 BERT 的输出作为 $x_{FIRST(i)}$ 和 $x_{LAST(i)}$ 的表示</li>
+<li>将 FIRST 和 LAST 作向量拼接，再输入一个前馈神经网络 FFNN，得到对于问题 i 此时 span j 作为答案的得分：<br>
+$$<br>
+s_a(j \vert i) = FFNN _{j \vert i} [x _{FIRST(j) \vert i}, x _{LAST(j) \vert i}]<br>
+$$</li>
+</ul>
+<p>但是注意到 <strong>上述的打分是单向的</strong>，也就是说只判断了 span j 是否是 query i 的答案，但是如果 span i 和 span j 指向同一个实体，则此时 span i 同理应该是 query j 的答案，此时作进一步操作以实现双向的打分：同理将 span j 所在的句子作为 query，重复上述操作，得到 （span i 为 query j 的答案的得分），记作 $s_a(i|j)$​ ：<br>
+$$<br>
+s_a(i \vert j) = FFNN _{i \vert j} [x _{FIRST(i) \vert j}, x _{LAST(i) \vert j}]<br>
+$$</p>
+<p>注意这里的表示 x 还是来自于加入了 query j 的 BERT 的输出</p>
+<p>最后 span i 和 span j 的得分为上述两个得分的均值：<br>
+$$<br>
+s_a(i,j) = \frac{1}{2} (s_a (j\vert i) + s_a (i \vert j))<br>
+$$</p>
+<p>进一步考虑，如果此时 span i 和 span j 确实指向同一个实体，此时要求：1）span i 和 span j 都是 mention；2)此时它们共指</p>
+<p>则此时定义总体的 overall 得分：<br>
+$$<br>
+s(i, j) = \lambda[s_m(i) + s_m(j)] + (1-\lambda)s_a(i, j)<br>
+$$</p>
+<p>这里的 $\lambda$ 还是超参数</p>
+<br>
+<h3 id="2-5-Antecedent-Pruning-前序指代修剪">2.5 Antecedent Pruning 前序指代修剪</h3>
+<p>注意到此时给定一个文档 X ，含有 n 个 token，则此时可能的 span 是 $O(n^2)$ 级别的，而计算它们两两 span 的得分 $s(i,j)$ 就是 $O(n^4)$ 级别的</p>
+<p>此时考虑对于给定的一个 span i，我只对一部分的 span j 作打分：</p>
+<ul>
+<li>给定 span i，得到 query i，再通过 BERT ，计算 span i 和所有的 span j 的第一轮得分 = span j 确实是 query i 的答案的得分 = $s_a(j|i)$</li>
+<li>选择 $s_a(j|i)$ 得分最高的 C 个 span j 保留，继续反过来计算</li>
+</ul>
+<br>
+<h3 id="2-6-Training-整体训练">2.6 Training 整体训练</h3>
+<p>对于任意一个给定的 span ei，此时我依据它和 span j 的总得分 $s(i,j)$，选择 C 个 span j 作为 span i 的可能的前序 mention。同时这里存在一个 dummy token $\epsilon$ 来标记不存在共指的 mention</p>
+<p>这里通过数据集给出的 gold cluster 来训练模型：对于每一个给定的 ei，此时任意一个 ej 是它的共指的概率为：<br>
+$$<br>
+P(e_j) = \frac{e ^{s(i, j)}} {\sum _{j' \in C} {e ^{s(i, j')}}}<br>
+$$</p>
+<p>这里用优化（所有出现在 gold cluster 中的 mention)对应的对数似然函数来 <strong>端到端地训练模型</strong></p>
+<p>注意此时如果将一个文档中的所有 span 视作结点，则通过 s(i,j) 得到了两个结点 i 和 j 之间的 边 的权重，此时只保留每一个结点对应的所有边中最大的，则对于mention i 此时它构成的连通子图也就是所有和它指向同一个实体的 mention 的集合</p>
+<br>
+<h3 id="2-7-Data-Augmentation-using-Question-Answering-Datasets-利用-QA-数据集作数据增强">2.7 Data Augmentation using Question Answering Datasets 利用 QA 数据集作数据增强</h3>
+<p>注意到中间是通过 QA 的思路来判断两个 mention 是否是共指的，则此时解答 QA 部分的模型的能力同样十分重要</p>
+<p>这里利用 <strong>Quoref</strong> 和 <strong>SQuAD</strong> 两个数据集来对 <strong>mention linking</strong> 模块作预训练</p>
+<br>
+<br>
+<hr>
+<h2 id="3-Experiments-实验部分">3 Experiments 实验部分</h2>
+<br>
+<p>先提一下几个细节的地方：</p>
+<ul>
+<li>针对 mention linking 模块的 speaker 和 mention，这里采用两个特殊的 token $<speaker></speaker>$ 和 $<mention></mention>$ 来处理</li>
+<li>对于 SpanBERT 的部分，选用滑动窗口大小 T = 512</li>
+<li>保留的最大的可能的候选前序mention 个数 C= 50</li>
+</ul>
+<p>这里实验用到的是共指消融的两个很经典的数据集：<strong>CoNLL-2012 + GAP</strong></p>
+<br>
+<h3 id="3-1-CoNLL-2012-数据集">3.1 CoNLL-2012 数据集</h3>
+<ul>
+<li>2,802/343/348 → train / development / test</li>
+<li>包含七种不同的体裁</li>
+</ul>
+<p>训练结果如下：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101704245.png" alt="image-20231023101704245" style="zoom:60%;" />
+<p>可以看到整体的提升还是很明显的（超明显的）</p>
+<br>
+<h3 id="3-2-GAP-数据集">3.2 GAP 数据集</h3>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101736590.png" alt="image-20231023101736590" style="zoom:67%;" />
+<br>
+<h3 id="3-3-其他评价">3.3 其他评价</h3>
+<h4 id="各组件影响">各组件影响</h4>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101757541.png" alt="image-20231023101757541" style="zoom:67%;" />
+<p>可以看到 QA 部分的影响超大，可以认为这里用 QA 的思路来判断两个 mention 是否是共指的想法确实有一定合理性</p>
+<h4 id="speaker-的影响">speaker 的影响</h4>
+<p>前面提到 CorefQA 对 speaker 信息的处理和传统模型是不同的，这里来看看效果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101844368.png" alt="image-20231023101844368" style="zoom:67%;" />
+<p>论文里图咋这样了，，，总之从左到右是黄蓝黑</p>
+<p>可以看到 speaker 人数较多的时候，本文特殊的处理方式优势明显</p>
+<h4 id="召回率">召回率</h4>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023101909090.png" alt="image-20231023101909090" style="zoom:67%;" />
+<p>注意这里更改了不同的 λ 以控制被保留的 mention，可以注意到即使一个 mention 一开始被略过了（也就是 λ 比较低的时候）此时它仍然可以被整个模型重新捡回来，故在 λ 比较低的时候整体模型较传统模型的提升是很明显的</p>
+<br>
+<br>
+<br/>
+]]></content>
+      <categories>
+        <category>论文笔记</category>
+        <category>NLP</category>
+        <category>机器阅读理解(MRC)</category>
+      </categories>
+      <tags>
+        <tag>NLP</tag>
+        <tag>机器阅读理解</tag>
       </tags>
   </entry>
   <entry>
@@ -3901,6 +3686,221 @@ $$<br>
         <tag>friends日常</tag>
         <tag>安卓</tag>
         <tag>我和我的三桑</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Self-Training MRC (STM): 基于软证据提取的机器阅读理解自训练方法</title>
+    <url>/2023/10/30/20210312-paper-note-STM/</url>
+    <content><![CDATA[<p>原文写于 20210311，存档如下</p>
+<blockquote>
+<p>Yilin Niu, Fangkai Jiao, Mantong Zhou, Ting Yao, Jingfang Xu, Minlie Huang, <strong>A Self-Training Method for Machine Reading Comprehension with Soft Evidence Extraction</strong></p>
+<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzIwMDUuMDUxODkucGRm">https://arxiv.org/pdf/2005.05189.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源代码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL1NwYXJrSmlhby9TZWxmLVRyYWluaW5nLU1SQw==">https://github.com/SparkJiao/Self-Training-MRC （official ** pytorch）<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<br>
+<h3 id="1-1-background-论文背景与思路">1.1 background 论文背景与思路</h3>
+<p>当前大多数经典的机器阅读理解模型（MRC）往往包括以下两个结构：</p>
+<ul>
+<li>证据提取器（evidence extractor）：也就是负责检索出可能对解决这个问题有帮助的部分文本，此时检索的结果可能是一个句子 / 一段片段 etc，著名的 SQuAD 和 CoQA 数据集给出的任务都是这个思路</li>
+<li>答案预测器（ answer predictor）：从前面提取出的片段种割出一个部分作为答案，也就是常见的那种任务为预测答案开始位置和结束位置的论文的思路</li>
+</ul>
+<p>也就是说，此时证据标签（evidence labels）对于整个模型的训练是很重要的，也就是说我需要知道我所提取出的部分是不是真的对的答案的出处。对于 <strong>抽取式</strong> 的阅读理解任务是很好训练的，因为本身的答案也就是从整个文本中进行抽取的。但是这一标签对于 <strong>非抽取式</strong>的机器阅读理解任务往往是难以获得的，比如答案为 Yes/No 的问题，或者一些类似于选择题 / 多选题的形式，本身不存在对应的文中的出处，也就是说只有答案，但是没有答案对应的文章部分的 span，缺少证据标签导致在这类非抽取式任务上难以直接对证据提取器进行训练。</p>
+<p>举一个非抽取式的例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051018029.png" alt="image-20231022051018029" style="zoom:60%;" />
+<p>针对这类非抽取式的机器阅读理解任务，经典方法有：</p>
+<ul>
+<li>人工标注 gold answer：费时间且贵，需要钞能力来雇佣生物型人工智能，不现实</li>
+<li>远程监督：往往会依赖于一些人工手动设置的规则或一些外部资源来生成 distant label ，有效性有待商榷</li>
+<li>强化学习：本身强化学习的训练往往是不稳定的</li>
+</ul>
+<p>为了解决针对非抽取式阅读理解问题缺乏用于训练的证据标签的问题，原文提出了一种 <strong>自训练方法</strong>（Self Training method ，STM），直观来说也就是在迭代的过程中，自动生成证据标签并用来训练我们的证据提取器。每一个迭代中，用正确答案（gold answer）和噪声标签（noisy evidence labels）同时来训练基础的机器阅读理解模型（MRC），再利用这个模型来预测伪标签（也就是我们的 MRC 认为是对的的标签，但是并没有经过人工的验证步骤），并加入监督下一轮的训练。整个过程不需要手动舍设定的规则或外部信息，同时具有较好的可迁移性。</p>
+<br>
+<h3 id="1-2-self-training-自训练">1.2 self-training 自训练</h3>
+<p>开始之前先稍微说说什么是自训练</p>
+<p>自训练本身提出就是为了用在缺少标注的数据上的，通过让模型自己学习，自己创建可能的标签，再不断训练迭代的方式来学习。</p>
+<p>具体思路如下：</p>
+<ul>
+<li>将此时的数据分为训练集和测试集和未标记数据，注意这里的训练集是得到标记的，也就是说一开始需要一定的已标记数据来启动模型，但是不需要标记所有数据，自训练的优势也就是在于可以将未标记数据利用到模型中</li>
+<li>利用训练集中的数据（已标记）来训练模型</li>
+<li>利用当前训练的模型来尝试标记没有人工标记的数据，选择正确率足够高的一些标签作为 “伪标签”，这里的伪标签的选取可以全部都要或者根据一定的置信度加权</li>
+<li>将上一步得到的 “伪标签” 数据和原始的训练数据放到一起，再一同用于训练模型</li>
+<li>重复上面的步骤，直到此时还未被标记的数据本身少于某一个数值，或者此时模型进行的预测不足以获得新的伪标签（比如新的预测对应的置信度都卡住了高不上去了）</li>
+<li>最后在测试集上测试分类器性能，注意这里的测试集是人工标注的数据</li>
+</ul>
+<p>也就是说，此时只是需要少量一部分的已标注数据（一部分作为训练集来启动模型，一部分作为测试集来进行评估），而同时可以利用大量的未标注数据，属于半监督学习的方式。</p>
+<br>
+<br>
+<hr>
+<h2 id="2-Methods-模型介绍">2 Methods 模型介绍</h2>
+<br>
+<h3 id="2-1-overview">2.1 overview</h3>
+<p>先来看看模型的整体结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051056629.png" alt="image-20231022051056629" style="zoom:60%;" />
+<p>此时有两个数据池， U 和 L，沿用自训练的思路，此时 L（labeled data） 中的数据是已经经过了标记的少量数据，而 U（unlabeled data） 中的数据是大量未标注数据，也就是说 U 中的没有对应的证据标签（答案出处）而只有正确答案</p>
+<p>整体 STM 模型的思路如下：</p>
+<ul>
+<li><strong>MRC 模型同时在 U 和 L 两个数据池上进行训练</strong>（注意这里是同时在训练的，也就是对应图中 ① 的两个箭头）</li>
+<li><strong>MRC 对未标注数据池 U 中的数据进行预测</strong>，也就是预测 U 中的只有正确答案的数据其对应的证据标签</li>
+<li><strong>Selector 进行选择</strong>，从上一步 MRC 的所有预测中选择有一定置信度的预测，将<strong>选中的预测从数据池 U 移到 L 中</strong>，这一步也就是选择伪标签并加入训练集以监督下一轮训练的部分</li>
+</ul>
+<br>
+<h3 id="2-2-Base-Model-阅读理解部分模型">2.2 Base Model  阅读理解部分模型</h3>
+<p>先来看一下 STM 中 MRC 部分模型的结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022051131978.png" alt="image-20231022051131978" style="zoom:67%;" />
+<p>同理，此时由 三个部分 组成：<strong>编码层（encoder layer）+ 证据提取（evidence extractor）+ 答案预测（answer predict）</strong></p>
+<p>第一个编码层也就是用了文档 D （token 单位的）和问题 Q  的 embedding，没啥好说的，主要看看后两个</p>
+<br>
+<br>
+<h4 id="2-2-1-evidence-extractor-证据提取">2.2.1 evidence extractor 证据提取</h4>
+<p>此时将问题 Q 和文档 D 作为输入，编码层负责获得输入的上下文表示。设此时文档 D 包括句子 S：$D = {S_1 , S_2, ... , S_m}$，而 $h^D_{i,j}$ 表示文档 D 中第 i 个句子中的第 j 个单词的表示，$h^Q_i$ 为问题 Q 中的第 i 个单词的表示。</p>
+<p>encoder 层还是依赖于注意力机制，这里使用了 <strong>token 级别的 attention</strong> 和 <strong>句子级别的 attention</strong> 来获得文档的上下文表示 $h^D$：</p>
+<h5 id="token-level-attention：">token-level attention：</h5>
+<p>也就是通过注意力模块得到句子的上下文表示，这里以句子中的多个 token 为单位</p>
+<p>首先以问题 <strong>Q 为查询向量</strong>，通过打分函数 + softmax 得到权重后融合各个 token，得到最后句子的向量表示 $h_i^D$：<br>
+$$<br>
+h_i^D = \sum _{j} ^{|S_i|} {a _{i,j} h _{i, j} ^D} \text{ , } \alpha _{i, j} \varpropto exp(F^S(h^Q, h^D _{i,j}))<br>
+$$</p>
+<p>再对整个句子作<strong>自注意力</strong>，也就是利用可学习的参数将原句子投影到新的空间作为查询矩阵，这里得到句子本身的自注意力向量表示 $s_i^D$：<br>
+$$<br>
+s_i^D = \sum _j ^{|S_i|} \beta _{i, j} h _{i, j} ^D \text{ , } \beta _{i,j} \varpropto exp(w_sh _{i,j} ^D + b_s)<br>
+$$</p>
+<p>一点小细节，这里原文的打分函数用的是双线性的形式 bilinear form</p>
+<br>
+<h5 id="sentence-level-attention">sentence-level attention</h5>
+<p>也就是以 sentence 句子为单位，通过注意力计算各个句子的权重以得到整个文档 D 的表示 $h^D$：<br>
+$$<br>
+h^D  = \sum _i ^m \gamma_i h_i^D \text{ , } \gamma_i \varpropto exp(F^D (h^Q, s_i^D))<br>
+$$</p>
+<p>注意这里用的是句子 i 本身的自注意力后的向量表示 si 和问题的表示 hQ 来计算得分函数的</p>
+<p>这里其实有一点类似于那种通过问题匹配来寻找答案可能出现的范围的问题，此时这个句子的权重越高说明问题越可能来自于这里</p>
+<br>
+<h4 id="2-2-2-answer-prediction-答案预测">2.2.2 answer prediction 答案预测</h4>
+<p>注意以上两个注意力模块最后的输出实际上是最后的 $h^D$，也就是文档的向量表示，此时将文档的向量表示和问题的向量表示 $h^Q$ 一同输入来进行答案的预测</p>
+<p>如果此时是<strong>抽取式问题</strong>，也就是需要给出文档的一部分内容作为答案，则此时使用两个 MLP 多层感知机来分别预测每一个 token 的位置是 （答案的开始位置）和是（答案的结束位置）的概率，再选取答案</p>
+<p>如果此时是 <strong>Yes/No</strong> 的问题，直接使用一个简单的线性分类器；如果是 <strong>多项选择问题</strong> 则使用 MLP + softmax 的形式给出各个答案的概率</p>
+<br>
+<h3 id="2-3-Loss-Function-损失函数">2.3 Loss Function 损失函数</h3>
+<p>这里定义两个损失函数，分别对应任务的损失函数和证据提取的损失函数</p>
+<br>
+<h4 id="2-3-1-task-specific-loss-任务部分损失函数">2.3.1 task-specific loss 任务部分损失函数</h4>
+<p>这里直接使用的是极大似然法（用的是负对数的那个似然函数）<br>
+$$<br>
+L_A (D, Q, A) = -\log P(\hat {A} = A|D, Q)<br>
+$$</p>
+<p>这里的 A 是正确答案（gold answer)，而 $\hat{A}$ 是我预测的答案</p>
+<br>
+<h4 id="2-3-2-evidence-loss-证据提取部分损失函数">2.3.2 evidence loss 证据提取部分损失函数</h4>
+<p>这里的证据理解为句子级别的，也就是选出 K 个可以作为证据的句子（这里的 K 是一个预先决定的超参数）。注意因为可能有 k 个句子，故这里一步一步地计算 loss：</p>
+<ul>
+<li>选出最可能的那个句子（也就是权重最大的）</li>
+<li>在所有没有被选过的句子上计算 loss，也就是把被选过的句子 mask 掉</li>
+</ul>
+<p>重复上面的步骤 k 次，也就是每一次都从当前剩下的句子里选出一个最大的，再算剩下的。最后的 loss 是上面 k 步 loss 的平均值</p>
+<p>这里利用了一个 <strong>BP-able</strong> 来选择 top-K 最可能为证据的句子。</p>
+<p>考虑：<br>
+$$<br>
+L_E(D, Q, E) = \frac{1}{K} \sum _{k=1} ^K H(D,Q,E,M^k)<br>
+$$</p>
+<p>这里的 M 表示 mask，也就是 $M^k = {M_1^k ,...,M_m^k}$，文章 D 中共 m 个句子，而每一个 $M^k_i \in {0,-\infty }$，表示为第 k 轮是句子 i 的 mask，如果 mask = 0 表示此时这个句子还没有被选中，而选中的句子为 $-\infty$，注意第 k 轮中新被选中的句子的对应 Mk 的 mask 也是 $-\infty$​<br>
+$$<br>
+M_i^k =<br>
+\begin{cases}<br>
+-\infty &amp;i = \arg\max_j (\lambda _j ^{k-1} E_j) \\<br>
+M_i ^{k-1} &amp;otherwise<br>
+\end{cases}<br>
+$$</p>
+<p>这里的 $E_i \in {0,1}$ 用来标识当前的 第 i 个句子是不是真的是证据</p>
+<p>在每一轮都需要选择出当前所有还没有被选择的句子中的一个最可能的句子，则此时在每一轮都计算所有未被选择句子的注意力分布：<br>
+$$<br>
+\lambda _i ^k = \frac{exp(F^D (h^Q, s_i) + M_i^k)} {\sum_j (exp(F^D(h^Q, s_j) + M_j^k))}<br>
+$$</p>
+<p>这里的 si 是句子的自注意力表示，打分函数出来后经过 softmax</p>
+<p>选出句子后计算它的 loss：<br>
+$$<br>
+H(D, Q, E, M^k) = -\log \max _i (\lambda _i ^k \cdot E_i)<br>
+$$</p>
+<p>这里的 $E_i \in {0,1}$ 用来标识当前的 第 i 个句子是不是真的是证据</p>
+<p>H 是对应第 k 步的结果，最后总体的损失函数也就是 k 个 H 的均值</p>
+<br>
+<p>综上，此时总体的损失函数就是上面两种损失函数的加权组合：<br>
+$$<br>
+L = \sum _{(D,Q,A) \in U \cup L} {L_A (D, Q, A) + \eta \sum _{(D,Q,A) \in L} L_E (D,Q,A)}<br>
+$$</p>
+<p>η 本身是一个超参数</p>
+<br>
+<h3 id="2-4-Self-Training-MRC-STM-整体模型">2.4  Self-Training MRC (STM) 整体模型</h3>
+<p>现在来看看整体模型的结构：</p>
+<p>首先，<strong>利用真实答案来训练 MRC 部分的模型</strong>，这里同时用到了 U 和 L 两个数据集，训练 MRC 的时候不需要证据标签，只要直到正确答案就可以</p>
+<p>这里的 MRC 的训练用的是上面那个同时（任务导向）+（证据提取部分导向）的总的损失函数</p>
+<p><strong>进一步通过给定的（D,Q,A），也就是文章+问题+答案 来进行证据标签的标注</strong>，这里标注依赖于：<br>
+$$<br>
+\hat {E} = \arg\min _{E'} L_E {(D, Q, E')}<br>
+$$</p>
+<p>也就是说我本来是依赖真实的（是否为证据 Ei）来计算损失函数，则此时我同样可以来考虑使得损失函数最小的 Ei 是什么样的，由此得到未标记（指的是未标记证据出处)数据的证据标签的估计 $\hat{E}$</p>
+<p>则此时对于 $(D,Q,A,\hat{E})$​，这个组合的置信得分定义为：<br>
+$$<br>
+c(D, Q, A, \hat{E}) = exp(-L_A (D, Q, A)) \cdot exp(-L_E(D, Q, \hat{E}))<br>
+$$</p>
+<p>同时用到了任务导向的损失函数 和 证据标签部分的 loss</p>
+<p>而这里的 <strong>selector 的选择依据</strong>：</p>
+<ul>
+<li>要求组成上面置信得分的两个损失函数都在某一个阈值以下（防止其中一个很低而另一个不行导致的总体得分高，需要两个任务上都差不多不错）</li>
+<li>在满足 1 的情况下，达到置信得分最高</li>
+</ul>
+<p>一个小细节，在初始的时候数据池 L 实际上是空的，而证据提取器的训练是由远程监督完成的</p>
+<p>整体模型的流程如下所示：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052441091.png" alt="image-20231022052441091" style="zoom:70%;" />
+<br>
+<br>
+<hr>
+<h2 id="3-Experiments-实验部分">3 Experiments 实验部分</h2>
+<br>
+<h3 id="3-1-dataset">3.1 dataset</h3>
+<p><strong>Yes/No Question Answering (YNQA)</strong> ：二元选择回答的数据集，非抽取，包括如下几个：</p>
+<ul>
+<li>CoQA</li>
+<li>BoolQ</li>
+<li>MS MARCO</li>
+</ul>
+<p><strong>Multiple-choice MRC</strong>：多项选择的数据集</p>
+<ul>
+<li>RACE</li>
+<li>DREAM</li>
+<li>MultiRC</li>
+</ul>
+<p><strong>Open-domain QA (ODQA)</strong>：开放</p>
+<ul>
+<li>Quasar-T</li>
+</ul>
+<br>
+<h3 id="3-2-result">3.2 result</h3>
+<p>看看在几个类型上的结果：</p>
+<p>对于二元选择：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052513753.png" alt="image-20231022052513753" style="zoom:67%;" />
+<p>多项选择：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052532575.png" alt="image-20231022052532575" style="zoom:55%;" />
+<p>开放：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052607856.png" alt="image-20231022052607856" style="zoom:60%;" />
+<p>由于用到的是自学习，这里验证了一下 <strong>Error propagation</strong> 的问题，也就是一开始就预测错了，但是又被拿去作训练，导致整个模型坚定不移地学着错的东西</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022052705215.png" alt="image-20231022052705215" style="zoom:67%;" />
+<p>约有 4% 的错误的证据反而被复用了（就是又被拿去学了），但是它们中有接近一半的在后面的 tire 又被纠正了，在此可以认为 STM 并不会陷入严重的 error propagation 导致整个的崩溃</p>
+<br>
+<br>
+<br/>
+]]></content>
+      <categories>
+        <category>论文笔记</category>
+        <category>NLP</category>
+        <category>机器阅读理解(MRC)</category>
+      </categories>
+      <tags>
+        <tag>NLP</tag>
+        <tag>机器阅读理解</tag>
       </tags>
   </entry>
 </search>
