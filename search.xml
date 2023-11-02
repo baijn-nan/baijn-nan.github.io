@@ -14,12 +14,25 @@
 <li>首页改版
 <ul>
 <li>[x] widget based on swiper 实现近期博客轮播展示 （v1.1.1 - 20231101）</li>
-<li>[ ] 统一 widget 语法：重写 github contribution widget （ejs $\to$ njk）<strong>施工中</strong> 🚧</li>
+<li>[x] 统一 widget 语法：重写 github contribution widget （ejs $\to$ njk）（v1.1.2 - 20231102）</li>
+<li>[ ] 公告喊话栏 （施工中 🚧）</li>
 <li>[ ] something else about index page ... 🤔</li>
 </ul>
 </li>
 </ul>
 <br/>
+<h3 id="v1-1-2-20231102">v1.1.2 - 20231102</h3>
+<ul>
+<li>
+<p>基于 echarts 实现首页 github contribution 图表</p>
+<ul>
+<li>
+<p>widget 结构；以 njk 文件定义与 index.njk 手动修改的方式实现；</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231102091851594.png" alt="image-20231102091851594" style="zoom:40%;" />
+</li>
+</ul>
+</li>
+</ul>
 <h3 id="v1-1-1-20231101">v1.1.1 - 20231101</h3>
 <ul>
 <li>首页使用 swiper 展示近期博文
@@ -558,6 +571,146 @@ In Proceedings of The 2019 Web Conference (WWW 2019)</p>
       </tags>
   </entry>
   <entry>
+    <title>RE3QA: 检索+阅读+重新排序：端到端的多文档阅读理解</title>
+    <url>/2023/10/30/20210303-paper-note-RE3QA/</url>
+    <content><![CDATA[<p>原文写于 20210303，存档如下</p>
+<blockquote>
+<p>Minghao Hu, Yuxing Peng, Zhen Huang, Dongsheng Li, National University of Defense Technology, Changsha, China (ACL19)   <strong>Retrieve, Read, Rerank: Towards End-to-End Multi-Document Reading Comprehension</strong></p>
+<p>原论文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MDYuMDQ2MTgucGRm">https://arxiv.org/pdf/1906.04618.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2h1bWluZ2hhbzE2L1JFM1FB">official<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1. introduction</h2>
+<p>延续前序研究的思路，考虑通过 <strong>检索（也就是寻找和整体问题相关的段落）+ 阅读（编码，embedding etc）+ 重排序（对可能的答案进行重新排序以生成最终的回答）的方式</strong> 完成机器阅读理解的任务。但是此时存在几个常有的问题：</p>
+<ul>
+<li>多个模块之间是独立的，独立进行训练，而不是作为一个整体共同解决问题。且此时常常要重复编码的输入，属于不必要的计算开支。</li>
+<li>难以将上游问题和下游任务很好地结合，简单理解就是上游的学习的目标往往不是下游任务最终的目标，导致学习目标和最后的目的的分离，或整体模型的训练-测试的分离。</li>
+</ul>
+<p>原论文提出 $RE^3QA$ 方法，作为一个整体阅读理解问题模型，将检索（context retrieve）+ 阅读（reading comprehension）+ 重新排序（answer reranking） 三个部分进行结合，得到端到端的多文档阅读理解模型。</p>
+<p>其本身为多文档的阅读理解任务设计，也就是说不同于传统的单独一个段落的阅读理解，此时需要 retrieve 的行为，即从整个内容中寻找和问题相关的部分，删除大部分对回答问题没有贡献的文本。进一步地从提取出的段落中提取答案，再通过重排序候选答案的方式（reranker）得到最终解答。新方法的优势在于：一方面其本身三个模块共享文本表示（contextualized text representation），另一方面将上游学习任务和下游的部分很好地结合，属于一个端到端的模型。同时由于将文本表示在整个模型的各个部分直接共享，此时不再需要重复的编码的输入，节省时间。</p>
+<p>几个前序研究的特点如下表：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021080610230.png" alt="image-20231021080610230" style="zoom: 50%;" />
+<br>
+<br>
+<hr>
+<h2 id="2-模型解释">2 模型解释</h2>
+<br>
+<p>先看一下整个模型的 overview</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021080700504.png" alt="image-20231021080700504" style="zoom: 67%;" />
+<p>明确地分为 <strong>三个部分（retrieve + read + rerank）</strong>。输入的为问题和一系列文档（a set of document)</p>
+<ul>
+<li>首先将输入的文档进行初步的筛选（也就是上图 pruning document 部分）→</li>
+<li>再将文本进行处理，得到固定长度的 segment →</li>
+<li>继续对得到的 segment 进行编码（这里使用的是预训练的 transformer 模块，对应图中的 T-block 部分）→
+<ul>
+<li>为保证效率，这里采用提前停止的思路，通过排序评分比较，仅仅将部分文档继续进入下一部分（也就是 early stop 部分）→</li>
+</ul>
+</li>
+<li>通过远程监督的阅读理解器，输出候选答案（图中 read 部分） →</li>
+<li>将候选答案重排序，得到最终答案</li>
+</ul>
+<br>
+<br>
+<h3 id="2-1-文档筛选（初步修剪，pruning-document）">2.1 文档筛选（初步修剪，pruning document）</h3>
+<p>以段落为尺度对文档进行拆解和修剪</p>
+<p>考虑此时输入的是文档的集合，经过 TF-IDF 向量化后，保留的是和输入的问题之间余弦cos距离最小的 topK 段落。此时通过保留下来的 k 个段落原本的相对位置，将经过筛选后的段落重新排序为一个新的文档 d，作为修剪后的文档，进入下一步操作。</p>
+<p>注意这里的方法很简单，但是作为一个初步筛选是十分有效的（论文表示 95% 以上的无关的段落将被舍弃）</p>
+<br>
+<h3 id="2-2-文本片段编码（segment-embedding）">2.2 文本片段编码（segment embedding）</h3>
+<p>这里不同于传统直接使用 句子 作为划分依据，而是通过 <strong>滑动窗口</strong> 来帮助分割文档。设定滑动窗口长度为 l，跨度 stride 为 r，将上述筛选处理后的文档 d 划分为多个 segment：</p>
+<p>$$C = { c_1, ... , c_n }, \text{ }\text{ }\text{ } n = [\frac{L_d-l}{r}]+1$$</p>
+<p>再通过预训练的 transformer 对 segment 进行编码。此时输入的为：</p>
+<p>$$[\text{ }[CLS]; q; [SEP] ; c ; [SEP]\text{ }]$$</p>
+<p>这里和 Transformer 和 bert 是相同的，就不多说了。CLS 是表征 token，标识分类 classification；q 是问题，SEP 作为句子之间区分的标志。注意这里上述的输入中的每一个 xi 都是 单词，type 类别 ，位置 embedding 的逐元素相加。直接放进 Transformer 进行编码，得到 $$h0 \in R^{L_x * D_h}$$，这里的 Lx 是输入的长度，Dh 为 hidden size</p>
+<p>注意这里同时使用 $I$ 个 Transformer blocks 进行训练，也就是得到 $I$ 个上述的 embedding 结果。</p>
+<br>
+<h3 id="2-3-提前停止检索器（-Early-Stopped-Retriever）">2.3 提前停止检索器（ Early-Stopped Retriever）</h3>
+<p>这里为了计算效率，采用了 early stop 的方法。</p>
+<p>论文表示在部分数据集中即使经过筛选，最后的 segment 也是较多的，如果此时将每一个 segment 都进行完整的 embedding 将损失大量信息。本文 <strong>利用早期汇总的隐藏层表示对各个 segment 进行评分和排序，并仅保留 topK 的 segment 的信息进入后续的模块</strong></p>
+<p>也就是说这里本身有 $I$ 个 transformer，但是仅仅使用第 J 个隐藏层的输出来作为对 segment 的表示来计算不同 segment 的得分，（这里的 J &lt; I，也就是使用的是早期层中的表示）<br>
+设 $h^J$ 为第 J 个隐藏层的输出，此时通过：</p>
+<p>$$\mu = softmax(w_\mu h^J)$$</p>
+<p>$$score^r = w_r tanh(W_r \sum _{i=1} ^{L_x} {\mu_ih_i^J})$$</p>
+<p>计算各个 segment 的得分。注意这里的  $w_\mu , w_r , W_r$ 都是学习的参数。第一个式子 μ 和 第二个式子的 sum 后部分，可以看作是将整个句子按照重要程度转换得到一个向量，输入第二个式子的 wr tanh 部分进行打分。</p>
+<p>得到所有的 segment 的得分后，保留得分最高的 N 个segment 进入下一个模块。其他的信息直接丢弃。注意这里的 N 一般不会太大，可以起到大大简化计算的作用。</p>
+<p>注意这一部分训练的目标函数：先将多个 segment 的得分 score r 标准化，通过：</p>
+<p>$$\mathcal{L}_I = -\sum _{i=1} ^2 y_i^r \log{(softmax(score^r)_i)}$$</p>
+<p>作为目标函数，其中 $y_i^r$ 是 one-hot label，用来标识当前的 segment 中是否存在至少一个正确答案中的文本（需要完全匹配)。</p>
+<br>
+<h3 id="2-4-远程监督阅读器（Distantly-Supervised-Reader）">2.4 远程监督阅读器（Distantly-Supervised Reader）</h3>
+<p>此时的目标是从多个 segment 中得到候选答案。此时通过片段切割的方法实现，也就是 <strong>计算每一个（答案开始位置 s）和 （答案结束位置 e）的得分，将得分相加作为这个候选答案的得分，排序再选择。</strong></p>
+<p>这里的 Transformer 共 $I$ 个，考虑最终隐藏层的输出 $h^l$，则此时答案开始部分和结束部分的得分计算为：</p>
+<p>$$score^s  = w_s h^l , \text{  } score^e = w_eh^l$$</p>
+<p>，进一步假设此时有一个候选答案 $a_i$，$\alpha_i$ 和 $\beta_i$ 分别是它的开始和结束部分对应的 indice，则此时整个答案 $a_i$ 的得分就是 $\alpha_i$ 作为开始的得分和 $\beta_i$ 作为结束的得分的加和：</p>
+<p>$$score^{all}<em>{a_i} = score^s</em>{\alpha_i} + score^e_{\beta_i}$$</p>
+<p>注意，这里为了标记最后的正确答案在原文中的位置，引入两个label：$y^s , y^e$，用来标记当前是否确实为正确答案的某一个文本片段的开始或结束。原文提到由于可能当前的 segment 本身不含有任何的正确答案文本片段，所以 ys 和 ye 的第一个元素都默认标记为 1</p>
+<p>这里用远程监督的方式来训练阅读器，这部分的损失函数：<br>
+$$<br>
+\begin{align}<br>
+\mathcal{L} _{II} &amp;= -\sum _{i=1} ^{L_x} y_i^s \log{(softmax(score^s)_i)} \\<br>
+&amp;= -\sum _{i=1} ^{L_x} y_j^e \log{(softmax(score^e)_j)}<br>
+\end{align}<br>
+$$<br>
+<br></p>
+<h3 id="2-5-答案重排序（answer-reranker）">2.5 答案重排序（answer reranker）</h3>
+<p>此时得到了候选答案，通过 reranker 作重排序，得到最后的答案。</p>
+<p>注意前面得到的候选答案中可能会存在重复的正确答案的片段（比如正确答案含有 dog ，可能很多的候选答案中都存在 dog 这个片段），这里采用 <strong>跨度级别非最大抑制（Span-level non-maximum suppression）</strong> 来对部分重复冗余的候选答案进行裁剪；</p>
+<p>此时输入候选答案集合 A，候选答案得分集合 S（来自于上一步），选择 A 集合中得分最高的答案 ai，将其加入集合 B 并从集合 A 中删除，同时寻找集合 A 中和答案 ai 存在重叠的答案。不断循环上述步骤，直到集合 A 为空或者集合 B 中的答案个数达到某个上限。</p>
+<p>具体 span-level NMS 的算法步骤如下：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021081500190.png" alt="image-20231021081500190" style="zoom:67%;" />
+<p>此时将集合 B 作为我的候选答案的集合，进一步对集合 B 中的候选答案进行重排。注意这里的思路和前面的打分比较类似，同理是将候选答案 a 进行某种转化为新的向量，再进行打分：<br>
+$$<br>
+\eta = softmax(w_{\eta} h ^I _{\alpha_i : \beta_i}) \<br>
+score_i ^a = w_a \tanh{(W_a \sum _{j=\alpha_i} ^{\beta_i} \eta _{j-\alpha_i+1} h_j^I)}<br>
+$$</p>
+<p>为了对这一部分的打分进行训练，引入标签 yhard 和 ysoft：</p>
+<ul>
+<li>$y_i^{hard}$： 也就是当前答案 ai 和真实答案的精确匹配分数</li>
+<li>$y_i^{soft}$：也就是当前答案 ai 和真实答案的模糊匹配 F1 分数</li>
+</ul>
+<p>如果此时 B 集合中的所有候选答案实际上都不包含正确答案，也就是所有的 element 的 yhard 编码都是 0，则此时用正确答案来替代集合 B 中得分最低的那个候选答案。</p>
+<p>定义第三部分的损失函数：<br>
+$$<br>
+\begin{align}<br>
+\mathcal{L} _{III} &amp;= -\sum _{i=1} ^{M^*} y _i ^{hard} \log {(softmax(score^a)_i)} \\<br>
+&amp;+ \sum _{i=1} ^{M^*} {|| y_i ^{soft} - \frac{score_i^a}{\sum _{j=1} ^{M^*} score_j^a}||^2}<br>
+\end{align}<br>
+$$</p>
+<p>最终选择重排序（rerank)后得分最高的候选答案作为正确答案。</p>
+<br>
+<be>
+<hr>
+<h2 id="3-模型训练">3 模型训练</h2>
+<p>注意这里本身是一个端到端的学习方式，则整体的损失函数为前面三个部分的损失函数的加和：<br>
+$$<br>
+\mathcal{J} = \mathcal{L} _I + \mathcal{L} _{II} + \mathcal{L} _{III}<br>
+$$</p>
+<p>通过直接计算迭代最后的损失函数来训练整个模型。整体的端到端的训练顺序：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021082022887.png" alt="image-20231021082022887" style="zoom:67%;" />
+<br>
+<p>来看看最后的模型效果</p>
+<p>首先是使用的数据集的情况：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021082156471.png" alt="image-20231021082156471" style="zoom: 55%;" />
+<p>最后的训练效果比较：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021082244711.png" alt="image-20231021082244711" style="zoom: 67%;" />
+<br>
+<br>
+<br>
+]]></content>
+      <categories>
+        <category>论文笔记</category>
+        <category>NLP</category>
+        <category>机器阅读理解(MRC)</category>
+      </categories>
+      <tags>
+        <tag>NLP</tag>
+        <tag>机器阅读理解</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>CogQA：基于认知图谱的多跳阅读理解</title>
     <url>/2023/10/30/20210304-paper-note-CogQA/</url>
     <content><![CDATA[<p>原文写于 20210304，存档如下；</p>
@@ -756,146 +909,6 @@ $$</p>
 <p>将<strong>常识知识加入</strong>帮助模型推理（HGN 实验发现对于 HotpotQA 数据集中的部分问题错答的主要原因是缺乏一定的常识知识，可以利用 [KT-NET][4] 的思路将常识信息和 bert 的编码作一定程度的融合？）</p>
 </li>
 </ul>
-<br>
-<br>
-<br>
-]]></content>
-      <categories>
-        <category>论文笔记</category>
-        <category>NLP</category>
-        <category>机器阅读理解(MRC)</category>
-      </categories>
-      <tags>
-        <tag>NLP</tag>
-        <tag>机器阅读理解</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>RE3QA: 检索+阅读+重新排序：端到端的多文档阅读理解</title>
-    <url>/2023/10/30/20210303-paper-note-RE3QA/</url>
-    <content><![CDATA[<p>原文写于 20210303，存档如下</p>
-<blockquote>
-<p>Minghao Hu, Yuxing Peng, Zhen Huang, Dongsheng Li, National University of Defense Technology, Changsha, China (ACL19)   <strong>Retrieve, Read, Rerank: Towards End-to-End Multi-Document Reading Comprehension</strong></p>
-<p>原论文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MDYuMDQ2MTgucGRm">https://arxiv.org/pdf/1906.04618.pdf<i class="fa fa-external-link-alt"></i></span></p>
-<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2h1bWluZ2hhbzE2L1JFM1FB">official<i class="fa fa-external-link-alt"></i></span></p>
-</blockquote>
-<span id="more"></span>
-<br>
-<br>
-<hr>
-<h2 id="1-introduction">1. introduction</h2>
-<p>延续前序研究的思路，考虑通过 <strong>检索（也就是寻找和整体问题相关的段落）+ 阅读（编码，embedding etc）+ 重排序（对可能的答案进行重新排序以生成最终的回答）的方式</strong> 完成机器阅读理解的任务。但是此时存在几个常有的问题：</p>
-<ul>
-<li>多个模块之间是独立的，独立进行训练，而不是作为一个整体共同解决问题。且此时常常要重复编码的输入，属于不必要的计算开支。</li>
-<li>难以将上游问题和下游任务很好地结合，简单理解就是上游的学习的目标往往不是下游任务最终的目标，导致学习目标和最后的目的的分离，或整体模型的训练-测试的分离。</li>
-</ul>
-<p>原论文提出 $RE^3QA$ 方法，作为一个整体阅读理解问题模型，将检索（context retrieve）+ 阅读（reading comprehension）+ 重新排序（answer reranking） 三个部分进行结合，得到端到端的多文档阅读理解模型。</p>
-<p>其本身为多文档的阅读理解任务设计，也就是说不同于传统的单独一个段落的阅读理解，此时需要 retrieve 的行为，即从整个内容中寻找和问题相关的部分，删除大部分对回答问题没有贡献的文本。进一步地从提取出的段落中提取答案，再通过重排序候选答案的方式（reranker）得到最终解答。新方法的优势在于：一方面其本身三个模块共享文本表示（contextualized text representation），另一方面将上游学习任务和下游的部分很好地结合，属于一个端到端的模型。同时由于将文本表示在整个模型的各个部分直接共享，此时不再需要重复的编码的输入，节省时间。</p>
-<p>几个前序研究的特点如下表：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021080610230.png" alt="image-20231021080610230" style="zoom: 50%;" />
-<br>
-<br>
-<hr>
-<h2 id="2-模型解释">2 模型解释</h2>
-<br>
-<p>先看一下整个模型的 overview</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021080700504.png" alt="image-20231021080700504" style="zoom: 67%;" />
-<p>明确地分为 <strong>三个部分（retrieve + read + rerank）</strong>。输入的为问题和一系列文档（a set of document)</p>
-<ul>
-<li>首先将输入的文档进行初步的筛选（也就是上图 pruning document 部分）→</li>
-<li>再将文本进行处理，得到固定长度的 segment →</li>
-<li>继续对得到的 segment 进行编码（这里使用的是预训练的 transformer 模块，对应图中的 T-block 部分）→
-<ul>
-<li>为保证效率，这里采用提前停止的思路，通过排序评分比较，仅仅将部分文档继续进入下一部分（也就是 early stop 部分）→</li>
-</ul>
-</li>
-<li>通过远程监督的阅读理解器，输出候选答案（图中 read 部分） →</li>
-<li>将候选答案重排序，得到最终答案</li>
-</ul>
-<br>
-<br>
-<h3 id="2-1-文档筛选（初步修剪，pruning-document）">2.1 文档筛选（初步修剪，pruning document）</h3>
-<p>以段落为尺度对文档进行拆解和修剪</p>
-<p>考虑此时输入的是文档的集合，经过 TF-IDF 向量化后，保留的是和输入的问题之间余弦cos距离最小的 topK 段落。此时通过保留下来的 k 个段落原本的相对位置，将经过筛选后的段落重新排序为一个新的文档 d，作为修剪后的文档，进入下一步操作。</p>
-<p>注意这里的方法很简单，但是作为一个初步筛选是十分有效的（论文表示 95% 以上的无关的段落将被舍弃）</p>
-<br>
-<h3 id="2-2-文本片段编码（segment-embedding）">2.2 文本片段编码（segment embedding）</h3>
-<p>这里不同于传统直接使用 句子 作为划分依据，而是通过 <strong>滑动窗口</strong> 来帮助分割文档。设定滑动窗口长度为 l，跨度 stride 为 r，将上述筛选处理后的文档 d 划分为多个 segment：</p>
-<p>$$C = { c_1, ... , c_n }, \text{ }\text{ }\text{ } n = [\frac{L_d-l}{r}]+1$$</p>
-<p>再通过预训练的 transformer 对 segment 进行编码。此时输入的为：</p>
-<p>$$[\text{ }[CLS]; q; [SEP] ; c ; [SEP]\text{ }]$$</p>
-<p>这里和 Transformer 和 bert 是相同的，就不多说了。CLS 是表征 token，标识分类 classification；q 是问题，SEP 作为句子之间区分的标志。注意这里上述的输入中的每一个 xi 都是 单词，type 类别 ，位置 embedding 的逐元素相加。直接放进 Transformer 进行编码，得到 $$h0 \in R^{L_x * D_h}$$，这里的 Lx 是输入的长度，Dh 为 hidden size</p>
-<p>注意这里同时使用 $I$ 个 Transformer blocks 进行训练，也就是得到 $I$ 个上述的 embedding 结果。</p>
-<br>
-<h3 id="2-3-提前停止检索器（-Early-Stopped-Retriever）">2.3 提前停止检索器（ Early-Stopped Retriever）</h3>
-<p>这里为了计算效率，采用了 early stop 的方法。</p>
-<p>论文表示在部分数据集中即使经过筛选，最后的 segment 也是较多的，如果此时将每一个 segment 都进行完整的 embedding 将损失大量信息。本文 <strong>利用早期汇总的隐藏层表示对各个 segment 进行评分和排序，并仅保留 topK 的 segment 的信息进入后续的模块</strong></p>
-<p>也就是说这里本身有 $I$ 个 transformer，但是仅仅使用第 J 个隐藏层的输出来作为对 segment 的表示来计算不同 segment 的得分，（这里的 J &lt; I，也就是使用的是早期层中的表示）<br>
-设 $h^J$ 为第 J 个隐藏层的输出，此时通过：</p>
-<p>$$\mu = softmax(w_\mu h^J)$$</p>
-<p>$$score^r = w_r tanh(W_r \sum _{i=1} ^{L_x} {\mu_ih_i^J})$$</p>
-<p>计算各个 segment 的得分。注意这里的  $w_\mu , w_r , W_r$ 都是学习的参数。第一个式子 μ 和 第二个式子的 sum 后部分，可以看作是将整个句子按照重要程度转换得到一个向量，输入第二个式子的 wr tanh 部分进行打分。</p>
-<p>得到所有的 segment 的得分后，保留得分最高的 N 个segment 进入下一个模块。其他的信息直接丢弃。注意这里的 N 一般不会太大，可以起到大大简化计算的作用。</p>
-<p>注意这一部分训练的目标函数：先将多个 segment 的得分 score r 标准化，通过：</p>
-<p>$$\mathcal{L}_I = -\sum _{i=1} ^2 y_i^r \log{(softmax(score^r)_i)}$$</p>
-<p>作为目标函数，其中 $y_i^r$ 是 one-hot label，用来标识当前的 segment 中是否存在至少一个正确答案中的文本（需要完全匹配)。</p>
-<br>
-<h3 id="2-4-远程监督阅读器（Distantly-Supervised-Reader）">2.4 远程监督阅读器（Distantly-Supervised Reader）</h3>
-<p>此时的目标是从多个 segment 中得到候选答案。此时通过片段切割的方法实现，也就是 <strong>计算每一个（答案开始位置 s）和 （答案结束位置 e）的得分，将得分相加作为这个候选答案的得分，排序再选择。</strong></p>
-<p>这里的 Transformer 共 $I$ 个，考虑最终隐藏层的输出 $h^l$，则此时答案开始部分和结束部分的得分计算为：</p>
-<p>$$score^s  = w_s h^l , \text{  } score^e = w_eh^l$$</p>
-<p>，进一步假设此时有一个候选答案 $a_i$，$\alpha_i$ 和 $\beta_i$ 分别是它的开始和结束部分对应的 indice，则此时整个答案 $a_i$ 的得分就是 $\alpha_i$ 作为开始的得分和 $\beta_i$ 作为结束的得分的加和：</p>
-<p>$$score^{all}<em>{a_i} = score^s</em>{\alpha_i} + score^e_{\beta_i}$$</p>
-<p>注意，这里为了标记最后的正确答案在原文中的位置，引入两个label：$y^s , y^e$，用来标记当前是否确实为正确答案的某一个文本片段的开始或结束。原文提到由于可能当前的 segment 本身不含有任何的正确答案文本片段，所以 ys 和 ye 的第一个元素都默认标记为 1</p>
-<p>这里用远程监督的方式来训练阅读器，这部分的损失函数：<br>
-$$<br>
-\begin{align}<br>
-\mathcal{L} _{II} &amp;= -\sum _{i=1} ^{L_x} y_i^s \log{(softmax(score^s)_i)} \\<br>
-&amp;= -\sum _{i=1} ^{L_x} y_j^e \log{(softmax(score^e)_j)}<br>
-\end{align}<br>
-$$<br>
-<br></p>
-<h3 id="2-5-答案重排序（answer-reranker）">2.5 答案重排序（answer reranker）</h3>
-<p>此时得到了候选答案，通过 reranker 作重排序，得到最后的答案。</p>
-<p>注意前面得到的候选答案中可能会存在重复的正确答案的片段（比如正确答案含有 dog ，可能很多的候选答案中都存在 dog 这个片段），这里采用 <strong>跨度级别非最大抑制（Span-level non-maximum suppression）</strong> 来对部分重复冗余的候选答案进行裁剪；</p>
-<p>此时输入候选答案集合 A，候选答案得分集合 S（来自于上一步），选择 A 集合中得分最高的答案 ai，将其加入集合 B 并从集合 A 中删除，同时寻找集合 A 中和答案 ai 存在重叠的答案。不断循环上述步骤，直到集合 A 为空或者集合 B 中的答案个数达到某个上限。</p>
-<p>具体 span-level NMS 的算法步骤如下：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021081500190.png" alt="image-20231021081500190" style="zoom:67%;" />
-<p>此时将集合 B 作为我的候选答案的集合，进一步对集合 B 中的候选答案进行重排。注意这里的思路和前面的打分比较类似，同理是将候选答案 a 进行某种转化为新的向量，再进行打分：<br>
-$$<br>
-\eta = softmax(w_{\eta} h ^I _{\alpha_i : \beta_i}) \<br>
-score_i ^a = w_a \tanh{(W_a \sum _{j=\alpha_i} ^{\beta_i} \eta _{j-\alpha_i+1} h_j^I)}<br>
-$$</p>
-<p>为了对这一部分的打分进行训练，引入标签 yhard 和 ysoft：</p>
-<ul>
-<li>$y_i^{hard}$： 也就是当前答案 ai 和真实答案的精确匹配分数</li>
-<li>$y_i^{soft}$：也就是当前答案 ai 和真实答案的模糊匹配 F1 分数</li>
-</ul>
-<p>如果此时 B 集合中的所有候选答案实际上都不包含正确答案，也就是所有的 element 的 yhard 编码都是 0，则此时用正确答案来替代集合 B 中得分最低的那个候选答案。</p>
-<p>定义第三部分的损失函数：<br>
-$$<br>
-\begin{align}<br>
-\mathcal{L} _{III} &amp;= -\sum _{i=1} ^{M^*} y _i ^{hard} \log {(softmax(score^a)_i)} \\<br>
-&amp;+ \sum _{i=1} ^{M^*} {|| y_i ^{soft} - \frac{score_i^a}{\sum _{j=1} ^{M^*} score_j^a}||^2}<br>
-\end{align}<br>
-$$</p>
-<p>最终选择重排序（rerank)后得分最高的候选答案作为正确答案。</p>
-<br>
-<be>
-<hr>
-<h2 id="3-模型训练">3 模型训练</h2>
-<p>注意这里本身是一个端到端的学习方式，则整体的损失函数为前面三个部分的损失函数的加和：<br>
-$$<br>
-\mathcal{J} = \mathcal{L} _I + \mathcal{L} _{II} + \mathcal{L} _{III}<br>
-$$</p>
-<p>通过直接计算迭代最后的损失函数来训练整个模型。整体的端到端的训练顺序：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021082022887.png" alt="image-20231021082022887" style="zoom:67%;" />
-<br>
-<p>来看看最后的模型效果</p>
-<p>首先是使用的数据集的情况：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021082156471.png" alt="image-20231021082156471" style="zoom: 55%;" />
-<p>最后的训练效果比较：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021082244711.png" alt="image-20231021082244711" style="zoom: 67%;" />
 <br>
 <br>
 <br>
@@ -1836,6 +1849,197 @@ $$</p>
       </tags>
   </entry>
   <entry>
+    <title>KAR: 实现机器阅读理解中对常识知识的显示应用</title>
+    <url>/2023/10/30/20210313-paper-note-KAR/</url>
+    <content><![CDATA[<p>原文写于 20210313，存档如下</p>
+<blockquote>
+<p>Chao Wang and Hui Jiang, Department of Electrical Engineering and Computer Science, Lassonde School of Engineering, York University, <strong>Explicit Utilization of General Knowledge in Machine Reading Comprehension</strong></p>
+<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE4MDkuMDM0NDl2My5wZGY=">https://arxiv.org/pdf/1809.03449v3.pdf<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<p>当前机器阅读理解模型 MRC 和人类行为之间的差距往往体现在：</p>
+<ul>
+<li><strong>缺少足够数据样例来训练</strong>：MRC 模型的训练需要大量的文本 passage，对应的问题 question，真实的答案 gold answer，对于抽取式问题甚至还需要答案提取的证据 span。但是对于人类而言，只需要比较少的例子即可以通过分析快速地学到更多的信息和解题方法。</li>
+<li><strong>对于噪声缺乏一定的鲁棒性</strong>：研究表明特意加入的噪音能够大大影响整体 MRC 模型的性能，而本文认为造成这一问题的主要原因是机器太过于依赖本身文本给定的信息，而人类可以利用常识来进行判断。</li>
+</ul>
+<p>针对第二个问题举个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022053124295.png" alt="image-20231022053124295" style="zoom:55%;" />
+<p>facilitate 本身是 help 的同义词，而这一个同义词的关系并没有体现在文本中，也就是说如果机器只是阅读了 passage，它连 help 这个词都没见过，本身也就不会学习到 help 和 facilitate 之间的相关性</p>
+<p>也就是说，如果此时能够让机器同时具有人类阅读时具有的常识（general knowledge），或许能够帮助机器更好地理解任务并给出解答。</p>
+<p>想要让机器同时利用人的常识来进行阅读理解，此时主要目标为解决以下两个问题：</p>
+<ul>
+<li><strong>结合文章-问题对，提取出相关的常识信息</strong>：不能让机器为了解答一个问题学遍全世界所有的常识，故这里需要根据文章问题 pair 提取出可能帮助机器解答问题的相关的常识</li>
+<li><strong>利用常识并帮助标注答案span</strong>：也就是如何将外界学到的常识信息利用进入整个 MRC 模型中</li>
+</ul>
+<p>第一个问题很好解决，本文利用 <strong>WordNet (Fellbaum, 1998)</strong> 作为外界知识库（这个东西可以简单地理解为一个同义词库）</p>
+<p>第二个问题，当前常用的解决方式为：得到相关常识的向量标识（也就是编码到一个向量空间），再利用它丰富 word 级别的上下文语义表示，此时也就是将常识的信息和表示结合，再进行后续的 MRC 预测。但是注意到这样的方式本身是隐形的，也就是说我们很难知道这样被融入进去的表达能够怎样帮助我们最后的预测。</p>
+<p>本文尝试提出一种能够帮助实现 <strong>于机器阅读理解中显式利用常识信息</strong> 的方法，主要贡献包括：</p>
+<ul>
+<li>提出一种<strong>数据增强方法</strong>（data enrichment method）：也就是利用 WordNet 提取出和当前 passage-question pair 相关的同义词用来完成某种程度上的数据增强</li>
+<li>提出<strong>端到端的机器阅读理解模型 nowledge Aided Reader (KAR)</strong>：显式利用提取出来的常识来帮助注意力机制部分的学习</li>
+</ul>
+<br>
+<br>
+<hr>
+<h2 id="2-数据增强方法">2 数据增强方法</h2>
+<p>这里利用 WordNet 来实现数据增强，也就是主要采取同义词的信息来完成，目标为提取出同当前文章-问题对相关的外部知识信息，也就是外部知识和 passage-question pair 中 word 的语义联系</p>
+<br>
+<h3 id="2-1-Semantic-Relation-Chain-语义关系链">2.1  Semantic Relation Chain  语义关系链</h3>
+<p>WordNet 本身就是同义词库，但是注意到本身一个词在不同的应用场景下会存在不同的含义，自然也就存在不同的同义词。在 WordNet 中定义了共 16 种语义关系，以标注两个同义词确实为同义所需要的应用上下文环境。</p>
+<p>则此时可以将 WordNet 中的语义关系看作语义关系链的形式，比如词汇 A 通过关系种类 1 与词汇 B 相连，而词汇 B 通过关系种类 2 与词汇 C 相连，通过不同的链的类型，不同的词汇可以连成语义关系链的形式。</p>
+<p>对于词汇 A 的同义词集，此时还有词可能和 A 是通过多跳的形式相连的，这些词可能和 A 也存在一定的潜在关系。这里将两个不同的词之间通过多种不同的语义关系相连的路径定义为语义关系链，并将其中一个词作为一个 hop 看待（类似于 图 的形式）</p>
+<br>
+<h3 id="2-2-Inter-word-Semantic-Connection-单词间语义联系">2.2  Inter-word Semantic Connection 单词间语义联系</h3>
+<p>注意到本身利用同义词信息来进行数据增强的重点问题就是在考察当前的两个问题之间到底有没有语义联系。考虑单词 w，此时 WordNet 会给出它的同义词集合 $S_w$，这里使用 $S_w^*$ 来表示单词 w 的扩充同义词集合（extended synsets），集合包括所有可以通过上面定义的语义关系链和单词 w 相连的单词。</p>
+<p>但是注意到如果此时不加限制可能整个 WordNet 中的词汇都能够相连，故在此设定超参数 $\kappa \in N$ 来规定所有可以被加入 $S_w^<em>$ 的单词涉及的最大跳数，这里对于 0 跳的时候，S</em> 也就是 Sw</p>
+<p>注意这里不对当前连接不同单词之间的 relation 的类型加限制，只要是相连了就行</p>
+<br>
+<h3 id="2-3-General-Knowledge-Extraction-常识提取">2.3 General Knowledge Extraction 常识提取</h3>
+<p>此时根据给定的 passage-question pair 来抽取相关的常识：</p>
+<p>此时认为所有和当前 passage 的词汇存在一定同义词关系的词汇都是我想要学习的外部常识。令任意一个词汇 w，则此时我想要抽取集合 $E_w$，包含所有 <strong>和词汇 w 存在同义词关系的 passage 中的词汇在 passag 中的位置信息</strong>：</p>
+<ul>
+<li>这里只是抽取<strong>位置信息</strong>，也就是找到所有和当前词汇 w 存在同义词关系的，且在 passage 中的词汇，且记录它们的位置信息。注意如果此时 w 词本身也在 passage 中，略过它自己在 passage 中的信息。</li>
+<li>利用规定了最大 hop 的超参数 <strong>κ 来控制此时抽取的数量</strong>，也就是说只有文章中的词汇 y 本身在当前词汇 w 的 κ-hop 内，才记录 y 在 passage 中的位置信息</li>
+</ul>
+<br>
+<br>
+<hr>
+<h2 id="3-Knowledge-Aided-Reader-模型介绍">3 Knowledge Aided Reader 模型介绍</h2>
+<br>
+<h3 id="3-1-overview">3.1 overview</h3>
+<p>先来看看整体的模型结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022053427122.png" alt="image-20231022053427122" style="zoom:60%;" />
+<p>注意这里还是 attention 主导的模型，主要包括两种：</p>
+<ul>
+<li><strong>mutual attention</strong>：主要目标是将问题表示和文章表示融合，可以得到经过了问题表示融合的文章表示（question-aware passage representation），这一步也是传统的 MRC 会处理的</li>
+<li><strong>self-attention</strong>：通过（经过了问题表示融合的文章表示）与自己的自注意力模块得到最后的最终文章表示</li>
+</ul>
+<p>而整个文章的创新点便在于 <strong>利用了前面抽取出的外部知识（常识）来辅助上述的注意力机制</strong>，与一般的直接将外部知识 embedding 和当前文章表示 embedding 进行融合的方式，这里针对外部知识的应用方式是显式的。</p>
+<p>定义：</p>
+<ul>
+<li>$P = {p_1, ... , p_n}; \text{ } Q = {q_1, ..., q_m}$  文章 - 问题的集合</li>
+<li>当前目标则为预测答案的 span（抽取式问题）：$[a_s,a_e]$</li>
+</ul>
+<br>
+<h3 id="3-2-Overall-Architecture-模型各层介绍">3.2  Overall Architecture 模型各层介绍</h3>
+<p>KAR 本身作为一个 端到端 的阅读理解模型，可以表示为以下五层的拼接：</p>
+<h4 id="Lexicon-Embedding-Layer">Lexicon Embedding Layer</h4>
+<p>图中蓝色部分，分别对文章和问题来做</p>
+<p>也就是通过词汇 word 得到 lexicon embedding，每一个 lexicon embedding 包括两个部分：<strong>word embedding（词向量） + character embedding（字符向量）</strong>，这里使用 <strong>GloVe预训练</strong> 来得到词向量，用 <strong>CNN</strong> 来得到字符向量</p>
+<p>将得到的两个向量拼在一起扔进一个全连接层 + ReLU 激活以得到最后的综合表示 lexicon embedding，则可以得到文章 passage 的表示 $L_P \in R^{d<em>n}$ 和 问题的表示 $L_Q \in R^{d</em>m}$</p>
+<h4 id="Context-Embedding-Layer">Context Embedding Layer</h4>
+<p>图中红色部分，分别对文章和问题来做</p>
+<p>也就是分别将文章和问题编码好的 lexicon embedding 扔到一个 <strong>参数共享的双向 LSTM = BiLSTM</strong> 中，这里的隐藏层维度为 d/2（d 是前面 embedding 的维度），此时进一步地将前向和后向的输出直接作向量拼接，分别得到文章的上下文表示 $C_P\in R^{d<em>n}$ 和问题的上下文表示 $C_Q\in R^{d</em>m}$</p>
+<h4 id="Coarse-Memory-Layer">Coarse Memory Layer</h4>
+<p>黑色部分，将 question 与 passage 融合</p>
+<p>也就是通过  knowledge aided mutual attention （这个在下一节介绍）来实现 question 和 passage 的 context embedding 的融合，再通过一个 <strong>BiLSTM</strong>（隐藏层的大小还是 d/2），将前后的输出作向量拼接得到最终表示 G，这里的 G 也就是融合了问题信息的文章表示（question-aware passage representations）</p>
+<h4 id="Refined-Memory-Layer">Refined Memory Layer</h4>
+<p>橙色部分</p>
+<p>利用 knowledge aided self-attention （下面介绍）将上一部分得到的 融合了问题信息的文章表示（question-aware passage representations） 进行进一步的聚合</p>
+<p>将输出还是通过一个隐藏层为 d/2 的 <strong>BiLSTM</strong>，同理将前后的输出作向量拼接得到最终表示 H，这里的 H 也就是最终的文章表示</p>
+<h4 id="Answer-Span-Prediction-Layer">Answer Span Prediction Layer</h4>
+<p>绿色部分，目标是得到答案的 span，也就是开始和结束位置</p>
+<p>将问题的上下文表示，也就是 C_Q 经过一个 <strong>attention pooling</strong> 得到 $r_Q$，计算答案开始 span 对应的概率：<br>
+$$<br>
+t_i = v_s ^T  \tanh (W_s h _{p_i} + U_s r_Q) \in \mathbb{R}<br>
+$$</p>
+<p>$$<br>
+o_s = softmax({t_1, ..., t_n}) \in \mathbb{R} ^n<br>
+$$</p>
+<p>这里的  W 和 U 和 v 都是待学习参数，实际上就是一个连接层 + tanh 激活 + softmax 输出概率</p>
+<p>同理，得到 os 开始概率后来预测结束的概率：<br>
+$$<br>
+t_i = v_e^T \tanh {(W_e h _{p_i} + U_e [r_Q; Ho_s])} \in \mathbb{R}<br>
+$$</p>
+<p>$$<br>
+o_e = softmax ({t_1, ..., t_n}) \in \mathbb{R}^n<br>
+$$</p>
+<p>预测结束后，得到一个预测矩阵：$$O = uptri(o_so_e^T)\in R^{n*n}$$，注意这里的 uptri 指的是得到该矩阵的上三角矩阵</p>
+<p>这里的损失函数也就是针对每一个真实答案的开始位置 as 和结束位置 ae，最小化 $-log(O_{a_s,a_e})$</p>
+<br>
+<h3 id="3-3-Knowledge-Aided-Mutual-Attention-知识辅助注意力">3.3 Knowledge Aided Mutual Attention 知识辅助注意力</h3>
+<p>注意这东西是用在 <strong>Coarse Memory Layer</strong> 中的，这里利用问题和文章的上下文表示 $C_P, C_Q$ 来进行聚合操作</p>
+<p>注意力聚合也就是计算文章中的每一个 embedding $c_{p_{i}}$ 和问题中的每一个 embedding $c_{q_i}$ 的相似度，这里的相似度方程定义为：<br>
+$$<br>
+f(c _{p_i}, c _{q_j}) = v_f^T [c _{p_i}; c _{q_j} ; c _{p_i} \odot c _{q_j}] \in \mathbb{R}<br>
+$$</p>
+<p>这里的 vf 也就是训练参数，而 $\odot$ 表示元素之间的乘法，但是考虑到此时我们需要将 <strong>外部知识 = 常识引入</strong>，则采用上述式子改进的式子：<br>
+$$<br>
+f^* (c _{p_i}, c _{q_j}) = v_f^T [c ^* _{p_i}; c ^* _{q_j} ; c ^* _{p_i} \odot c ^* _{q_j}] \in \mathbb{R}<br>
+$$</p>
+<p>为得到这里的 c* 作如下操作：</p>
+<ul>
+<li>
+<p>对于当前词汇 w，得到它对应的 Ew，也就是所有（和词汇 w 存在 κ-hop 内同义词关系且在文章内的词在文章中的位置信息）</p>
+</li>
+<li>
+<p>找到 Ew 中所有的词汇对应的 context embedding 的集合，记作 $Z \in R^{n*|E_w|}$</p>
+</li>
+<li>
+<p>计算对应的 c+：<br>
+$$<br>
+\begin{align}<br>
+t_i &amp;= v_c^T \tanh (W_c z_i + U_cc_w) \in \mathbb {R} \\<br>
+c_w ^+ &amp;= Z softmax({t_1, ..., t _{|E_w|}}) \in \mathbb{R} ^d<br>
+\end{align}<br>
+$$</p>
+<p>这里的 vc 和 W 和 U 都是训练参数，将得到的 c+ 和 c 作向量拼接，再通过一个 ReLU 激活函数，最后输出维度为 d，记作 c*</p>
+</li>
+</ul>
+<p>得到 c* 后，我们可以通过上面的公式计算问题和文章的相似度矩阵，记作 A，则此时 A 的 i,j 位置元素也就是文章的第 i 个 embedding 和问题的第 q 个embedding 之间的相似度</p>
+<p>通过 A 来计算（融合了问题信息的文章表示）和（融合了文章信息的问题表示）：<br>
+$$<br>
+\begin{align}<br>
+R_Q &amp;= C_Q \text{ softmax} _r^T (A) \in \mathbb{R} ^{d \times n} \\<br>
+R_P &amp;= C_P \text{ softmax} _c (A) \text{ softmax} _r^T (A) \in \mathbb{R} ^{d \times n}<br>
+\end{align}<br>
+$$</p>
+<p>这里的 softmax r 是只d对行作 softmax，softmax c 是对列</p>
+<p>最后将 $C_P, R_Q, C_P\odot R_Q, R_P\odot R_Q$ 作向量拼接，再扔进一个全连接层 + ReLU 激活函数，注意这里的输出维度还是 d，作为最终结果</p>
+<br>
+<h3 id="3-3-Knowledge-Aided-Self-Attention-知识辅助自注意力">3.3 Knowledge Aided Self Attention 知识辅助自注意力</h3>
+<p>和前面的思路是一样的，但是注意因为作自注意力的时候，实际上大多数文章中的单词和其他单词之间是没啥关系的， 如果用惯用的自注意力的方式会浪费资源</p>
+<p>考虑文章中的单词 pi，对应的 coarse memory 层的输出为 $g_{p_i}$，同理我有这个词对应的外部常识集合 $E_{p_i}$，得到其中的 word 对应的 coarse memory 的集合，记作 Z，这里计算 g+：<br>
+$$<br>
+t_i = v_g^T \tanh (W_g z_i + U_g g _{p_i}) \in \mathbb{R}<br>
+$$</p>
+<p>$$<br>
+g _{p_i}^+ = Z \text{ softmax} ({t_1, ..., t _{|E _{p_i}}}) \in \mathbb{R} ^d<br>
+$$</p>
+<p>注意这里的 g+ 本质上是基于 gpi 的 Z 的信息的融合</p>
+<p>进一步将 g+ 和 g 作拼接，再通过一个全连接层 + ReLU激活，最后得到该部分的输出 H</p>
+<br>
+<br>
+<hr>
+<h2 id="4-experiment-实验部分">4 experiment 实验部分</h2>
+<p>这里的 MRC 部分的数据集用的是 <strong>SQuAD 1.1</strong>，但是考虑到本身提出 KAR 的目标就是要 <strong>利用外部知识（常识）来增强当前 MRC 模型的鲁棒性</strong>，故这里采用 <strong>AddOneSent 和 AddSent</strong> 向 SQuAD 添加噪声，再评估模型</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022054918162.png" alt="image-20231022054918162" style="zoom:50%;" />
+<p>可以看到此时鲁棒性确实增强了</p>
+<p>另一个提出的目标是 <strong>通过数据增强的方法常识在更小的训练集上获得更好的效果</strong>，来看看训练效果和训练的数据集的关系：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022054953766.png" alt="image-20231022054953766" style="zoom:67%;" />
+<p>确实训练集越小此时效果下降越明显，但是还是比现有的几个方法要高，可以热为此时引入常识确实是有帮助的</p>
+<p>下面看一下超参数，特别是常识提取部分的 κ-hop</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055023970.png" alt="image-20231022055023970" style="zoom:60%;" />
+<p>可以看到这里做到 3-hop 就比较好了</p>
+<br>
+<br>
+<br>
+]]></content>
+      <categories>
+        <category>论文笔记</category>
+        <category>NLP</category>
+        <category>机器阅读理解(MRC)</category>
+      </categories>
+      <tags>
+        <tag>NLP</tag>
+        <tag>机器阅读理解</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Retro-Reader: 基于回溯式阅读器的机器阅读理解模型</title>
     <url>/2023/10/30/20210317-paper-note-RetroReader/</url>
     <content><![CDATA[<p>原文写于 20210317，存档如下</p>
@@ -2014,197 +2218,6 @@ $$</p>
 <p>这里的 TAV 也就是直接使用 score_diff 的部分（上面 3.3 的最后一部分）来判断到底有没有答案，如果 score_diff 确实大于某一个阈值 δ 则认为有答案。也就是说 TAV 本身没有用到 E-FV 给出的判断。通过比较可以看到此时同时设置 E-FV 和 I-FV 或许真的可以帮助提升</p>
 <p>再看看在 newsQA 的效果：</p>
 <img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022061124279.png" alt="image-20231022061124279" style="zoom:67%;" />
-<br>
-<br>
-<br>
-]]></content>
-      <categories>
-        <category>论文笔记</category>
-        <category>NLP</category>
-        <category>机器阅读理解(MRC)</category>
-      </categories>
-      <tags>
-        <tag>NLP</tag>
-        <tag>机器阅读理解</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>KAR: 实现机器阅读理解中对常识知识的显示应用</title>
-    <url>/2023/10/30/20210313-paper-note-KAR/</url>
-    <content><![CDATA[<p>原文写于 20210313，存档如下</p>
-<blockquote>
-<p>Chao Wang and Hui Jiang, Department of Electrical Engineering and Computer Science, Lassonde School of Engineering, York University, <strong>Explicit Utilization of General Knowledge in Machine Reading Comprehension</strong></p>
-<p>论文原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE4MDkuMDM0NDl2My5wZGY=">https://arxiv.org/pdf/1809.03449v3.pdf<i class="fa fa-external-link-alt"></i></span></p>
-</blockquote>
-<span id="more"></span>
-<br>
-<br>
-<hr>
-<h2 id="1-introduction">1 introduction</h2>
-<p>当前机器阅读理解模型 MRC 和人类行为之间的差距往往体现在：</p>
-<ul>
-<li><strong>缺少足够数据样例来训练</strong>：MRC 模型的训练需要大量的文本 passage，对应的问题 question，真实的答案 gold answer，对于抽取式问题甚至还需要答案提取的证据 span。但是对于人类而言，只需要比较少的例子即可以通过分析快速地学到更多的信息和解题方法。</li>
-<li><strong>对于噪声缺乏一定的鲁棒性</strong>：研究表明特意加入的噪音能够大大影响整体 MRC 模型的性能，而本文认为造成这一问题的主要原因是机器太过于依赖本身文本给定的信息，而人类可以利用常识来进行判断。</li>
-</ul>
-<p>针对第二个问题举个例子：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022053124295.png" alt="image-20231022053124295" style="zoom:55%;" />
-<p>facilitate 本身是 help 的同义词，而这一个同义词的关系并没有体现在文本中，也就是说如果机器只是阅读了 passage，它连 help 这个词都没见过，本身也就不会学习到 help 和 facilitate 之间的相关性</p>
-<p>也就是说，如果此时能够让机器同时具有人类阅读时具有的常识（general knowledge），或许能够帮助机器更好地理解任务并给出解答。</p>
-<p>想要让机器同时利用人的常识来进行阅读理解，此时主要目标为解决以下两个问题：</p>
-<ul>
-<li><strong>结合文章-问题对，提取出相关的常识信息</strong>：不能让机器为了解答一个问题学遍全世界所有的常识，故这里需要根据文章问题 pair 提取出可能帮助机器解答问题的相关的常识</li>
-<li><strong>利用常识并帮助标注答案span</strong>：也就是如何将外界学到的常识信息利用进入整个 MRC 模型中</li>
-</ul>
-<p>第一个问题很好解决，本文利用 <strong>WordNet (Fellbaum, 1998)</strong> 作为外界知识库（这个东西可以简单地理解为一个同义词库）</p>
-<p>第二个问题，当前常用的解决方式为：得到相关常识的向量标识（也就是编码到一个向量空间），再利用它丰富 word 级别的上下文语义表示，此时也就是将常识的信息和表示结合，再进行后续的 MRC 预测。但是注意到这样的方式本身是隐形的，也就是说我们很难知道这样被融入进去的表达能够怎样帮助我们最后的预测。</p>
-<p>本文尝试提出一种能够帮助实现 <strong>于机器阅读理解中显式利用常识信息</strong> 的方法，主要贡献包括：</p>
-<ul>
-<li>提出一种<strong>数据增强方法</strong>（data enrichment method）：也就是利用 WordNet 提取出和当前 passage-question pair 相关的同义词用来完成某种程度上的数据增强</li>
-<li>提出<strong>端到端的机器阅读理解模型 nowledge Aided Reader (KAR)</strong>：显式利用提取出来的常识来帮助注意力机制部分的学习</li>
-</ul>
-<br>
-<br>
-<hr>
-<h2 id="2-数据增强方法">2 数据增强方法</h2>
-<p>这里利用 WordNet 来实现数据增强，也就是主要采取同义词的信息来完成，目标为提取出同当前文章-问题对相关的外部知识信息，也就是外部知识和 passage-question pair 中 word 的语义联系</p>
-<br>
-<h3 id="2-1-Semantic-Relation-Chain-语义关系链">2.1  Semantic Relation Chain  语义关系链</h3>
-<p>WordNet 本身就是同义词库，但是注意到本身一个词在不同的应用场景下会存在不同的含义，自然也就存在不同的同义词。在 WordNet 中定义了共 16 种语义关系，以标注两个同义词确实为同义所需要的应用上下文环境。</p>
-<p>则此时可以将 WordNet 中的语义关系看作语义关系链的形式，比如词汇 A 通过关系种类 1 与词汇 B 相连，而词汇 B 通过关系种类 2 与词汇 C 相连，通过不同的链的类型，不同的词汇可以连成语义关系链的形式。</p>
-<p>对于词汇 A 的同义词集，此时还有词可能和 A 是通过多跳的形式相连的，这些词可能和 A 也存在一定的潜在关系。这里将两个不同的词之间通过多种不同的语义关系相连的路径定义为语义关系链，并将其中一个词作为一个 hop 看待（类似于 图 的形式）</p>
-<br>
-<h3 id="2-2-Inter-word-Semantic-Connection-单词间语义联系">2.2  Inter-word Semantic Connection 单词间语义联系</h3>
-<p>注意到本身利用同义词信息来进行数据增强的重点问题就是在考察当前的两个问题之间到底有没有语义联系。考虑单词 w，此时 WordNet 会给出它的同义词集合 $S_w$，这里使用 $S_w^*$ 来表示单词 w 的扩充同义词集合（extended synsets），集合包括所有可以通过上面定义的语义关系链和单词 w 相连的单词。</p>
-<p>但是注意到如果此时不加限制可能整个 WordNet 中的词汇都能够相连，故在此设定超参数 $\kappa \in N$ 来规定所有可以被加入 $S_w^<em>$ 的单词涉及的最大跳数，这里对于 0 跳的时候，S</em> 也就是 Sw</p>
-<p>注意这里不对当前连接不同单词之间的 relation 的类型加限制，只要是相连了就行</p>
-<br>
-<h3 id="2-3-General-Knowledge-Extraction-常识提取">2.3 General Knowledge Extraction 常识提取</h3>
-<p>此时根据给定的 passage-question pair 来抽取相关的常识：</p>
-<p>此时认为所有和当前 passage 的词汇存在一定同义词关系的词汇都是我想要学习的外部常识。令任意一个词汇 w，则此时我想要抽取集合 $E_w$，包含所有 <strong>和词汇 w 存在同义词关系的 passage 中的词汇在 passag 中的位置信息</strong>：</p>
-<ul>
-<li>这里只是抽取<strong>位置信息</strong>，也就是找到所有和当前词汇 w 存在同义词关系的，且在 passage 中的词汇，且记录它们的位置信息。注意如果此时 w 词本身也在 passage 中，略过它自己在 passage 中的信息。</li>
-<li>利用规定了最大 hop 的超参数 <strong>κ 来控制此时抽取的数量</strong>，也就是说只有文章中的词汇 y 本身在当前词汇 w 的 κ-hop 内，才记录 y 在 passage 中的位置信息</li>
-</ul>
-<br>
-<br>
-<hr>
-<h2 id="3-Knowledge-Aided-Reader-模型介绍">3 Knowledge Aided Reader 模型介绍</h2>
-<br>
-<h3 id="3-1-overview">3.1 overview</h3>
-<p>先来看看整体的模型结构：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022053427122.png" alt="image-20231022053427122" style="zoom:60%;" />
-<p>注意这里还是 attention 主导的模型，主要包括两种：</p>
-<ul>
-<li><strong>mutual attention</strong>：主要目标是将问题表示和文章表示融合，可以得到经过了问题表示融合的文章表示（question-aware passage representation），这一步也是传统的 MRC 会处理的</li>
-<li><strong>self-attention</strong>：通过（经过了问题表示融合的文章表示）与自己的自注意力模块得到最后的最终文章表示</li>
-</ul>
-<p>而整个文章的创新点便在于 <strong>利用了前面抽取出的外部知识（常识）来辅助上述的注意力机制</strong>，与一般的直接将外部知识 embedding 和当前文章表示 embedding 进行融合的方式，这里针对外部知识的应用方式是显式的。</p>
-<p>定义：</p>
-<ul>
-<li>$P = {p_1, ... , p_n}; \text{ } Q = {q_1, ..., q_m}$  文章 - 问题的集合</li>
-<li>当前目标则为预测答案的 span（抽取式问题）：$[a_s,a_e]$</li>
-</ul>
-<br>
-<h3 id="3-2-Overall-Architecture-模型各层介绍">3.2  Overall Architecture 模型各层介绍</h3>
-<p>KAR 本身作为一个 端到端 的阅读理解模型，可以表示为以下五层的拼接：</p>
-<h4 id="Lexicon-Embedding-Layer">Lexicon Embedding Layer</h4>
-<p>图中蓝色部分，分别对文章和问题来做</p>
-<p>也就是通过词汇 word 得到 lexicon embedding，每一个 lexicon embedding 包括两个部分：<strong>word embedding（词向量） + character embedding（字符向量）</strong>，这里使用 <strong>GloVe预训练</strong> 来得到词向量，用 <strong>CNN</strong> 来得到字符向量</p>
-<p>将得到的两个向量拼在一起扔进一个全连接层 + ReLU 激活以得到最后的综合表示 lexicon embedding，则可以得到文章 passage 的表示 $L_P \in R^{d<em>n}$ 和 问题的表示 $L_Q \in R^{d</em>m}$</p>
-<h4 id="Context-Embedding-Layer">Context Embedding Layer</h4>
-<p>图中红色部分，分别对文章和问题来做</p>
-<p>也就是分别将文章和问题编码好的 lexicon embedding 扔到一个 <strong>参数共享的双向 LSTM = BiLSTM</strong> 中，这里的隐藏层维度为 d/2（d 是前面 embedding 的维度），此时进一步地将前向和后向的输出直接作向量拼接，分别得到文章的上下文表示 $C_P\in R^{d<em>n}$ 和问题的上下文表示 $C_Q\in R^{d</em>m}$</p>
-<h4 id="Coarse-Memory-Layer">Coarse Memory Layer</h4>
-<p>黑色部分，将 question 与 passage 融合</p>
-<p>也就是通过  knowledge aided mutual attention （这个在下一节介绍）来实现 question 和 passage 的 context embedding 的融合，再通过一个 <strong>BiLSTM</strong>（隐藏层的大小还是 d/2），将前后的输出作向量拼接得到最终表示 G，这里的 G 也就是融合了问题信息的文章表示（question-aware passage representations）</p>
-<h4 id="Refined-Memory-Layer">Refined Memory Layer</h4>
-<p>橙色部分</p>
-<p>利用 knowledge aided self-attention （下面介绍）将上一部分得到的 融合了问题信息的文章表示（question-aware passage representations） 进行进一步的聚合</p>
-<p>将输出还是通过一个隐藏层为 d/2 的 <strong>BiLSTM</strong>，同理将前后的输出作向量拼接得到最终表示 H，这里的 H 也就是最终的文章表示</p>
-<h4 id="Answer-Span-Prediction-Layer">Answer Span Prediction Layer</h4>
-<p>绿色部分，目标是得到答案的 span，也就是开始和结束位置</p>
-<p>将问题的上下文表示，也就是 C_Q 经过一个 <strong>attention pooling</strong> 得到 $r_Q$，计算答案开始 span 对应的概率：<br>
-$$<br>
-t_i = v_s ^T  \tanh (W_s h _{p_i} + U_s r_Q) \in \mathbb{R}<br>
-$$</p>
-<p>$$<br>
-o_s = softmax({t_1, ..., t_n}) \in \mathbb{R} ^n<br>
-$$</p>
-<p>这里的  W 和 U 和 v 都是待学习参数，实际上就是一个连接层 + tanh 激活 + softmax 输出概率</p>
-<p>同理，得到 os 开始概率后来预测结束的概率：<br>
-$$<br>
-t_i = v_e^T \tanh {(W_e h _{p_i} + U_e [r_Q; Ho_s])} \in \mathbb{R}<br>
-$$</p>
-<p>$$<br>
-o_e = softmax ({t_1, ..., t_n}) \in \mathbb{R}^n<br>
-$$</p>
-<p>预测结束后，得到一个预测矩阵：$$O = uptri(o_so_e^T)\in R^{n*n}$$，注意这里的 uptri 指的是得到该矩阵的上三角矩阵</p>
-<p>这里的损失函数也就是针对每一个真实答案的开始位置 as 和结束位置 ae，最小化 $-log(O_{a_s,a_e})$</p>
-<br>
-<h3 id="3-3-Knowledge-Aided-Mutual-Attention-知识辅助注意力">3.3 Knowledge Aided Mutual Attention 知识辅助注意力</h3>
-<p>注意这东西是用在 <strong>Coarse Memory Layer</strong> 中的，这里利用问题和文章的上下文表示 $C_P, C_Q$ 来进行聚合操作</p>
-<p>注意力聚合也就是计算文章中的每一个 embedding $c_{p_{i}}$ 和问题中的每一个 embedding $c_{q_i}$ 的相似度，这里的相似度方程定义为：<br>
-$$<br>
-f(c _{p_i}, c _{q_j}) = v_f^T [c _{p_i}; c _{q_j} ; c _{p_i} \odot c _{q_j}] \in \mathbb{R}<br>
-$$</p>
-<p>这里的 vf 也就是训练参数，而 $\odot$ 表示元素之间的乘法，但是考虑到此时我们需要将 <strong>外部知识 = 常识引入</strong>，则采用上述式子改进的式子：<br>
-$$<br>
-f^* (c _{p_i}, c _{q_j}) = v_f^T [c ^* _{p_i}; c ^* _{q_j} ; c ^* _{p_i} \odot c ^* _{q_j}] \in \mathbb{R}<br>
-$$</p>
-<p>为得到这里的 c* 作如下操作：</p>
-<ul>
-<li>
-<p>对于当前词汇 w，得到它对应的 Ew，也就是所有（和词汇 w 存在 κ-hop 内同义词关系且在文章内的词在文章中的位置信息）</p>
-</li>
-<li>
-<p>找到 Ew 中所有的词汇对应的 context embedding 的集合，记作 $Z \in R^{n*|E_w|}$</p>
-</li>
-<li>
-<p>计算对应的 c+：<br>
-$$<br>
-\begin{align}<br>
-t_i &amp;= v_c^T \tanh (W_c z_i + U_cc_w) \in \mathbb {R} \\<br>
-c_w ^+ &amp;= Z softmax({t_1, ..., t _{|E_w|}}) \in \mathbb{R} ^d<br>
-\end{align}<br>
-$$</p>
-<p>这里的 vc 和 W 和 U 都是训练参数，将得到的 c+ 和 c 作向量拼接，再通过一个 ReLU 激活函数，最后输出维度为 d，记作 c*</p>
-</li>
-</ul>
-<p>得到 c* 后，我们可以通过上面的公式计算问题和文章的相似度矩阵，记作 A，则此时 A 的 i,j 位置元素也就是文章的第 i 个 embedding 和问题的第 q 个embedding 之间的相似度</p>
-<p>通过 A 来计算（融合了问题信息的文章表示）和（融合了文章信息的问题表示）：<br>
-$$<br>
-\begin{align}<br>
-R_Q &amp;= C_Q \text{ softmax} _r^T (A) \in \mathbb{R} ^{d \times n} \\<br>
-R_P &amp;= C_P \text{ softmax} _c (A) \text{ softmax} _r^T (A) \in \mathbb{R} ^{d \times n}<br>
-\end{align}<br>
-$$</p>
-<p>这里的 softmax r 是只d对行作 softmax，softmax c 是对列</p>
-<p>最后将 $C_P, R_Q, C_P\odot R_Q, R_P\odot R_Q$ 作向量拼接，再扔进一个全连接层 + ReLU 激活函数，注意这里的输出维度还是 d，作为最终结果</p>
-<br>
-<h3 id="3-3-Knowledge-Aided-Self-Attention-知识辅助自注意力">3.3 Knowledge Aided Self Attention 知识辅助自注意力</h3>
-<p>和前面的思路是一样的，但是注意因为作自注意力的时候，实际上大多数文章中的单词和其他单词之间是没啥关系的， 如果用惯用的自注意力的方式会浪费资源</p>
-<p>考虑文章中的单词 pi，对应的 coarse memory 层的输出为 $g_{p_i}$，同理我有这个词对应的外部常识集合 $E_{p_i}$，得到其中的 word 对应的 coarse memory 的集合，记作 Z，这里计算 g+：<br>
-$$<br>
-t_i = v_g^T \tanh (W_g z_i + U_g g _{p_i}) \in \mathbb{R}<br>
-$$</p>
-<p>$$<br>
-g _{p_i}^+ = Z \text{ softmax} ({t_1, ..., t _{|E _{p_i}}}) \in \mathbb{R} ^d<br>
-$$</p>
-<p>注意这里的 g+ 本质上是基于 gpi 的 Z 的信息的融合</p>
-<p>进一步将 g+ 和 g 作拼接，再通过一个全连接层 + ReLU激活，最后得到该部分的输出 H</p>
-<br>
-<br>
-<hr>
-<h2 id="4-experiment-实验部分">4 experiment 实验部分</h2>
-<p>这里的 MRC 部分的数据集用的是 <strong>SQuAD 1.1</strong>，但是考虑到本身提出 KAR 的目标就是要 <strong>利用外部知识（常识）来增强当前 MRC 模型的鲁棒性</strong>，故这里采用 <strong>AddOneSent 和 AddSent</strong> 向 SQuAD 添加噪声，再评估模型</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022054918162.png" alt="image-20231022054918162" style="zoom:50%;" />
-<p>可以看到此时鲁棒性确实增强了</p>
-<p>另一个提出的目标是 <strong>通过数据增强的方法常识在更小的训练集上获得更好的效果</strong>，来看看训练效果和训练的数据集的关系：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022054953766.png" alt="image-20231022054953766" style="zoom:67%;" />
-<p>确实训练集越小此时效果下降越明显，但是还是比现有的几个方法要高，可以热为此时引入常识确实是有帮助的</p>
-<p>下面看一下超参数，特别是常识提取部分的 κ-hop</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231022055023970.png" alt="image-20231022055023970" style="zoom:60%;" />
-<p>可以看到这里做到 3-hop 就比较好了</p>
 <br>
 <br>
 <br>
@@ -3637,125 +3650,6 @@ $$<br>
       </tags>
   </entry>
   <entry>
-    <title>adb 调试清理安卓系统预装 (附三星禁用list - OneUI5.1 + 安卓13)</title>
-    <url>/2023/10/30/20231019-casual-adbuninstall/</url>
-    <content><![CDATA[<blockquote>
-<p>找工焦虑，转移注意力嚯嚯！</p>
-</blockquote>
-<p>年初三桑更新多了预装游戏助推器，会跟着所有 google play 注册的游戏自启动，本来不太在意的但 pjsk 三周年更新后老是打歌途中反复跳通知 ... 断了第二次 fc 后痛定思痛，今天白刀子必须见血（舔</p>
-<p>target：以 (相对) 安全 / 不root留保修/ 可恢复 的方式清理不需要的预装app</p>
-<p>系统：三星s21国行 / OneUI5.1 / 安卓 13 + win10</p>
-<span id="more"></span>
-<br/>
-<br/>
-<hr>
-<h2 id="step-0：确认工具">step 0：确认工具</h2>
-<p>其实三桑预装算是比较多的，但到手几个月就出国了加之 nhv 烂村子没地方修，一直没敢直接上手杀，日常使用也还是以 sd 女仆小修小补为主，即使这次起意要做还是希望回国前以相对保守的方式处理；</p>
-<p>个人考虑 adb 特点如下：</p>
-<ul>
-<li>方便，免 root，像我这种手滑砸来砸去的未来还能去店里换个屏；</li>
-<li>说是 uninstall 但本质不是全卸载，所有命令都是在 user 层面进行的，也就是说恢复比较方便（保守；希望株连九族的朋友可能不合适这个）</li>
-<li>简单干净不需要装别的东西，还是不要那种装大流氓管小流氓把，我感觉好像被 ntr ... 且三桑 Bixby 老是和三方软件冲突（比如和酷安老哥最喜欢的冰箱）装机的前两周有吃够苦头；</li>
-</ul>
-<p>个人设备系统：</p>
-<ul>
-<li>三星 galaxy s21 国行，SM-G9910</li>
-<li>安卓13，One UI 5.1，20230701 安全补丁</li>
-<li>google play 20230501 更新</li>
-</ul>
-<br/>
-<br/>
-<hr>
-<h2 id="adb-操作">adb 操作</h2>
-<p>上手，准备数据线和电脑（以下命令基于 win10</p>
-<br/>
-<h3 id="准备">准备</h3>
-<blockquote>
-<p>先备份，先备份，先备份，玩机有风险，先备份</p>
-</blockquote>
-<p>备份建议 <strong>s 换机助手</strong>；傻瓜式操作；</p>
-<ul>
-<li>pc 端下载 <span class="exturl" data-url="aHR0cHM6Ly93d3cuc2Ftc3VuZy5jb20vY24vYXBwcy9zbWFydC1zd2l0Y2gv">官网链接<i class="fa fa-external-link-alt"></i></span> ，上面是安卓端，往下滑有 pc 端；</li>
-<li>手机直接应用市场 / google play</li>
-<li>注意这里如果中途切断是会有大量 cache 占手机空间的（... 很坑），可以手机端重装卸载再来</li>
-</ul>
-<p>等待备份的时候准备 <strong>adb</strong>：</p>
-<ul>
-<li>建议不要用任何三方界面，adb 有什么好用三方的不就是套壳 ... <span class="exturl" data-url="aHR0cHM6Ly9kZXZlbG9wZXIuYW5kcm9pZC5jb20vdG9vbHMvcmVsZWFzZXMvcGxhdGZvcm0tdG9vbHM/aGw9emgtY24=">官网下载<i class="fa fa-external-link-alt"></i></span>，普通用用直接命令行工具就行；</li>
-<li>打开 SDK-platform-tools，确认文件夹下有 adb.exe</li>
-</ul>
-<br/>
-<h3 id="手机进开发者模式">手机进开发者模式</h3>
-<p>设置 → 关于手机 → 软件信息 → 找到编译编号</p>
-<p>连击七下，输入密码确认</p>
-<p>返回设置，找到开发者选项 → usb 调试，打开；</p>
-<p>数据线连接电脑</p>
-<br/>
-<h3 id="命令行工具">命令行工具</h3>
-<p>打开刚刚下载的 sdk 工具，文件夹 SDK-platform-tools，确认文件夹下有 adb.exe</p>
-<p>在当前目录下打开命令行工具</p>
-<ul>
-<li>直接在当前文件夹目录行输入 cmd，回车</li>
-<li>或者 win+R，输入 cmd 启动后，再 cd 到当前文件夹</li>
-</ul>
-<h4 id="检查设备信息">检查设备信息</h4>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb devices</span><br></pre></td></tr></table></figure>
-<p>看手机，跳出窗口询问是否允许，授权；</p>
-<h4 id="打开-shell-交互式">打开 shell 交互式</h4>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell</span><br></pre></td></tr></table></figure>
-<p>注意这里的命令行的开头变成 <code>o1q:/ $ </code> ，表示进入交互式命令</p>
-<p>同时检查当前的软件列表：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pm list package</span><br></pre></td></tr></table></figure>
-<p>最好找个记事本把这里的输出复制粘贴记下来，到时候可以用关键字查找搜索包名删除</p>
-<br/>
-<h3 id="基本命令">基本命令</h3>
-<p>以下都是在 shell 下，如果普通命令行记得加上 <code>adb shell</code></p>
-<h4 id="删除">删除</h4>
-<p>本质是为当前用户删除，不是直接移除；</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pm uninstall -k --user 0 package-name</span><br></pre></td></tr></table></figure>
-<p>这里的 package-name 在上面输出的 list 里面找，比如</p>
-<p><code>package:/system/priv-app/GameTools_Dream/GameTools_Dream.apk=com.samsung.android.game.gametools</code></p>
-<p>找到最后的 <code>apk=</code> 后 <code>.com</code> 的部分就是包名 <code>com.samsung.android.game.gametools</code></p>
-<p>这里的 <code>-k</code> 是保存用户数据信息和缓存文件</p>
-<p>比如删除游戏助推器：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pm uninstall -k --user 0 com.samsung.android.game.gametools</span><br></pre></td></tr></table></figure>
-<p>出现 Success 就是删除成功；如果是 Failure 一般是包名错误，注意大家版本都不太一样包名可能不一样，最好还是从自己的 list 里面找；</p>
-<br/>
-<h4 id="禁用">禁用</h4>
-<p>直接 uninstall 换成 disable</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pm disable-user package-name</span><br></pre></td></tr></table></figure>
-<p>package-name 和上面一样</p>
-<br/>
-<h4 id="恢复">恢复</h4>
-<p>也就是 uninstall 换成 enable （所以说其实没有删除 ...</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pm enable package-name</span><br></pre></td></tr></table></figure>
-<br/>
-<br/>
-<hr>
-<h3 id="自用禁用列表">自用禁用列表</h3>
-<p>还是看个人使用习惯，比如我不用 bixby 但希望保留完整的 google play 套件</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">adb devices</span><br><span class="line">adb shell</span><br><span class="line"></span><br><span class="line"><span class="comment"># AR Zone</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.arzone</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.ardrawing.zh</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.aremoji</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.aremojieditor</span><br><span class="line"><span class="comment"># 游戏助推器</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.game.gametools</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.game.gos</span><br><span class="line"><span class="comment"># 相机贴纸</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.app.camera.sticker.facearavatar.preload</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.autodoodle.service <span class="comment"># 费流量大户 ...</span></span><br><span class="line"><span class="comment"># 三星浏览器（注意装好替代）</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.app.sbrowser</span><br><span class="line"><span class="comment"># Dex</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.desktopmode.uiservice  <span class="comment"># Dex</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.app.desktoplauncher  <span class="comment"># Dex 主屏幕</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.dexsystemui</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.app.dexonpc</span><br><span class="line"><span class="comment"># bixby 套件</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixby.service</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixbytouch</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixby.agent</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixby.wakeup</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixbyvision.framework</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.app.settings.bixby</span><br><span class="line"><span class="comment"># 其他</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.kidsinstaller  <span class="comment"># 儿童模式</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.hongbaoassistant <span class="comment"># 红包助手</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.mhs.smarttethering  <span class="comment"># 自动开启热点</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.mdecservice  <span class="comment"># 其他设备上打电话发短信</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.mdx  <span class="comment"># 连接到 windows</span></span><br></pre></td></tr></table></figure>
-<br/>
-<br/>
-<hr>
-<h3 id="参考">参考</h3>
-<p><span class="exturl" data-url="aHR0cHM6Ly90aWViYS5iYWlkdS5jb20vcC82OTA3MDQ5MDg1">adb禁用列表<i class="fa fa-external-link-alt"></i></span>  贴吧老哥补充很全，有些包名字变了，可以关键字在自己的 list 里面搜索</p>
-<p><span class="exturl" data-url="aHR0cHM6Ly9tYWFqaWFhLndvcmRwcmVzcy5jb20vMjAyMS8wNi8xMi9zYW1zdW5nLWJsb2F0d2FyZS1yZW1vdmFsLXdpdGhvdXQtcm9vdC8=">s10 原厂app 卸载笔记<i class="fa fa-external-link-alt"></i></span> 原作者建了 google doc，有记录一些大家删了出问题的包，可以先在这里check（当然个人建议是如果你不知道它是干嘛的，要么搞明白要么就别删 ...）</p>
-<br/>
-<br/>
-<br/>
-]]></content>
-      <categories>
-        <category>friends日常</category>
-        <category>我和我的三桑</category>
-      </categories>
-      <tags>
-        <tag>friends日常</tag>
-        <tag>安卓</tag>
-        <tag>我和我的三桑</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>模式匹配：从 BF 到 KMP（图解 + 代码）</title>
     <url>/2023/10/30/20221125-summary-patternmatchKMP/</url>
     <content><![CDATA[<p>原文写于 20221125，存档如下</p>
@@ -3926,6 +3820,125 @@ $$<br>
       <tags>
         <tag>算法基础</tag>
         <tag>模式匹配</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>adb 调试清理安卓系统预装 (附三星禁用list - OneUI5.1 + 安卓13)</title>
+    <url>/2023/10/30/20231019-casual-adbuninstall/</url>
+    <content><![CDATA[<blockquote>
+<p>找工焦虑，转移注意力嚯嚯！</p>
+</blockquote>
+<p>年初三桑更新多了预装游戏助推器，会跟着所有 google play 注册的游戏自启动，本来不太在意的但 pjsk 三周年更新后老是打歌途中反复跳通知 ... 断了第二次 fc 后痛定思痛，今天白刀子必须见血（舔</p>
+<p>target：以 (相对) 安全 / 不root留保修/ 可恢复 的方式清理不需要的预装app</p>
+<p>系统：三星s21国行 / OneUI5.1 / 安卓 13 + win10</p>
+<span id="more"></span>
+<br/>
+<br/>
+<hr>
+<h2 id="step-0：确认工具">step 0：确认工具</h2>
+<p>其实三桑预装算是比较多的，但到手几个月就出国了加之 nhv 烂村子没地方修，一直没敢直接上手杀，日常使用也还是以 sd 女仆小修小补为主，即使这次起意要做还是希望回国前以相对保守的方式处理；</p>
+<p>个人考虑 adb 特点如下：</p>
+<ul>
+<li>方便，免 root，像我这种手滑砸来砸去的未来还能去店里换个屏；</li>
+<li>说是 uninstall 但本质不是全卸载，所有命令都是在 user 层面进行的，也就是说恢复比较方便（保守；希望株连九族的朋友可能不合适这个）</li>
+<li>简单干净不需要装别的东西，还是不要那种装大流氓管小流氓把，我感觉好像被 ntr ... 且三桑 Bixby 老是和三方软件冲突（比如和酷安老哥最喜欢的冰箱）装机的前两周有吃够苦头；</li>
+</ul>
+<p>个人设备系统：</p>
+<ul>
+<li>三星 galaxy s21 国行，SM-G9910</li>
+<li>安卓13，One UI 5.1，20230701 安全补丁</li>
+<li>google play 20230501 更新</li>
+</ul>
+<br/>
+<br/>
+<hr>
+<h2 id="adb-操作">adb 操作</h2>
+<p>上手，准备数据线和电脑（以下命令基于 win10</p>
+<br/>
+<h3 id="准备">准备</h3>
+<blockquote>
+<p>先备份，先备份，先备份，玩机有风险，先备份</p>
+</blockquote>
+<p>备份建议 <strong>s 换机助手</strong>；傻瓜式操作；</p>
+<ul>
+<li>pc 端下载 <span class="exturl" data-url="aHR0cHM6Ly93d3cuc2Ftc3VuZy5jb20vY24vYXBwcy9zbWFydC1zd2l0Y2gv">官网链接<i class="fa fa-external-link-alt"></i></span> ，上面是安卓端，往下滑有 pc 端；</li>
+<li>手机直接应用市场 / google play</li>
+<li>注意这里如果中途切断是会有大量 cache 占手机空间的（... 很坑），可以手机端重装卸载再来</li>
+</ul>
+<p>等待备份的时候准备 <strong>adb</strong>：</p>
+<ul>
+<li>建议不要用任何三方界面，adb 有什么好用三方的不就是套壳 ... <span class="exturl" data-url="aHR0cHM6Ly9kZXZlbG9wZXIuYW5kcm9pZC5jb20vdG9vbHMvcmVsZWFzZXMvcGxhdGZvcm0tdG9vbHM/aGw9emgtY24=">官网下载<i class="fa fa-external-link-alt"></i></span>，普通用用直接命令行工具就行；</li>
+<li>打开 SDK-platform-tools，确认文件夹下有 adb.exe</li>
+</ul>
+<br/>
+<h3 id="手机进开发者模式">手机进开发者模式</h3>
+<p>设置 → 关于手机 → 软件信息 → 找到编译编号</p>
+<p>连击七下，输入密码确认</p>
+<p>返回设置，找到开发者选项 → usb 调试，打开；</p>
+<p>数据线连接电脑</p>
+<br/>
+<h3 id="命令行工具">命令行工具</h3>
+<p>打开刚刚下载的 sdk 工具，文件夹 SDK-platform-tools，确认文件夹下有 adb.exe</p>
+<p>在当前目录下打开命令行工具</p>
+<ul>
+<li>直接在当前文件夹目录行输入 cmd，回车</li>
+<li>或者 win+R，输入 cmd 启动后，再 cd 到当前文件夹</li>
+</ul>
+<h4 id="检查设备信息">检查设备信息</h4>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb devices</span><br></pre></td></tr></table></figure>
+<p>看手机，跳出窗口询问是否允许，授权；</p>
+<h4 id="打开-shell-交互式">打开 shell 交互式</h4>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell</span><br></pre></td></tr></table></figure>
+<p>注意这里的命令行的开头变成 <code>o1q:/ $ </code> ，表示进入交互式命令</p>
+<p>同时检查当前的软件列表：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pm list package</span><br></pre></td></tr></table></figure>
+<p>最好找个记事本把这里的输出复制粘贴记下来，到时候可以用关键字查找搜索包名删除</p>
+<br/>
+<h3 id="基本命令">基本命令</h3>
+<p>以下都是在 shell 下，如果普通命令行记得加上 <code>adb shell</code></p>
+<h4 id="删除">删除</h4>
+<p>本质是为当前用户删除，不是直接移除；</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pm uninstall -k --user 0 package-name</span><br></pre></td></tr></table></figure>
+<p>这里的 package-name 在上面输出的 list 里面找，比如</p>
+<p><code>package:/system/priv-app/GameTools_Dream/GameTools_Dream.apk=com.samsung.android.game.gametools</code></p>
+<p>找到最后的 <code>apk=</code> 后 <code>.com</code> 的部分就是包名 <code>com.samsung.android.game.gametools</code></p>
+<p>这里的 <code>-k</code> 是保存用户数据信息和缓存文件</p>
+<p>比如删除游戏助推器：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pm uninstall -k --user 0 com.samsung.android.game.gametools</span><br></pre></td></tr></table></figure>
+<p>出现 Success 就是删除成功；如果是 Failure 一般是包名错误，注意大家版本都不太一样包名可能不一样，最好还是从自己的 list 里面找；</p>
+<br/>
+<h4 id="禁用">禁用</h4>
+<p>直接 uninstall 换成 disable</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pm disable-user package-name</span><br></pre></td></tr></table></figure>
+<p>package-name 和上面一样</p>
+<br/>
+<h4 id="恢复">恢复</h4>
+<p>也就是 uninstall 换成 enable （所以说其实没有删除 ...</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pm enable package-name</span><br></pre></td></tr></table></figure>
+<br/>
+<br/>
+<hr>
+<h3 id="自用禁用列表">自用禁用列表</h3>
+<p>还是看个人使用习惯，比如我不用 bixby 但希望保留完整的 google play 套件</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">adb devices</span><br><span class="line">adb shell</span><br><span class="line"></span><br><span class="line"><span class="comment"># AR Zone</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.arzone</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.ardrawing.zh</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.aremoji</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.aremojieditor</span><br><span class="line"><span class="comment"># 游戏助推器</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.game.gametools</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.game.gos</span><br><span class="line"><span class="comment"># 相机贴纸</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.app.camera.sticker.facearavatar.preload</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.autodoodle.service <span class="comment"># 费流量大户 ...</span></span><br><span class="line"><span class="comment"># 三星浏览器（注意装好替代）</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.app.sbrowser</span><br><span class="line"><span class="comment"># Dex</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.desktopmode.uiservice  <span class="comment"># Dex</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.app.desktoplauncher  <span class="comment"># Dex 主屏幕</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.dexsystemui</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.android.app.dexonpc</span><br><span class="line"><span class="comment"># bixby 套件</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixby.service</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixbytouch</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixby.agent</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixby.wakeup</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.bixbyvision.framework</span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.app.settings.bixby</span><br><span class="line"><span class="comment"># 其他</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.kidsinstaller  <span class="comment"># 儿童模式</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.hongbaoassistant <span class="comment"># 红包助手</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.sec.mhs.smarttethering  <span class="comment"># 自动开启热点</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.mdecservice  <span class="comment"># 其他设备上打电话发短信</span></span><br><span class="line">pm uninstall --user <span class="number">0</span> com.samsung.android.mdx  <span class="comment"># 连接到 windows</span></span><br></pre></td></tr></table></figure>
+<br/>
+<br/>
+<hr>
+<h3 id="参考">参考</h3>
+<p><span class="exturl" data-url="aHR0cHM6Ly90aWViYS5iYWlkdS5jb20vcC82OTA3MDQ5MDg1">adb禁用列表<i class="fa fa-external-link-alt"></i></span>  贴吧老哥补充很全，有些包名字变了，可以关键字在自己的 list 里面搜索</p>
+<p><span class="exturl" data-url="aHR0cHM6Ly9tYWFqaWFhLndvcmRwcmVzcy5jb20vMjAyMS8wNi8xMi9zYW1zdW5nLWJsb2F0d2FyZS1yZW1vdmFsLXdpdGhvdXQtcm9vdC8=">s10 原厂app 卸载笔记<i class="fa fa-external-link-alt"></i></span> 原作者建了 google doc，有记录一些大家删了出问题的包，可以先在这里check（当然个人建议是如果你不知道它是干嘛的，要么搞明白要么就别删 ...）</p>
+<br/>
+<br/>
+<br/>
+]]></content>
+      <categories>
+        <category>friends日常</category>
+        <category>我和我的三桑</category>
+      </categories>
+      <tags>
+        <tag>friends日常</tag>
+        <tag>安卓</tag>
+        <tag>我和我的三桑</tag>
       </tags>
   </entry>
 </search>

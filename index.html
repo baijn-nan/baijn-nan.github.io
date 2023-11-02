@@ -190,31 +190,12 @@
     <div class="main-inner index posts-expand">
 
 
-  <div class="container github-calendar">
+  <div class="container-github-contrib">
     <div class="contrib-card">
-        <div id="github-calendar" class="card-github-calendar"></div>
-		<div id="table-calendar" class="card-table-calendar"></div>
+        <div id="github-calendar" class="card-github-calendar" style="width: 100%;height: 225px;"></div>
+		    <div id="table-calendar" class="card-table-calendar"></div>
     </div>
 </div>
-
-<style>
-    .card-github-calendar {
-        width: 100%;
-        height: 225px;
-        margin-top: 20px;
-        background-color: rgb(255, 255, 255, 0);
-    }
-    .card-table-calendar {
-        width: 100%;
-        background-color: rgb(255, 255, 255, 0.1);
-    }
-    .contrib-card {
-        width: 100%;
-        height: 325px;
-        margin-top: 20px;
-        background-color: rgb(255, 255, 255, 0.05);
-    };
-</style>
 
 
 <script src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
@@ -222,180 +203,181 @@
 
 <script type="text/javascript">
 
-  let myChart = echarts.init(document.getElementById('github-calendar'));
+  var myChart = echarts.init(document.getElementById('github-calendar'));
+  window.addEventListener('resize', function() {
+    myChart.resize();
+  });
 	var myTable = document.getElementById('table-calendar');
 
   var option;
 	var table_text;
-	var style_text;
 
-    $.ajax({
-        url: "https://github-calendar-api-python.vercel.app/api/?baijn-nan",
-        type: "GET",
-        dataType: "json",
-        async: false,
-        success:function (data) {
+  $.ajax({
+      url: "https://github-calendar-api-python.vercel.app/api/?baijn-nan",
+      type: "GET",
+      dataType: "json",
+      async: false,
+      success:function (data) {
 
-            var cur_timestamp = data.cur_timestamp;
-            var total_year_cnt = data.total_year_cnt;
-            var year_timestamp = data.year_timestamp;
-            var total_month_cnt = data.total_month_cnt;
-            var month_timestamp = data.month_timestamp;
-            var total_week_cnt = data.total_week_cnt;
-            var week_timestamp = data.week_timestamp;
-            var contribute_data = JSON.parse(data.data_str);
-            var rangeArr = [year_timestamp, cur_timestamp];
+          var cur_timestamp = data.cur_timestamp;
+          var total_year_cnt = data.total_year_cnt;
+          var year_timestamp = data.year_timestamp;
+          var total_month_cnt = data.total_month_cnt;
+          var month_timestamp = data.month_timestamp;
+          var total_week_cnt = data.total_week_cnt;
+          var week_timestamp = data.week_timestamp;
+          var contribute_data = JSON.parse(data.data_str);
+          var rangeArr = [year_timestamp, cur_timestamp];
 
 
-            option = {
-                title: {
-                    top: '3%',
-                    text: '   contribution @github',
-					link: 'https://github.com/baijn-nan',
-                    left: 'left',
-                    textStyle: {
-                        color: 'rgba(255, 255, 255, 0.5)'
-                    }
-                },
-                tooltip: {
-                    padding: 10,
-                    backgroundColor: 'rgba(50,50,50,0.5)',
-                    borderColor: 'rgba(50,50,50,0.5)',
-                    borderWidth: 1,
-                    formatter: function (obj) {
-                        var value = obj.value;
-                        return '<div style="font-size: 14px;color: rgba(255, 255, 255, 0.8)">' + value[0] + '：' + value[1] + ' contribution </div>';
-                    }
-                },
-                visualMap: {
-                    type: 'piecewise',
-                    splitNumber: 5,
-                    min: 0,
-                    max: 5,
-                    maxOpen: true,
-                    selectedMode: false,
-                    itemWidth: 13,
-                    itemHeight: 13,
-                    text: [' More', 'Less '],
-                    itemGap: 2,
-                    hoverLink: false,
-                    left: 'center',
-                    bottom: '10%',
-                    orient: 'horizontal',
-                    inRange: {
-                        color: ['#1f1f1f', '#0E4429', '#006D32', '#26A641', '#39D353']
-                    },
-                    textStyle:{
-                        color: 'rgba(255, 255, 255, 0.5)'
-                    }
-                },
-                calendar: [{
-                    left: 'center',
-                    range: rangeArr,
-                    cellSize: [15, 15],
-                    splitLine: {
-                        show: false
-                    },
-                    itemStyle: {
-                        width: '1.88679%',
-                        height: '18px',
-                        color: 'rgb(255,255,255,0)',
-                        borderColor: 'rgb(255,255,255,0)',
-                        borderWidth: 2
-                    },
-                    yearLabel: {
-                        show: false
-                    },
-                    monthLabel: {
-                        nameMap: 'en',
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        fontWeight: 'lighter',
-                        fontSize: 12
-                    },
-                    dayLabel: {
-                        show: true,
-                        firstDay: 1,
-                        nameMap: ['Sun', 'Mon', '', 'Wed', '', 'Fri', ''],
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        fontWeight: 'lighter',
-                        fontSize: 12
-                    }
-                }],
-                series: [{
-                    type: 'heatmap',
-                    coordinateSystem: 'calendar',
-                    calendarIndex: 0,
-                    data: contribute_data
-                }]
-            };
+          option = {
+              title: {
+                  top: '5%',
+                  text: 'contribution @github',
+                  link: 'https://github.com/baijn-nan',
+                  left: '5%',
+                  textStyle: {
+                      color: 'rgba(255, 255, 255, 0.5)'
+                  }
+              },
+              tooltip: {
+                  padding: 10,
+                  backgroundColor: 'rgba(50,50,50,0.5)',
+                  borderColor: 'rgba(50,50,50,0.5)',
+                  borderWidth: 1,
+                  formatter: function (obj) {
+                      var value = obj.value;
+                      return '<div style="font-size: 14px;color: rgba(255, 255, 255, 0.8)">' + value[0] + '：' + value[1] + ' contribution </div>';
+                  }
+              },
+              visualMap: {
+                  type: 'piecewise',
+                  splitNumber: 5,
+                  min: 0,
+                  max: 5,
+                  maxOpen: true,
+                  selectedMode: false,
+                  itemWidth: 13,
+                  itemHeight: 13,
+                  text: [' More', 'Less '],
+                  itemGap: 2,
+                  hoverLink: false,
+                  left: 'center',
+                  bottom: '10%',
+                  orient: 'horizontal',
+                  inRange: {
+                      color: ['#1f1f1f', '#0E4429', '#006D32', '#26A641', '#39D353']
+                  },
+                  textStyle:{
+                      color: 'rgba(255, 255, 255, 0.5)'
+                  }
+              },
+              calendar: [{
+                  left: 'center',
+                  range: rangeArr,
+                  cellSize: [15, 15],
+                  splitLine: {
+                      show: false
+                  },
+                  itemStyle: {
+                      width: '1.88679%',
+                      height: '18px',
+                      color: 'rgb(255,255,255,0)',
+                      borderColor: 'rgb(255,255,255,0)',
+                      borderWidth: 2
+                  },
+                  yearLabel: {
+                      show: false
+                  },
+                  monthLabel: {
+                      nameMap: 'en',
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontWeight: 'lighter',
+                      fontSize: 12
+                  },
+                  dayLabel: {
+                      show: true,
+                      firstDay: 1,
+                      nameMap: ['Sun', 'Mon', '', 'Wed', '', 'Fri', ''],
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontWeight: 'lighter',
+                      fontSize: 12
+                  }
+              }],
+              series: [{
+                  type: 'heatmap',
+                  coordinateSystem: 'calendar',
+                  calendarIndex: 0,
+                  data: contribute_data
+              }]
+          };
 
 
 			table_text = '' +
 				'<div style="display:flex;width:100%">' +
-				'<div class="contrib-column contrib-column-first table-column">' +
+				'<div class="contrib-column contrib-column-first">' +
 					'<span class="text-muted">过去一年提交</span>' +
 					'<span class="contrib-number">' + total_year_cnt + '</span>' +
 					'<span class="text-muted">' + year_timestamp + ' -- ' + cur_timestamp + '</span>' +
 				'</div>' +
-				'<div class="contrib-column table-column">' +
+				'<div class="contrib-column">' +
 					'<span class="text-muted">最近一月提交</span>' +
 					'<span class="contrib-number">' + total_month_cnt + '</span>' +
 					'<span class="text-muted">' + month_timestamp + ' -- ' + cur_timestamp + '</span>' +
 				'</div>' +
-				'<div class="contrib-column table-column">' +
+				'<div class="contrib-column">' +
 					'<span class="text-muted">最近一周提交</span>' +
 					'<span class="contrib-number">' + total_week_cnt + '</span>' +
 					'<span class="text-muted">' + week_timestamp + ' -- ' + cur_timestamp + '</span>' +
 				'</div>' +
 				'</div>';
+		  }
+  });
 
-			style_text = '' +
-				'<style>' +
-				'{' +
-					'text-align:center;' +
-					'margin:0 auto;' +
-					'width:100%;' +
-					'display:flex;' +
-					'display:-webkit-flex;' +
-					'justify-content:center;' +
-					'align-items:center;' +
-					'flex-wrap:wrap;}' +
-				'.contrib-column{' +
-					'text-align:center;' +
-					'border-left:0;' +
-					'border-top:0;' +
-					'font-size:12px;}' +
-				'.contrib-column-first{' +
-					'border-left:0;}' +
-				'.table-column{' +
-					'padding:10px;' +
-					'display:table-cell;' +
-					'flex:1;' +
-					'vertical-align:top;}' +
-				'.contrib-number{' +
-					'font-weight:300;' +
-					'line-height:1.3em;' +
-					'font-size:24px;' +
-					'display:block;' +
-					'color:rgba(255, 255, 255, 0.5);}' +
-				'.left.text-muted{' +
-					'float:left;' +
-					'margin-left:9px;' +
-					'color:rgba(255, 255, 255, 0.5)}' +
-				'.left.text-muted a{' +
-					'color:rgba(255, 255, 255, 0.5);' +
-					'text-decoration:none;}' +
-				'</style>';
-
-			table_text = table_text + style_text;
-		}
-    });
-
-    myChart.setOption(option);
+  myChart.setOption(option);
 	myTable.innerHTML = table_text;
 
-
 </script>
+
+
+<style type="text/css">
+    .contrib-card {
+        margin-top: 5px;
+        width: 100%;
+        height: 325px; // 225 calendar + 100 table
+        background-color: rgb(255, 255, 255, 0.05);
+    }
+    .card-github-calendar {
+        width: 100%;
+        height: 225px;
+        left: 10px;
+        margin: 0 auto;
+        background-color: rgb(255, 255, 255, 0);
+    }
+    .card-table-calendar {
+        width: 100%;
+        height: 100px;
+        background-color: rgb(255, 255, 255, 0.1);
+    }
+    .contrib-column {
+        border: 0;
+        font-size: 12px;
+        text-align: center;
+        padding: 10px;
+        display: table-cell;
+        flex: 100%;
+        vertical-align: center;
+		}
+		.contrib-number {
+        font-weight: 300;
+        line-height: 1.3em;
+        font-size: 24px;
+        display: block;
+        color: rgba(255, 255, 255, 0.5);
+		}
+
+</style>
+
 
 
   <link rel="stylesheet" href="https://unpkg.com/swiper@8/swiper-bundle.css">
@@ -952,6 +934,7 @@ var mySwiper = new Swiper('.swiper',{
     border-radius: 15px;
   }
   .post-block {
+
   }
   .swiper-slide {
     width: 100%;
@@ -960,11 +943,17 @@ var mySwiper = new Swiper('.swiper',{
     margin: auto;
     border-radius: 15px;
   }
+  .swiper-pagination {
+    height: 20px !important;
+  }
   .swiper-pagination-bullet {
+    bottom: 6px !important;
     background: #5f9ea0;
     width: 15px;
     border-radius: 15px;
-    margin: 7px !important;
+    margin-left: 7px !important;
+    margin-right: 7px !important;
+    margin-bottom: 5px !important;
   }
   .swiper-pagination-bullet-active{
     background: #5f9ea0;
