@@ -11,13 +11,20 @@
 <hr>
 <h2 id="v1-1-pending">v1.1 - pending</h2>
 <ul>
-<li>首页改版
+<li>
+<p>首页改版</p>
 <ul>
 <li>[x] widget based on swiper 实现近期博客轮播展示 （v1.1.1 - 20231101）</li>
 <li>[x] 统一 widget 语法：重写 github contribution widget （ejs $\to$ njk）（v1.1.2 - 20231102）</li>
-<li>[ ] 公告喊话栏 （施工中 🚧）</li>
+<li>[ ] 公告喊话栏</li>
 <li>[ ] something else about index page ... 🤔</li>
 </ul>
+</li>
+<li>
+<p>加密（施工中 🚧）</p>
+</li>
+<li>
+<p>移动端适配</p>
 </li>
 </ul>
 <br/>
@@ -58,114 +65,6 @@
       </categories>
       <tags>
         <tag>疗养院基建</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>RippleNet: 知识图谱+用户偏好传播的推荐系统</title>
-    <url>/2023/10/30/20210208-paper-note-RippleNet/</url>
-    <content><![CDATA[<p>原文写于 20210208，存档如下</p>
-<blockquote>
-<p><strong>RippleNet: Propagating User Preferences on the Knowledge Graph for Recommender Systems</strong><br>
-Hongwei Wang, Fuzheng Zhang, Jialin Wang, Miao Zhao, Wenjie Li, Xing Xie, Minyi Guo<br>
-The 27th ACM International Conference on Information and Knowledge Management (CIKM 2018)</p>
-<p>原文(arXiv): <span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE4MDMuMDM0Njd2NC5wZGY=">https://arxiv.org/pdf/1803.03467v4.pdf<i class="fa fa-external-link-alt"></i></span></p>
-<p>源码: <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2h3d2FuZzU1L1JpcHBsZU5ldA==">tensorflow / official<i class="fa fa-external-link-alt"></i></span> -  <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL3FpYmluYy9SaXBwbGVOZXQtUHlUb3JjaA==">pytorch<i class="fa fa-external-link-alt"></i></span></p>
-</blockquote>
-<span id="more"></span>	
-<p>​</p>
-<p>​</p>
-<hr>
-<h2 id="1-background">1 background</h2>
-<p>传统基于协同过滤 (CF) 的推荐系统算法普遍存在 <strong>数据稀疏 (用户 - 物品矩阵)</strong> 和 <strong>冷启动</strong> 两个问题，且往往难以充分利用所提供的数据，如用户社交数据（social networks），用户 / 物品特征（user / item attributes），文本信息（context）</p>
-<p>为解决协同过滤带来的问题并将更多的信息（side information）引入推荐系统，利用知识图谱（KG）往往是一个能够较好地综合各类信息的选择。此时将各类实体（entity）标识为点，将实体之间的关系（relationship）标识为边（有向边，比如用户 A 关注 B 需要用有向的关系进行表示），同时考虑到存在多种不同类别的实体（可以是用户可以是物品可以是某一个tag）和不同类别的关系（用户与商品的交互，用户之间的关注关系等），构造异构信息网络，即能够较好地将不同的信息综合进入整体的信息网络。则此时一条信息可以表示为一个三元组：<strong>（头节点H，关系R，尾节点T）</strong></p>
-<p>利用知识图谱的推荐系统按实现思路在此分为两类：</p>
-<ul>
-<li>
-<p><strong>基于 embedding 的方法</strong>：也就是利用知识图谱嵌入的方法（KGE）先学习到各个实体 / 关系的嵌入 = 用一定维度的向量来表示各个结点和边，再利用向量表示来进行推荐任务（比如计算某一个物品和用户以前好评的物品的相似度 // 对于两个向量这是很好处理的 // 以决定是否需要将这个物品向用户进行推荐 etc）</p>
-<ul>
-<li>embedding 的方法分为 Trans 系的方法或基于异构信息网络的方法等，（具体的建议关键字 KGE / <span class="exturl" data-url="aHR0cHM6Ly96aHVhbmxhbi56aGlodS5jb20vcC8xMTQ0NzAxNDE=">扫盲参考<i class="fa fa-external-link-alt"></i></span>），后续推荐系统的任务基于 CF 等均可。</li>
-</ul>
-</li>
-<li>
-<p><strong>基于路径 path 的方法</strong>: 也就是将物品与用户构建为一个巨大的异构图，利用路径进行推荐（比如 meta-path / meta-graph 的方法，构建结束后再利用矩阵分解 + 分解因子机等方法进行推荐任务，<span class="exturl" data-url="aHR0cHM6Ly93d3cubGVpcGhvbmUuY29tL25ld3MvMjAxNzA5L2tlZnZRUGsxRk15YkNsZWIuaHRtbA==">参考<i class="fa fa-external-link-alt"></i></span>）但是注意此时的缺点在于要人工设计 meta-graph / meta-path，繁琐是一方面，有效性或全面性本身有待商榷。</p>
-</li>
-</ul>
-<p>在如上讨论的基础上，本文提出了新的基于知识图谱与用户偏好传播的推荐系统：<strong>RippleNet</strong>，几个优点如下：</p>
-<ul>
-<li>结合知识图谱表示，能够较好地综合辅助信息（side information）</li>
-<li>本身是端到端（end-to-end）的模型，也就是说采用的是<strong>联合训练</strong>的思路，此时embedding的部分和下游推荐系统的部分是统一用最后的损失函数训练的，换言之可以解决（明明最后的下游问题是推荐系统，但是 embedding 部分训练实际上只是一个对尾节点的预测）所带来的不匹配的问题（这也正是依次训练的缺点，<span class="exturl" data-url="aHR0cHM6Ly93d3cubXNyYS5jbi96aC1jbi9uZXdzL2ZlYXR1cmVzL2VtYmVkZGluZy1rbm93bGVkZ2UtZ3JhcGgtaW4tcmVjb21tZW5kYXRpb24tc3lzdGVtLWlp">参考<i class="fa fa-external-link-alt"></i></span>）</li>
-<li>采用了偏好传播的思路，能够更好地挖掘用户的潜在兴趣（而不单纯只是讨论用户发生了行为的那些物品，具体通过多跳的方式实现）</li>
-<li>本身针对点击预测问题，也就是给定用户和物品，预测用户是否会对物品感兴趣（本身是一个二分类问题，最后输出层应该是 softmax = 对点击概率的预测）</li>
-</ul>
-<p>​</p>
-<p>​</p>
-<hr>
-<h2 id="2-RippleNet">2 RippleNet</h2>
-<h3 id="2-1-整体框架">2.1 整体框架</h3>
-<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018012238468.png" alt="RippleNet_model_structure"></p>
-<p>注意这里还是分为 <strong>embedding</strong> 和 <strong>推荐任务</strong> 两个部分，首先给定一个物品（item）和一个用户（user），物品经过 embedding 后的向量不断地和 KG 中该用户周围 h 跳的物品的 embedding 进行交互运算（注意这里的 H = 也就是具体用到几跳的信息本质上是一个超参数，取值后面会讨论），最后<strong>组成该用户的embedding</strong>（图中灰色的 user embedding)，再和前面的 item embedding 一起计算点击概率</p>
-<p>​</p>
-<h3 id="2-2-RippleSet">2.2 RippleSet</h3>
-<p>定义用户 u 的第 k 跳对应相关的实体集合（直观理解就是从用户出发，向外至少需要经过 k 步所有可以达到的实体的集合），表示为：</p>
-<p>$$\mathcal{E}_u^k= \lbrace t | (h,r,t) \in \mathcal{G} \text{  }and\text{  }h \in \mathcal{E_u^{k-1} } \rbrace $$</p>
-<p>同理定义用户 u 的第 k 跳对应的 ripple set：</p>
-<p>$$\mathcal{S}_u^k = \lbrace (h,r,t)|(h,r,t) \in \mathcal{G} \text{  } and \text{  } h\in \mathcal{E}_u^{k-1} \rbrace \qquad  k = 1,2,...,H$$</p>
-<p>​</p>
-<h3 id="2-3-偏好传播">2.3 偏好传播</h3>
-<p>先再放一遍整体模型的图（摆好摆好：</p>
-<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018012238468.png" alt="RippleNet_model_structure"></p>
-<p>先看 <strong>embedding 部分</strong>：可以采用 Trans 系列的嵌入方式，也可以直接用语义匹配等，假设此时物品 v 通过 embedding 后得到了 $v \in R^d$ (也就是得到了一个 d 维的向量表示)<br>
-考虑用户 u 的一跳的 ripple set，也就是和用户 u 在 KG 上直接相连的物品作为 h 所得到的三元组，记作 $(h_i, r_i, t_i)$，这里的 hi 也就是和 u 直接相连的物品。注意此时三元组内各个元素的大小：$$h_i \in R^d , t_i \in R^d , r_i \in R^{d\times d}$$</p>
-<p><strong>再看 Rh 和 softmax 部分</strong>：对于每一个三元组，计算对应的一个概率 $p_i$（实际上可以看作是计算每一个 i 对应的相关性以后归一化得到各个的权重，实质上衡量的是在关系 r 上，我给定的商品$v$ 和用户一跳发生过行为的物品 $h_i$ 之间的相似度）：</p>
-<p>$$p_i = softmax(v^{T}R_{i}h_{i}) = \frac{exp(v^TR_ih_i)}{\sum_{(h,r,t) \in S_u^1}{exp(v^TRh)}}$$</p>
-<p>注意此时考察的是 <strong>在关系 R 上，我给定的物品$v$ 和 用户$u$本身在 KG 上相连的物品$h_i$的相似度</strong>，也就是说不同关系下的评价是不同的。举例，如果两家餐馆存在（位于同一地区）的关系，另外两家参观存在（属于同一菜系）的关系，我们可以认为后者的关系更能够证明两家餐馆可能是相似的。</p>
-<p><strong>接下来是 t 部分</strong>：也就是利用前面得到的每一个 i 的对应权重 $p_i$，计算所有的 $S_u^1$ 中三元组尾结点 $t_i$ 的加权和：$$o_u^1 = \sum_{(h_i, r_i,t_i)\in \mathcal{S}_u^1}{p_it_i}$$</p>
-<p>注意这里的 $o_u^1$ 本身是 t 的一个加权和，而 t 是和 用户 u 在 KG 上存在一定相关关系的物品。也就是说，这里的 o 按照 CF 的思路，<strong>可以作为用户 u 的一个表示</strong>：也就是利用 用户 u 相关的产品来表示 u 用户的特征。</p>
-<p><strong>重复，得到用户表示 user embedding</strong>： 后续同理，不断重复上面的步骤，一直得到 $o_u^H$，（这里的 H 是一个超参数），则每一个 $o_u^h$ 本身都可以作为用户 u 的一个嵌入，也就是对用户 u 进行 embedding 的结果。此时将得到的 H 个向量作相加：$$u = o_u^1 + o_u^2 + ... + o_u^H$$这里的 u 也就是用户 u 的一个 embedding 表示，对应图上的 user embedding。</p>
-<p><strong>最后计算用户和物品 embedding 的相似度，完成推荐</strong>：这里直接采用向量积配合 Sigmoid 函数的形式：</p>
-<p>$$\hat{y}_{uv} = \sigma(u^Tv) = \frac{1}{1+exp(-u^Tv)}$$</p>
-<p>最后得到的就是该用户 u 对该物品 v 的点击概率</p>
-<p>​</p>
-<p>​</p>
-<hr>
-<h2 id="3-训练策略">3 训练策略</h2>
-<p>还是用梯度下降的方式进行整体的模型训练</p>
-<p>具体损失函数的推导略，原论文讲得还是比较清楚的，根本思想是需要最大化后验概率，同时将 KGE 部分（物品 v 的 embedding 部分）的似然函数包括进去，以实现端到端的训练，具体损失函数如下：</p>
-<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018013048938.png" alt="image-20231018013048938"></p>
-<p>注意各个符号含义：</p>
-<ul>
-<li>$V / E$:  所有的物品（item）和实体（entity）的 embedding 矩阵</li>
-<li>$R$：关系 r 的 embedding 矩阵（是 dxd 大小的）</li>
-<li>$y_{uv}$: 用户 u 和物品 v 到底有没有交互（真实的交互情况，也就是 0/1）</li>
-<li>$\lambda_1, \lambda_2$: 防止过拟合用的正则项</li>
-</ul>
-<p>也就是说，整体的 损失函数 是由三个部分组成的：第一部分是预测结果的交叉熵损失函数（也就是用户到底会不会点击的 0/1 二分类问题）；第二部分是知识图谱本身 embedding 的损失，第三部分是参数正则化损失</p>
-<p>得到损失函数后，直接利用梯度下降的方法进行模型训练</p>
-<p>整体的模型训练过程如下：</p>
-<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018013007536.png" alt="image-20231018013007536"></p>
-<p>​</p>
-<p>​</p>
-<hr>
-<h2 id="4-后续讨论">4 后续讨论</h2>
-<p>​</p>
-<p>这里就不赘述实验结果了，具体参考原文</p>
-<p><strong>如何选择适合的超参数 H？</strong></p>
-<p>如果跳数过大，一方面整体涉及的实体会过多，导致计算困难；另一方面会出现实体的重合（也就是发散得太远了导致不同的 ripple 之间出现重合的部分），会为整体模型引入噪音。如果过小又不能够更好地挖掘用户的潜在兴趣。论文建议 H 跳数不宜过大（在论文使用的三个数据集中 H = 2，3 就已经可以得到比较好的效果）<br>
-具体选择的时候还是可以直接通过实验来选择（每一个 H 都试一试，调参），但是一般都不会过大，并不会带来太大的计算负担</p>
-<p><strong>每一跳的时候对涉及的三元组进行采样</strong></p>
-<p>注意到如果此时 H 较大，容易涉及到过多的实体；也就是说此时可以对每一跳涉及到的三元组作采样，只使用部分三元组来训练模型，防止带来过大的计算负担。对于论文使用的数据集，每一跳的时候用 16 / 32 的 ripple set 进行模型训练就已经可以得到较好的效果。</p>
-<p>​</p>
-<p>​</p>
-<hr>
-]]></content>
-      <categories>
-        <category>论文笔记</category>
-        <category>推荐系统</category>
-        <category>图模型+推荐</category>
-      </categories>
-      <tags>
-        <tag>推荐系统</tag>
-        <tag>图模型</tag>
       </tags>
   </entry>
   <entry>
@@ -419,6 +318,114 @@ In Proceedings of The 2019 Web Conference (WWW 2019)</p>
 <br>
 <br>
 <br>
+]]></content>
+      <categories>
+        <category>论文笔记</category>
+        <category>推荐系统</category>
+        <category>图模型+推荐</category>
+      </categories>
+      <tags>
+        <tag>推荐系统</tag>
+        <tag>图模型</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>RippleNet: 知识图谱+用户偏好传播的推荐系统</title>
+    <url>/2023/10/30/20210208-paper-note-RippleNet/</url>
+    <content><![CDATA[<p>原文写于 20210208，存档如下</p>
+<blockquote>
+<p><strong>RippleNet: Propagating User Preferences on the Knowledge Graph for Recommender Systems</strong><br>
+Hongwei Wang, Fuzheng Zhang, Jialin Wang, Miao Zhao, Wenjie Li, Xing Xie, Minyi Guo<br>
+The 27th ACM International Conference on Information and Knowledge Management (CIKM 2018)</p>
+<p>原文(arXiv): <span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE4MDMuMDM0Njd2NC5wZGY=">https://arxiv.org/pdf/1803.03467v4.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码: <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL2h3d2FuZzU1L1JpcHBsZU5ldA==">tensorflow / official<i class="fa fa-external-link-alt"></i></span> -  <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL3FpYmluYy9SaXBwbGVOZXQtUHlUb3JjaA==">pytorch<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>	
+<p>​</p>
+<p>​</p>
+<hr>
+<h2 id="1-background">1 background</h2>
+<p>传统基于协同过滤 (CF) 的推荐系统算法普遍存在 <strong>数据稀疏 (用户 - 物品矩阵)</strong> 和 <strong>冷启动</strong> 两个问题，且往往难以充分利用所提供的数据，如用户社交数据（social networks），用户 / 物品特征（user / item attributes），文本信息（context）</p>
+<p>为解决协同过滤带来的问题并将更多的信息（side information）引入推荐系统，利用知识图谱（KG）往往是一个能够较好地综合各类信息的选择。此时将各类实体（entity）标识为点，将实体之间的关系（relationship）标识为边（有向边，比如用户 A 关注 B 需要用有向的关系进行表示），同时考虑到存在多种不同类别的实体（可以是用户可以是物品可以是某一个tag）和不同类别的关系（用户与商品的交互，用户之间的关注关系等），构造异构信息网络，即能够较好地将不同的信息综合进入整体的信息网络。则此时一条信息可以表示为一个三元组：<strong>（头节点H，关系R，尾节点T）</strong></p>
+<p>利用知识图谱的推荐系统按实现思路在此分为两类：</p>
+<ul>
+<li>
+<p><strong>基于 embedding 的方法</strong>：也就是利用知识图谱嵌入的方法（KGE）先学习到各个实体 / 关系的嵌入 = 用一定维度的向量来表示各个结点和边，再利用向量表示来进行推荐任务（比如计算某一个物品和用户以前好评的物品的相似度 // 对于两个向量这是很好处理的 // 以决定是否需要将这个物品向用户进行推荐 etc）</p>
+<ul>
+<li>embedding 的方法分为 Trans 系的方法或基于异构信息网络的方法等，（具体的建议关键字 KGE / <span class="exturl" data-url="aHR0cHM6Ly96aHVhbmxhbi56aGlodS5jb20vcC8xMTQ0NzAxNDE=">扫盲参考<i class="fa fa-external-link-alt"></i></span>），后续推荐系统的任务基于 CF 等均可。</li>
+</ul>
+</li>
+<li>
+<p><strong>基于路径 path 的方法</strong>: 也就是将物品与用户构建为一个巨大的异构图，利用路径进行推荐（比如 meta-path / meta-graph 的方法，构建结束后再利用矩阵分解 + 分解因子机等方法进行推荐任务，<span class="exturl" data-url="aHR0cHM6Ly93d3cubGVpcGhvbmUuY29tL25ld3MvMjAxNzA5L2tlZnZRUGsxRk15YkNsZWIuaHRtbA==">参考<i class="fa fa-external-link-alt"></i></span>）但是注意此时的缺点在于要人工设计 meta-graph / meta-path，繁琐是一方面，有效性或全面性本身有待商榷。</p>
+</li>
+</ul>
+<p>在如上讨论的基础上，本文提出了新的基于知识图谱与用户偏好传播的推荐系统：<strong>RippleNet</strong>，几个优点如下：</p>
+<ul>
+<li>结合知识图谱表示，能够较好地综合辅助信息（side information）</li>
+<li>本身是端到端（end-to-end）的模型，也就是说采用的是<strong>联合训练</strong>的思路，此时embedding的部分和下游推荐系统的部分是统一用最后的损失函数训练的，换言之可以解决（明明最后的下游问题是推荐系统，但是 embedding 部分训练实际上只是一个对尾节点的预测）所带来的不匹配的问题（这也正是依次训练的缺点，<span class="exturl" data-url="aHR0cHM6Ly93d3cubXNyYS5jbi96aC1jbi9uZXdzL2ZlYXR1cmVzL2VtYmVkZGluZy1rbm93bGVkZ2UtZ3JhcGgtaW4tcmVjb21tZW5kYXRpb24tc3lzdGVtLWlp">参考<i class="fa fa-external-link-alt"></i></span>）</li>
+<li>采用了偏好传播的思路，能够更好地挖掘用户的潜在兴趣（而不单纯只是讨论用户发生了行为的那些物品，具体通过多跳的方式实现）</li>
+<li>本身针对点击预测问题，也就是给定用户和物品，预测用户是否会对物品感兴趣（本身是一个二分类问题，最后输出层应该是 softmax = 对点击概率的预测）</li>
+</ul>
+<p>​</p>
+<p>​</p>
+<hr>
+<h2 id="2-RippleNet">2 RippleNet</h2>
+<h3 id="2-1-整体框架">2.1 整体框架</h3>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018012238468.png" alt="RippleNet_model_structure"></p>
+<p>注意这里还是分为 <strong>embedding</strong> 和 <strong>推荐任务</strong> 两个部分，首先给定一个物品（item）和一个用户（user），物品经过 embedding 后的向量不断地和 KG 中该用户周围 h 跳的物品的 embedding 进行交互运算（注意这里的 H = 也就是具体用到几跳的信息本质上是一个超参数，取值后面会讨论），最后<strong>组成该用户的embedding</strong>（图中灰色的 user embedding)，再和前面的 item embedding 一起计算点击概率</p>
+<p>​</p>
+<h3 id="2-2-RippleSet">2.2 RippleSet</h3>
+<p>定义用户 u 的第 k 跳对应相关的实体集合（直观理解就是从用户出发，向外至少需要经过 k 步所有可以达到的实体的集合），表示为：</p>
+<p>$$\mathcal{E}_u^k= \lbrace t | (h,r,t) \in \mathcal{G} \text{  }and\text{  }h \in \mathcal{E_u^{k-1} } \rbrace $$</p>
+<p>同理定义用户 u 的第 k 跳对应的 ripple set：</p>
+<p>$$\mathcal{S}_u^k = \lbrace (h,r,t)|(h,r,t) \in \mathcal{G} \text{  } and \text{  } h\in \mathcal{E}_u^{k-1} \rbrace \qquad  k = 1,2,...,H$$</p>
+<p>​</p>
+<h3 id="2-3-偏好传播">2.3 偏好传播</h3>
+<p>先再放一遍整体模型的图（摆好摆好：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018012238468.png" alt="RippleNet_model_structure"></p>
+<p>先看 <strong>embedding 部分</strong>：可以采用 Trans 系列的嵌入方式，也可以直接用语义匹配等，假设此时物品 v 通过 embedding 后得到了 $v \in R^d$ (也就是得到了一个 d 维的向量表示)<br>
+考虑用户 u 的一跳的 ripple set，也就是和用户 u 在 KG 上直接相连的物品作为 h 所得到的三元组，记作 $(h_i, r_i, t_i)$，这里的 hi 也就是和 u 直接相连的物品。注意此时三元组内各个元素的大小：$$h_i \in R^d , t_i \in R^d , r_i \in R^{d\times d}$$</p>
+<p><strong>再看 Rh 和 softmax 部分</strong>：对于每一个三元组，计算对应的一个概率 $p_i$（实际上可以看作是计算每一个 i 对应的相关性以后归一化得到各个的权重，实质上衡量的是在关系 r 上，我给定的商品$v$ 和用户一跳发生过行为的物品 $h_i$ 之间的相似度）：</p>
+<p>$$p_i = softmax(v^{T}R_{i}h_{i}) = \frac{exp(v^TR_ih_i)}{\sum_{(h,r,t) \in S_u^1}{exp(v^TRh)}}$$</p>
+<p>注意此时考察的是 <strong>在关系 R 上，我给定的物品$v$ 和 用户$u$本身在 KG 上相连的物品$h_i$的相似度</strong>，也就是说不同关系下的评价是不同的。举例，如果两家餐馆存在（位于同一地区）的关系，另外两家参观存在（属于同一菜系）的关系，我们可以认为后者的关系更能够证明两家餐馆可能是相似的。</p>
+<p><strong>接下来是 t 部分</strong>：也就是利用前面得到的每一个 i 的对应权重 $p_i$，计算所有的 $S_u^1$ 中三元组尾结点 $t_i$ 的加权和：$$o_u^1 = \sum_{(h_i, r_i,t_i)\in \mathcal{S}_u^1}{p_it_i}$$</p>
+<p>注意这里的 $o_u^1$ 本身是 t 的一个加权和，而 t 是和 用户 u 在 KG 上存在一定相关关系的物品。也就是说，这里的 o 按照 CF 的思路，<strong>可以作为用户 u 的一个表示</strong>：也就是利用 用户 u 相关的产品来表示 u 用户的特征。</p>
+<p><strong>重复，得到用户表示 user embedding</strong>： 后续同理，不断重复上面的步骤，一直得到 $o_u^H$，（这里的 H 是一个超参数），则每一个 $o_u^h$ 本身都可以作为用户 u 的一个嵌入，也就是对用户 u 进行 embedding 的结果。此时将得到的 H 个向量作相加：$$u = o_u^1 + o_u^2 + ... + o_u^H$$这里的 u 也就是用户 u 的一个 embedding 表示，对应图上的 user embedding。</p>
+<p><strong>最后计算用户和物品 embedding 的相似度，完成推荐</strong>：这里直接采用向量积配合 Sigmoid 函数的形式：</p>
+<p>$$\hat{y}_{uv} = \sigma(u^Tv) = \frac{1}{1+exp(-u^Tv)}$$</p>
+<p>最后得到的就是该用户 u 对该物品 v 的点击概率</p>
+<p>​</p>
+<p>​</p>
+<hr>
+<h2 id="3-训练策略">3 训练策略</h2>
+<p>还是用梯度下降的方式进行整体的模型训练</p>
+<p>具体损失函数的推导略，原论文讲得还是比较清楚的，根本思想是需要最大化后验概率，同时将 KGE 部分（物品 v 的 embedding 部分）的似然函数包括进去，以实现端到端的训练，具体损失函数如下：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018013048938.png" alt="image-20231018013048938"></p>
+<p>注意各个符号含义：</p>
+<ul>
+<li>$V / E$:  所有的物品（item）和实体（entity）的 embedding 矩阵</li>
+<li>$R$：关系 r 的 embedding 矩阵（是 dxd 大小的）</li>
+<li>$y_{uv}$: 用户 u 和物品 v 到底有没有交互（真实的交互情况，也就是 0/1）</li>
+<li>$\lambda_1, \lambda_2$: 防止过拟合用的正则项</li>
+</ul>
+<p>也就是说，整体的 损失函数 是由三个部分组成的：第一部分是预测结果的交叉熵损失函数（也就是用户到底会不会点击的 0/1 二分类问题）；第二部分是知识图谱本身 embedding 的损失，第三部分是参数正则化损失</p>
+<p>得到损失函数后，直接利用梯度下降的方法进行模型训练</p>
+<p>整体的模型训练过程如下：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231018013007536.png" alt="image-20231018013007536"></p>
+<p>​</p>
+<p>​</p>
+<hr>
+<h2 id="4-后续讨论">4 后续讨论</h2>
+<p>​</p>
+<p>这里就不赘述实验结果了，具体参考原文</p>
+<p><strong>如何选择适合的超参数 H？</strong></p>
+<p>如果跳数过大，一方面整体涉及的实体会过多，导致计算困难；另一方面会出现实体的重合（也就是发散得太远了导致不同的 ripple 之间出现重合的部分），会为整体模型引入噪音。如果过小又不能够更好地挖掘用户的潜在兴趣。论文建议 H 跳数不宜过大（在论文使用的三个数据集中 H = 2，3 就已经可以得到比较好的效果）<br>
+具体选择的时候还是可以直接通过实验来选择（每一个 H 都试一试，调参），但是一般都不会过大，并不会带来太大的计算负担</p>
+<p><strong>每一跳的时候对涉及的三元组进行采样</strong></p>
+<p>注意到如果此时 H 较大，容易涉及到过多的实体；也就是说此时可以对每一跳涉及到的三元组作采样，只使用部分三元组来训练模型，防止带来过大的计算负担。对于论文使用的数据集，每一跳的时候用 16 / 32 的 ripple set 进行模型训练就已经可以得到较好的效果。</p>
+<p>​</p>
+<p>​</p>
+<hr>
 ]]></content>
       <categories>
         <category>论文笔记</category>
@@ -2622,6 +2629,130 @@ $$</p>
       </tags>
   </entry>
   <entry>
+    <title>Harnessing Deep Neural Networks with Logic Rules: 结合逻辑规则的深层神经网络</title>
+    <url>/2023/10/30/20210406-paper-note-LogicRulesACL16/</url>
+    <content><![CDATA[<p>原文写于 20210406，存档如下</p>
+<blockquote>
+<p>Zhiting Hu, Xuezhe Ma, Zhengzhong Liu, Eduard Hovy, Eric P. Xing, School of Computer Science, Carnegie Mellon University ; <strong>Harnessing Deep Neural Networks with Logic Rules</strong></p>
+<p>原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE2MDMuMDYzMTh2Ni5wZGY=">https://arxiv.org/pdf/1603.06318v6.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL1poaXRpbmdIdS9sb2dpY25u">更贴切来说是一个官方应用案例<i class="fa fa-external-link-alt"></i></span></p>
+</blockquote>
+<span id="more"></span>
+<br>
+<br>
+<hr>
+<h2 id="1-introduction">1 introduction</h2>
+<p>当前广泛应用的深度神经网络（例如 DNN）结构存在一定的问题：</p>
+<ul>
+<li>过于依赖大量的标记数据参与训练</li>
+<li>纯数据驱动（data-driven）的学习方式往往缺乏解释性</li>
+<li>难以将人类的一些思维模式融合进入模型，或者仅仅局限于昂贵的直接监督学习或专门的初始化方法</li>
+<li>人类本身在解决问题的时候不仅仅是依赖于单纯的问题本身提供的信息，而更多地会共同结合自己的常识知识和过往经历进行判断。而当前模型难以将常识知识或者一些人类的思维模式融入任务中</li>
+</ul>
+<p>综上，考虑将逻辑规则（logic rules）融入传统的神经网络模型，将为 DNN CNN 等模型带来训练，解释性和最终效果多个方面的进步。本文提出了一种<strong>将逻辑规则（logic rules）融入多种不同的传统神经网络（如 CNN DNN 等）的方法</strong>，使得神经网络结构可以同时从作好了标签的实例和逻辑实例中进行学习，并通过一种迭代蒸馏（iterative rule knowledge distillation）的方式，利用逻辑规则中结构化的信息来辅助模型参数的训练。这里的逻辑规则可以看作是一种针对当前给定的数据的一种信息补充，也就使得该方法可以应用于结合未标签数据的半监督学习方式。</p>
+<p>本质上本文的方法可以看作是 <strong>知识蒸馏（knowledge distillation）和 后验正则化（posterior regularization - PR）的融合</strong>，也就是说，在每一层循环均从 PR 选择后验的约束规则来建立一个 规则正则化的教师 teacher，再通过模仿教师网络的预测的方式来训练学生网络 student</p>
+<br>
+<br>
+<hr>
+<h2 id="2-Method">2 Method</h2>
+<br>
+<h3 id="2-1-overview">2.1 overview</h3>
+<p>本质上来说这个模型可以同时从特殊的例子（specific examples）和常识知识（general rules）中学习</p>
+<p>来看看模型的整体结构：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023103922691.png" alt="image-20231023103922691" style="zoom:60%;" />
+<p>具体流程 → 通过后验的正则化规则来建立 teacher 部分 → 要求 student 部分学习 teacher 部分的预测</p>
+<br>
+<h3 id="2-2-Learning-Resources-Instances-and-Rule-实例和规则">2.2  Learning Resources: Instances and Rule 实例和规则</h3>
+<p>这里使用带有置信区间的 first-order logic (FOL) 规则，记作 $R = {R_l,\lambda_l}^L_{l=1}$，注意这里的 $R_l$ 也就是输入的目标空间 $(x,y)$ 上的第 l 个规则，对应的 $\lambda_l \in [0,\infty]$ 为置信区间，这里的 $\lambda_l  = \infty$​ 则表示为硬规则。这里为了后续编码的灵活性和优化的方便采用软规则（soft logic）来进行 FOL 的编码，也就是说此时的值是连续的，也就是区间 [0,1] 而不是单纯的 01 集合 {0, 1}。这里集合运算的规则如下：<br>
+$$<br>
+\begin{align}<br>
+&amp; A\&amp;B = \max {A + B-1, 0} \\<br>
+&amp; A\vee B = min {A + B, 1} \\<br>
+&amp; A_1 \wedge ... \wedge A_N = \sum _i A_i /N \\<br>
+&amp; \neg A = 1-A<br>
+\end{align}<br>
+$$<br>
+<br></p>
+<h3 id="2-3-Rule-Knowledge-Distillation-规则知识蒸馏">2.3  Rule Knowledge Distillation 规则知识蒸馏</h3>
+<p>本质一个神经网络即通过当前已知的 x 信息考虑得到一个关于 y 的条件概率 $p_\theta(y|x)$，此时记神经网络通过给定的信息 x 给出的预测结果向量为 $\sigma_\theta(x)$，注意这里的预测结果是一个 K 维的（K分类问题）软分类（soft prediction vector）</p>
+<p>对于传统的神经网络而言，本质模型的训练也就是不断将最后输出的 $p_\theta(y|x)$ 同正确的标签比较并更新神经网络的参数 θ，但是这里为了同时向模型中加入规则中蕴含的信息，这里同时要求模型去模仿一个规则正则化的模型给出的 $p_\theta(y|x)$，记作  $q(y|x)$</p>
+<p>这里采用 <strong>蒸馏（distillation）</strong> 方法的思路：将模型给出的预测 $p_\theta(y|x)$ 称作 学生（student），而规则正则化模型给出的记作 $q(y|x)$，称为老师（teacher），此时老师本身理解一定的逻辑规则，则老师会为某一个问题给出自己的解答（也就是这里的给定 x 输出 q(y|x)），而学生的任务就是将自己对这个问题的解答（也就是 $p_\theta(y|x)$）同老师给出的解答作对比，不断更正自己的答案以接近老师的答案</p>
+<p>具体更新参数 θ 的时候考虑的是 1）预测真的正确的标签 hard label 2）学习规则正则化的模型给出的 $p_\theta(y|x)$ 这两个任务的平衡：<br>
+$$<br>
+\theta ^{(t-1)} = \arg\min _{\theta \in \Theta} \frac{1}{N} \sum _{n=1} ^N (1-\pi) l(y_n, \sigma _\theta (x_n)) + \pi l(s_n ^{(t)}, \sigma _\theta (x_n))<br>
+$$</p>
+<p>这里的 $l$ 是对应的任务的损失函数（比如分类任务就是交叉熵损失函数之类），$\sigma_\theta(x_n)$ 也就是模型给出的预测，$s_n^{(t)}$ 是 teacher 部分的针对 xn 的软逻辑预测向量，这里通过 $\pi$ 来控制两个任务之间的比重</p>
+<br>
+<h3 id="2-4-Teacher-Network-Construction-教师网络构建">2.4 Teacher Network Construction 教师网络构建</h3>
+<p>每一轮迭代（设这里是第 t 轮）都需要构造一个教师网络（teacher network），这里利用后验正则化规则来帮助逻辑约束的构建</p>
+<p>假设这里有一系列的规则 （FOL rules），记作 $R = {R_l,\lambda_l}^L_{l=1}$，则教师网络的目标就是找到一个对应的 $q(y|x)$，一方面是服从规则的，一方面是接近 $p_\theta$ 的</p>
+<ul>
+<li>对于要求 q(y|x) 服从规则方面，此时采用 expectation operator 的方式：此时令 $r_{lg}(X,Y)$ 来标识从 X 到 Y 是否是服从规则 $R_l$ 的，则我想要 q(y|x) 在置信区间 $\lambda_l$ 满足 $$E_{q(y|x)}[r_{lg}(X,Y)] = 1 $$</li>
+<li>对于要求 q(y|x) 一定程度上接近 $p_\theta$ 方面，实际上也就是要求两个分布尽量接近，则此时衡量接近的程度用 KL 散度</li>
+</ul>
+<p>综上，此时构造 q(y|x) 也就是在约束下（也就是满足规则 Rl 的约束下）最小化第二个任务的损失函数（也就是 KL 散度）：<br>
+$$<br>
+\begin{align}<br>
+\min _{q, \xi \geq 0} &amp;\text{ } KL(q(Y \vert X) || p _\theta (Y|X)) + C \sum _{l, g_l} \xi _{l, g_l} \\<br>
+s.t. &amp;\text{ } \lambda(1-\mathbb{E}_q [r _{l, g_l} (X, Y)]) \leq \xi _{l, g_l} \\<br>
+&amp;\text{ } g_l = 1, ..., G_l, \text{ } l = 1, ..., L<br>
+\end{align}<br>
+$$</p>
+<p>本质也就是一个优化问题，这里的 $\xi_{l,g_l}$​​ 是对应的松弛变量（slack variable），注意这里实际上是一个凸优化问题，可以通过原问题的对偶问题解决，此时上述优化任务的对偶问题可以得到如下形式的解：<br>
+$$<br>
+q ^* (Y|X) \propto p _\theta (Y|X) exp {-\sum _{l, g_l} C\lambda_l (1-r _{l, g_l} (X,Y))}<br>
+$$</p>
+<br>
+<br>
+<h3 id="2-5-训练和测试">2.5 训练和测试</h3>
+<p>整体的伪代码：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023103947133.png" alt="image-20231023103947133" style="zoom:60%;" />
+<p>注意这里每一轮都要新构建一个 teacher，再更新 student 的参数，本质上 teacher 的构建是一个凸优化问题（通过求解其对偶问题得到 q(y|x) 参与 student 的训练），而 student 部分也就是不断更新对应的 θ 参数的过程</p>
+<p>注意最后测试的时候可以用 student 给出的 p(y|x)，也可以用 teacher 给出的 q(y|x)，一般来说 q 的 teacher 的表现会好一些，本质上来说 q 对于数据涉及的  / 本身逻辑规则覆盖的情况效果较好，而 p 对于纯粹未知的情况的处理效果较好</p>
+<br>
+<br>
+<hr>
+<h2 id="3-Applications">3  Applications</h2>
+<p>这里考虑分别在 CNN 和 RNN 两个最为常用的神经网络基本框架上实验效果，这里的 CNN 用于文本情感分类，而 RNN 对标实体识别任务</p>
+<h3 id="3-1-Sentiment-Classification-情感分类">3.1 Sentiment Classification 情感分类</h3>
+<p>这里采用一通道的 CNN，引入 but 规则：<br>
+$$<br>
+\begin{align}<br>
+&amp;\text{has- 'A-but-B'-structure(S)} \Rightarrow \\<br>
+&amp;(1(y=+) \Rightarrow \sigma _\theta(B) _+ \wedge \sigma _\theta (B) _+ \Rightarrow 1(y=+))<br>
+\end{align}<br>
+$$</p>
+<p>$1()$​ 函数标识内部逻辑的正确与否，正确返回 1，错误返回 0；上面这个规则可以直观理解为 but 前后出现情感的转折</p>
+<p>这里用三个数据集 <strong>SST2 + MR + CR</strong> 来评价效果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023105846377.png" alt="image-20231023105846377" style="zoom:60%;" />
+<p>可以看到这里的提升还是比较明显的，并且 q（teacher） 的表现稍优于 p（student）</p>
+<br>
+<h3 id="3-2-Named-Entity-Recognition-命名实体识别">3.2  Named Entity Recognition 命名实体识别</h3>
+<p>也就是 NER 任务，也就是将句子中的实体文本识别出来并加入不同的实体类别，LSTM 在类似的任务上表现不错，这里考虑用本文的方法优化 LSTM 的 RNN 部分</p>
+<p>这里对应的规则：<br>
+$$<br>
+\text{equal} (y _{i-1}, \text{I-ORG}) \Rightarrow \neg \text{equal} (y_i, \text{B-PER})<br>
+$$</p>
+<p>也就是 I-ORG 不能跟在 B-PER 后面</p>
+<p>注意这里的置信度 $\lambda_l = \infty$，也就是说这里是一个硬规则，一点都不能违反</p>
+<p>这里在 <strong>CoNLL-2003</strong> 数据集上进行测试，结果如下：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023110025249.png" alt="image-20231023110025249" style="zoom:60%;" />
+<p>同理可以看出这里的 q（teacher） 的表现是要略好于 p（student）的表现的</p>
+<br>
+<br>
+<br>
+]]></content>
+      <categories>
+        <category>论文笔记</category>
+        <category>NLP</category>
+        <category>机器推理Reasoning</category>
+      </categories>
+      <tags>
+        <tag>NLP</tag>
+        <tag>机器推理Reasoning</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>HGN: 基于分层图网络的多跳阅读理解模型</title>
     <url>/2023/10/30/20210330-paper-note-HGN/</url>
     <content><![CDATA[<p>原文写于 20210330，存档如下</p>
@@ -2817,115 +2948,177 @@ $$</p>
       </tags>
   </entry>
   <entry>
-    <title>Harnessing Deep Neural Networks with Logic Rules: 结合逻辑规则的深层神经网络</title>
-    <url>/2023/10/30/20210406-paper-note-LogicRulesACL16/</url>
-    <content><![CDATA[<p>原文写于 20210406，存档如下</p>
+    <title>Neural Module Networks + NLP + Reasoning: 可用于文本推理的模块神经网络</title>
+    <url>/2023/10/30/20210706-paper-note-moduleReasoning20/</url>
+    <content><![CDATA[<p>原文写于 20210706，存档如下</p>
 <blockquote>
-<p>Zhiting Hu, Xuezhe Ma, Zhengzhong Liu, Eduard Hovy, Eric P. Xing, School of Computer Science, Carnegie Mellon University ; <strong>Harnessing Deep Neural Networks with Logic Rules</strong></p>
-<p>原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE2MDMuMDYzMTh2Ni5wZGY=">https://arxiv.org/pdf/1603.06318v6.pdf<i class="fa fa-external-link-alt"></i></span></p>
-<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL1poaXRpbmdIdS9sb2dpY25u">更贴切来说是一个官方应用案例<i class="fa fa-external-link-alt"></i></span></p>
+<p><strong>Neural Module Networks for Reasoning over Text</strong> ; Nitish Gupta, Kevin Lin, Dan Roth, Sameer Singh &amp; Matt Gardner; University of Pennsylvania, Philadelphia, University of California, Berkeley, University of California, Irvine, Allen Institute for AI</p>
+<p>原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MTIuMDQ5NzF2Mi5wZGY=">https://arxiv.org/pdf/1912.04971v2.pdf<i class="fa fa-external-link-alt"></i></span></p>
+<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL25pdGlzaGd1cHRhL25tbi1kcm9w">official，基于 AllenNLP<i class="fa fa-external-link-alt"></i></span> ** <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL0NPTVA2MjQ4LVJlcHJvZHVjYWJpbGl0eS1DaGFsbGVuZ2UvQ09NUDYyNDgtUmVwcm9kdWNhYmlsaXR5LUNoYWxsZW5nZS1OTU4tRHJvcC1mb3ItUmVhc29uaW5nLU92ZXItVGV4dA==">pytorch 实现<i class="fa fa-external-link-alt"></i></span></p>
 </blockquote>
 <span id="more"></span>
 <br>
 <br>
 <hr>
 <h2 id="1-introduction">1 introduction</h2>
-<p>当前广泛应用的深度神经网络（例如 DNN）结构存在一定的问题：</p>
+<p>本文同理针对需要多跳推理的问题；这里首先解释一下几个概念：</p>
 <ul>
-<li>过于依赖大量的标记数据参与训练</li>
-<li>纯数据驱动（data-driven）的学习方式往往缺乏解释性</li>
-<li>难以将人类的一些思维模式融合进入模型，或者仅仅局限于昂贵的直接监督学习或专门的初始化方法</li>
-<li>人类本身在解决问题的时候不仅仅是依赖于单纯的问题本身提供的信息，而更多地会共同结合自己的常识知识和过往经历进行判断。而当前模型难以将常识知识或者一些人类的思维模式融入任务中</li>
+<li><strong>KBQA</strong>：基于知识图谱的问答(KBQA) = knowledge base question answering，也就是在三元组上进行推理和查找最后得到答案</li>
+<li><strong>机器阅读理解</strong>：多针对自然语言形式的文章，而非已经提取的三元组的形式</li>
+<li><strong>多跳推理问题</strong>：可以直观地理解为需要多次跳转，将不同的信息进行进一步整合才能得到答案的问题（多跳阅读理解也就是基于自然语言形式的文章，同理知识图谱领域也存在多跳推理）。这里还是用 CogQA 的图举个例子：</li>
 </ul>
-<p>综上，考虑将逻辑规则（logic rules）融入传统的神经网络模型，将为 DNN CNN 等模型带来训练，解释性和最终效果多个方面的进步。本文提出了一种<strong>将逻辑规则（logic rules）融入多种不同的传统神经网络（如 CNN DNN 等）的方法</strong>，使得神经网络结构可以同时从作好了标签的实例和逻辑实例中进行学习，并通过一种迭代蒸馏（iterative rule knowledge distillation）的方式，利用逻辑规则中结构化的信息来辅助模型参数的训练。这里的逻辑规则可以看作是一种针对当前给定的数据的一种信息补充，也就使得该方法可以应用于结合未标签数据的半监督学习方式。</p>
-<p>本质上本文的方法可以看作是 <strong>知识蒸馏（knowledge distillation）和 后验正则化（posterior regularization - PR）的融合</strong>，也就是说，在每一层循环均从 PR 选择后验的约束规则来建立一个 规则正则化的教师 teacher，再通过模仿教师网络的预测的方式来训练学生网络 student</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png" alt="image-20231021084007009" style="zoom: 80%;" />
+<p>这个问题本身问的是导演，但是没有给出电影的名字，首先需要后面的信息去推断是哪一部电影，才能进一步去寻找该电影的导演。也就是说这里问题的解决需要一个中间的推理步骤（也就是得到 //电影名称// 的中间步骤，这里的电影名称也可以称为 bridge entity）才能得到最终的答案</p>
+<p>然而，除去上面此类需要查找中间实体来进行类似于 “多步搜索” 的问题，多跳阅读理解问题同时涉及符号推理问题（例如排序 / 数数问题<br>
+举个例子：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023110700618.png" alt="image-20231023110700618" style="zoom:60%;" />
+<p>这里不仅是需要寻找对应的 bridge entity，不仅是需要得到一条连接初始实体和最后的答案实体的推理链，而是需要进行信息提取 + 排序 再得到最终的答案。</p>
+<p>由此总结，多跳推理问题的解决主要包括以下几个步骤：</p>
+<ul>
+<li><strong>理解复杂问题的结构</strong>：考虑上面的例子，此时问题 = 谁 + 第二季度（限定） + 最长，首先需要模型理解这个问题的结构 → 也就是（先找到第二季度限定）下的所有得分 → 再比较 → 得到最长</li>
+<li><strong>从问题精确提取信息</strong>：还是上面的例子，这里需要模型能够精确提取到 lengths / kickers / filed goal 等词汇，并从文中确实地找到相关信息</li>
+<li><strong>执行符号推理</strong>：上面的问题也就是需要对提取到的数字作排序操作 + 得到最长的 → 对应得到最后的答案</li>
+</ul>
+<p>综上，本文尝试将 <strong>模块化的神经网络 Neural module networks (NMNs; Andreas et al., 2016)</strong> 用于解决多跳推理问题。（实际上 NMNs 已经在 VQA（视觉问答）领域取得了一定的成果（例如 CLEVR），但是针对 nlp 领域的应用还十分有限</p>
 <br>
 <br>
 <hr>
-<h2 id="2-Method">2 Method</h2>
-<br>
-<h3 id="2-1-overview">2.1 overview</h3>
-<p>本质上来说这个模型可以同时从特殊的例子（specific examples）和常识知识（general rules）中学习</p>
-<p>来看看模型的整体结构：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023103922691.png" alt="image-20231023103922691" style="zoom:60%;" />
-<p>具体流程 → 通过后验的正则化规则来建立 teacher 部分 → 要求 student 部分学习 teacher 部分的预测</p>
-<br>
-<h3 id="2-2-Learning-Resources-Instances-and-Rule-实例和规则">2.2  Learning Resources: Instances and Rule 实例和规则</h3>
-<p>这里使用带有置信区间的 first-order logic (FOL) 规则，记作 $R = {R_l,\lambda_l}^L_{l=1}$，注意这里的 $R_l$ 也就是输入的目标空间 $(x,y)$ 上的第 l 个规则，对应的 $\lambda_l \in [0,\infty]$ 为置信区间，这里的 $\lambda_l  = \infty$​ 则表示为硬规则。这里为了后续编码的灵活性和优化的方便采用软规则（soft logic）来进行 FOL 的编码，也就是说此时的值是连续的，也就是区间 [0,1] 而不是单纯的 01 集合 {0, 1}。这里集合运算的规则如下：<br>
-$$<br>
-\begin{align}<br>
-&amp; A\&amp;B = \max {A + B-1, 0} \\<br>
-&amp; A\vee B = min {A + B, 1} \\<br>
-&amp; A_1 \wedge ... \wedge A_N = \sum _i A_i /N \\<br>
-&amp; \neg A = 1-A<br>
-\end{align}<br>
-$$<br>
-<br></p>
-<h3 id="2-3-Rule-Knowledge-Distillation-规则知识蒸馏">2.3  Rule Knowledge Distillation 规则知识蒸馏</h3>
-<p>本质一个神经网络即通过当前已知的 x 信息考虑得到一个关于 y 的条件概率 $p_\theta(y|x)$，此时记神经网络通过给定的信息 x 给出的预测结果向量为 $\sigma_\theta(x)$，注意这里的预测结果是一个 K 维的（K分类问题）软分类（soft prediction vector）</p>
-<p>对于传统的神经网络而言，本质模型的训练也就是不断将最后输出的 $p_\theta(y|x)$ 同正确的标签比较并更新神经网络的参数 θ，但是这里为了同时向模型中加入规则中蕴含的信息，这里同时要求模型去模仿一个规则正则化的模型给出的 $p_\theta(y|x)$，记作  $q(y|x)$</p>
-<p>这里采用 <strong>蒸馏（distillation）</strong> 方法的思路：将模型给出的预测 $p_\theta(y|x)$ 称作 学生（student），而规则正则化模型给出的记作 $q(y|x)$，称为老师（teacher），此时老师本身理解一定的逻辑规则，则老师会为某一个问题给出自己的解答（也就是这里的给定 x 输出 q(y|x)），而学生的任务就是将自己对这个问题的解答（也就是 $p_\theta(y|x)$）同老师给出的解答作对比，不断更正自己的答案以接近老师的答案</p>
-<p>具体更新参数 θ 的时候考虑的是 1）预测真的正确的标签 hard label 2）学习规则正则化的模型给出的 $p_\theta(y|x)$ 这两个任务的平衡：<br>
-$$<br>
-\theta ^{(t-1)} = \arg\min _{\theta \in \Theta} \frac{1}{N} \sum _{n=1} ^N (1-\pi) l(y_n, \sigma _\theta (x_n)) + \pi l(s_n ^{(t)}, \sigma _\theta (x_n))<br>
-$$</p>
-<p>这里的 $l$ 是对应的任务的损失函数（比如分类任务就是交叉熵损失函数之类），$\sigma_\theta(x_n)$ 也就是模型给出的预测，$s_n^{(t)}$ 是 teacher 部分的针对 xn 的软逻辑预测向量，这里通过 $\pi$ 来控制两个任务之间的比重</p>
-<br>
-<h3 id="2-4-Teacher-Network-Construction-教师网络构建">2.4 Teacher Network Construction 教师网络构建</h3>
-<p>每一轮迭代（设这里是第 t 轮）都需要构造一个教师网络（teacher network），这里利用后验正则化规则来帮助逻辑约束的构建</p>
-<p>假设这里有一系列的规则 （FOL rules），记作 $R = {R_l,\lambda_l}^L_{l=1}$，则教师网络的目标就是找到一个对应的 $q(y|x)$，一方面是服从规则的，一方面是接近 $p_\theta$ 的</p>
+<h2 id="2-模块神经网络-Neural-Module-Networks">2  模块神经网络 Neural Module Networks</h2>
+<p>先说说所谓的模块神经网络</p>
+<p>还是考虑上面给出的问题：</p>
+<blockquote>
+<p><strong>Who kicked the longest field goal in the second quarter?</strong></p>
+</blockquote>
+<p>按照正常人类的思维，读到问题后需要的步骤为：</p>
 <ul>
-<li>对于要求 q(y|x) 服从规则方面，此时采用 expectation operator 的方式：此时令 $r_{lg}(X,Y)$ 来标识从 X 到 Y 是否是服从规则 $R_l$ 的，则我想要 q(y|x) 在置信区间 $\lambda_l$ 满足 $$E_{q(y|x)}[r_{lg}(X,Y)] = 1 $$</li>
-<li>对于要求 q(y|x) 一定程度上接近 $p_\theta$ 方面，实际上也就是要求两个分布尽量接近，则此时衡量接近的程度用 KL 散度</li>
+<li>先找出所有的 field goal 的实例</li>
+<li>再找出其中符合限定 in second quarter 的</li>
+<li>找到它们的 lengths（来自于 longest）</li>
+<li>再比较得到其中最长的（比较 / 排序</li>
+<li>找到谁踢的作为最终答案</li>
 </ul>
-<p>综上，此时构造 q(y|x) 也就是在约束下（也就是满足规则 Rl 的约束下）最小化第二个任务的损失函数（也就是 KL 散度）：<br>
-$$<br>
-\begin{align}<br>
-\min _{q, \xi \geq 0} &amp;\text{ } KL(q(Y \vert X) || p _\theta (Y|X)) + C \sum _{l, g_l} \xi _{l, g_l} \\<br>
-s.t. &amp;\text{ } \lambda(1-\mathbb{E}_q [r _{l, g_l} (X, Y)]) \leq \xi _{l, g_l} \\<br>
-&amp;\text{ } g_l = 1, ..., G_l, \text{ } l = 1, ..., L<br>
-\end{align}<br>
-$$</p>
-<p>本质也就是一个优化问题，这里的 $\xi_{l,g_l}$​​ 是对应的松弛变量（slack variable），注意这里实际上是一个凸优化问题，可以通过原问题的对偶问题解决，此时上述优化任务的对偶问题可以得到如下形式的解：<br>
-$$<br>
-q ^* (Y|X) \propto p _\theta (Y|X) exp {-\sum _{l, g_l} C\lambda_l (1-r _{l, g_l} (X,Y))}<br>
-$$</p>
-<br>
-<br>
-<h3 id="2-5-训练和测试">2.5 训练和测试</h3>
-<p>整体的伪代码：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023103947133.png" alt="image-20231023103947133" style="zoom:60%;" />
-<p>注意这里每一轮都要新构建一个 teacher，再更新 student 的参数，本质上 teacher 的构建是一个凸优化问题（通过求解其对偶问题得到 q(y|x) 参与 student 的训练），而 student 部分也就是不断更新对应的 θ 参数的过程</p>
-<p>注意最后测试的时候可以用 student 给出的 p(y|x)，也可以用 teacher 给出的 q(y|x)，一般来说 q 的 teacher 的表现会好一些，本质上来说 q 对于数据涉及的  / 本身逻辑规则覆盖的情况效果较好，而 p 对于纯粹未知的情况的处理效果较好</p>
+<p>而 NMNs 读到上述问题后，会将问题拆解为几个<strong>可执行的模块</strong>，比如上面的问题可以拆解为：$$relocate(find-max-num(filter(find())))$$<br>
+先执行最内部的 find = 找到所有的 field goal 的示例，再 filter（符合 in second quarter 的限定）再 find-max-num 取最大值，再找到是谁踢的（relocate）</p>
+<p>综上，将 NMN 应用于推理问答，需要：</p>
+<ul>
+<li>
+<p>定义 <strong>Modules 模块</strong>，这里可能的模块限定于预先定义好的几种，具体的功能在后面介绍：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023110727182.png" alt="image-20231023110727182" style="zoom:60%;" />
+</li>
+<li>
+<p>得到<strong>上下文表示</strong>：这里采用 预训练模型 + embedding 的形式得到问题和上下文的 embedding，分别用 BERT 和 双向 GRU 两种方式实现</p>
+</li>
+<li>
+<p>实现 <strong>问题分解 Question Parser</strong>：也就是将问题分解为上述定义好的可执行模块，这里同时利用到了 encoder-decoder 和注意力机制</p>
+</li>
+<li>
+<p>训练 <strong>模块执行器</strong>：也就是训练得到每一个模块，以实现将规定各式的输入给定时（比如给定数字，给定文本，给定日期形式的输入），可以得到我想要找到的输出</p>
+</li>
+</ul>
 <br>
 <br>
 <hr>
-<h2 id="3-Applications">3  Applications</h2>
-<p>这里考虑分别在 CNN 和 RNN 两个最为常用的神经网络基本框架上实验效果，这里的 CNN 用于文本情感分类，而 RNN 对标实体识别任务</p>
-<h3 id="3-1-Sentiment-Classification-情感分类">3.1 Sentiment Classification 情感分类</h3>
-<p>这里采用一通道的 CNN，引入 but 规则：<br>
+<h2 id="3-整体模型">3 整体模型</h2>
+<br>
+<h3 id="3-1-问题分解-question-parser">3.1 问题分解 question parser</h3>
+<p>首先通过双向 GRU 或 BERT 得到问题的 embedding，利用 GRU 的最后一层的 ht 或 BERT 中的 [CLS] 的 embedding 作为输入，也就是说这里的输入应该是整个问题句子的语义信息</p>
+<p>这里选择 LSTM 作为 decoder（见原文附录2，但是 encoder 具体用的是什么好像没有点名，下次读读源码），将我们定义好的 10 种模块作为 vocabulary 来实现问题的分解（具体做法将每一个模块都转化为一个 100 维的 embedding），中间涉及注意力机制的计算是 decoder 和 encoder 的隐藏层之间的</p>
+<p>具体 question parser 的结构原文没有给明，还需要读读源码看。总体的结构是 encoder + decoder 的形式，将 10 种模块转化为 embedding 作为最后的 decoder 部分输出用到的 vocabulary</p>
+<p>注意这里使用 LSTM 还有别的原因，因为定义的 10 个模块本身存在输入和输出的格式限制（比如 find-num 的输出一定要是 N，但是 find-num 的输入一定要是文段 P，此时如果 find-num → 输出 N → 后面再跟着一个 find-num，则此时的分解就是非法的。而 LSTM 存在（将前一个已经生成的模块再作为下一个生成的输入利用）的特点，此时可以利用 LSTM 的这个特性控制不要生成问题的非法分解。</p>
+<br>
+<h3 id="3-1-定义模块-module">3.1 定义模块 module</h3>
+<p>这里共预先定义了 10 种模块，NMN 也就是用这 10 种模块来表示问题，分别训练每一种模块，再同通过按分解顺序依次执行对应的模块得到最后的答案：</p>
+<p>注意这里定义的模块可以分为两种：</p>
+<ul>
+<li>自然语言推理：也就是从文中找到信息的步骤</li>
+<li>符号推理：也就是通过得到的信息来进行客观意义上的推理得到最后的答案（比如计算差值，计数，取最大值，排序等等</li>
+</ul>
+<p>这里两种类型的模块分别定义了五种，绿色部分是 natural language reasoning，黄色部分是 symbolic reasoning</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111119568.png" alt="image-20231023111119568" style="zoom:67%;" />
+<p>这里的 In 和 Out 表示：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111235267.png" alt="image-20231023111235267" style="zoom:67%;" />
+<p>以下分别介绍每一个模块：</p>
+<ul>
+<li>
+<p>$find(Q) \to P$：也就是输入问题，找到和问题相关的语段；具体利用注意力机制：先计算对应文段的各个 token 和问题的各个 token 之间的相似度矩阵，记作 S；对应的 S 的 i，j 位置元素定义为：$$S_{ij} = w_f^T[Q_i. ; P_j. ; Q_i. \circ P_j.]$$这里的 wfT 是待学习参数；对应的 o 是 elementwise 的乘法；对应得到 S 矩阵后通过 softmax 得到文段和问题之间的注意力矩阵 A，通过注意力的方法从给定的上下文文段中得到最后的输出 P</p>
+</li>
+<li>
+<p>$filter(Q,P) \to P$：也就是通过问题中的限定条件来从给定的 P 中筛选出一部分符合的 P 文段；举例就是上面的问题中实现 in second quarter 的限定条件的部分。实际理解也就是 mask 掉一部分 P 中的内容（不符合的就 mask 掉），则此时计算文段 P 的第 j 个 token 对应的 masking score：$$M_j = \sigma(w_{filter}^T[q ; P_j. ; q\circ P_j.])$$这里的小 q 通过问题的 embedding  = Q 来计算：$q = \sum_i Q_i Q_i. \in R^d$，对应的 σ 是 sigmoid 函数，同理 wfT 是可学习参数，最后对应的输出 P 通过下式得到：$$P_{filter} = normalize(M \circ P)$$</p>
+</li>
+<li>
+<p>$relocate(Q,P) \rightarrow P$：也就是依据问题重新定位，举例就是依照上面的例子，找到 longest 的 field score 后需要找到 who kick；首先计算 P 对 P 的注意力矩阵：$$R_{ij} = w_{relocate}^T [(q+P_i.) ; P_j. ; (q+P_i.)\circ P_j.]$$ $$q = \sum_i Q_i Q_i. \in R^d$$得到 R 后经过 softmax，最后的输出通过 $P_{located} = \sum_i P_i R_i.$ 得到</p>
+</li>
+<li>
+<p>$\text{find-num(P)}\to N \text{ / } \text{find-date(P)} \rightarrow D$：同理是计算对应的文段 P 和文段中的数字 / 日期部分之间的相似度矩阵。以数字为例，假设此时文段 P 中存在 $N_{token}$ 个数字，每一个数字也就是一个 token，则此时计算对应的相似度矩阵 $S^{num}$：$$S_{ij} = P_i.^T W_{num} P_{n_j}.$$ 这里的 Pnj 也就是第 j 次提到的数字对应的 token；对 S 作 softmax 后得到 A，并通过 $T = \sum_i P_i A_i.^{num}$ 得到每一个提及对应为答案的概率，再得到最后的输出。注意这里如果两次提及都是相同的数字，需要将两次提及对应的概率相加；比如此时提及为 2234，对应的概率为 0.1 0.4 0.3 0.2，则此时答案为 234 的概率分别为 0.5 0.3 0.2；对应日期同理</p>
+</li>
+<li>
+<p>$count(P) \rightarrow C$：这部分挺复杂的，建议直接看原文部分可能更清楚一些 ... 本质的思想是计算注意力向量中连续相同的多个值的 span 大小，比如如果这里的向量为 0.3 0.3 0.2 0.4，则输出为 2（因为两个相同的 0.3 存在）。首先利用（一个奇怪的初值）[1,2,5,10] 作为权重来得到 $P_{scaled}\in R^{m*4}$，再扔进一个双向 GRU 得到隐藏状态 ht，再通过单层前馈和 sigmoid 得到对应的 $c_v$，也就是 $$c_v = \sum \sigma(FF(countGRU(P_{scaled})))$$这里用到正态假设，认为最后的答案是以 cv 为均值，方差为 0.5 的数，则此时对应计算答案 c：$$p(c) \propto exp(-(c-c_v)^2/2v^2)$$</p>
+</li>
+<li>
+<p>$\text{compare-num-lt(P1, P2)} \rightarrow P$：此时要求输出的 P 是较小的一个。首先将 P1 和 P2 扔进 find-num 的那个模块中，对应得到数字 N1 和 N2。注意这里的 find-num 得到的模块是（多个数字提及）和（其对应的概率）的形式，则此时计算概率：<br>
 $$<br>
 \begin{align}<br>
-&amp;\text{has- 'A-but-B'-structure(S)} \Rightarrow \\<br>
-&amp;(1(y=+) \Rightarrow \sigma _\theta(B) _+ \wedge \sigma _\theta (B) _+ \Rightarrow 1(y=+))<br>
+p(N_1 &lt; N_2) &amp;= \sum _i \sum _j \mathbb{1} _{N_1^i &lt; N_2^j} {N_1^i N_2^j} \\<br>
+p(N_2 &lt; N_1) &amp;= \sum _i \sum _j \mathbb{1} _{N_2^i &lt; N_1^j} {N_2^i N_1^j}<br>
 \end{align}<br>
 $$</p>
-<p>$1()$​ 函数标识内部逻辑的正确与否，正确返回 1，错误返回 0；上面这个规则可以直观理解为 but 前后出现情感的转折</p>
-<p>这里用三个数据集 <strong>SST2 + MR + CR</strong> 来评价效果：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023105846377.png" alt="image-20231023105846377" style="zoom:60%;" />
-<p>可以看到这里的提升还是比较明显的，并且 q（teacher） 的表现稍优于 p（student）</p>
+<p>对应得到最终的输出 Pout：$P_{out} = p(N_1&lt;N_2) * P_1 + p(N_2&lt;N_1)*P_2$​，随着训练不断进行，对应的两个 P 会不断接近边界 0/1，则此时对应的 Pout 也就是 P1 和 P2 二者其一</p>
+</li>
+<li>
+<p>对应的 $\text{compare-num-gt , compare-date-lt, compare-date-gt}$ 和上面的处理方法相似，在此不再赘述</p>
+</li>
+<li>
+<p>$\text{time-diff}(P_1, P_2)$：同理先通过 find-date 得到两个 P 对应的 D1 和 D2，同理这里的 D1 和 D2 是带有概率的日期列表，则计算 D1i 和 D2j 之间的差值，再对应乘上相关的概率，求加权平均。对应的概率计算：$p(t_d) = \sum_{i,j} 1_{(d_i-d_j  = t_d)} D_1^i D_2^j$</p>
+</li>
+<li>
+<p>$\text{find-max-num}(P)$：同理先通过 find-num 提取出数字列表，注意这里实际上是得到了文段中每一个数字提及对应的概率，记作 T，也就是第 j 个提及对应一个概率 Tj；再计算 Tmax，这里是通过抽样的方式实现的，原文比较清楚：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111452907.png" alt="image-20231023111452907" style="zoom:67%;" />
+<p>最后通过 $P_i  = \sum_j T_j^{max} / T_j P_i A_{ij}.$ 计算出我的输出结果 P</p>
+</li>
+<li>
+<p>$span(P) \rightarrow S$：也就是输出两个向量，分别表示每一个 token 是 start 或 end 的概率，训练方式和 count 相似，详细部分见原文的附录部分</p>
+</li>
+</ul>
 <br>
-<h3 id="3-2-Named-Entity-Recognition-命名实体识别">3.2  Named Entity Recognition 命名实体识别</h3>
-<p>也就是 NER 任务，也就是将句子中的实体文本识别出来并加入不同的实体类别，LSTM 在类似的任务上表现不错，这里考虑用本文的方法优化 LSTM 的 RNN 部分</p>
-<p>这里对应的规则：<br>
+<h3 id="3-3-模型训练">3.3 模型训练</h3>
+<p>注意到前面的模块是很复杂的，先需要训练问题分解部分，还要再训练模块本身的功能，如果直接利用端到端训练会很难</p>
+<p>这里使用 auxiliary training 的方式来完成模型训练。</p>
+<ul>
+<li>
+<p><strong>模块功能的无监督训练</strong>：针对 find-num / find-date / relocate 三个模块，本身的作用也就是从 P 文段中提取信息，这里希望在数字 / 日期提及周围的 token 能够得到更高的关注，则此时控制窗口大小 W = 10，希望在提及 mention 的窗口范围内的 token 能够有更高的 attention，对应损失函数设置为：<br>
 $$<br>
-\text{equal} (y _{i-1}, \text{I-ORG}) \Rightarrow \neg \text{equal} (y_i, \text{B-PER})<br>
-$$</p>
-<p>也就是 I-ORG 不能跟在 B-PER 后面</p>
-<p>注意这里的置信度 $\lambda_l = \infty$，也就是说这里是一个硬规则，一点都不能违反</p>
-<p>这里在 <strong>CoNLL-2003</strong> 数据集上进行测试，结果如下：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023110025249.png" alt="image-20231023110025249" style="zoom:60%;" />
-<p>同理可以看出这里的 q（teacher） 的表现是要略好于 p（student）的表现的</p>
+H _{loss} ^n = -\sum _{i=1} ^m \log (\sum _{j=0} ^{N _{tokens}} \mathbb{1} _{n_j \in [i\pm W] }A ^{num} _{ij})<br>
+$$<br>
+此时这三个模块对应在一起训练，此时对应的总损失函数 = 三个模块对应的损失函数的加和</p>
+</li>
+<li>
+<p><strong>问题分解的有监督训练</strong>：这里由于本文使用的是 DROP 数据集，并没有任何关于问题分解的标签可用，这里作者直接选取了约 10% 的问题人工手动分解为几个模块来训练 question parser 部分。则此时的训练部分和带 LSTM  的 encoder + decoder 模型相同</p>
+</li>
+<li>
+<p><strong>模型输出的监督学习</strong>：这里存在真实答案所以可以直接进行监督学习。同时考虑到对于（最短的是什么？）类似的问题，对于 find-num 模块，真实答案只是帮助模块确认了是否找到了最小的那个 num，对于其他的 num 的寻找不存在监督作用，长此以往的训练会导致 find-num 就只倾向于找到较小的 num，而导致整体模型的有偏。为了缓解这一问题，这里对约 5% 的可能出现类似情况的问题加入噪音，比如对于 （A 的最短 xxx 是多少） 的问题，我们认为离 A 最近的一个数字本身也应该作为 find-num 的一个输出存在。将这样的噪音加入训练集，和真实答案一同进行模型的监督学习</p>
+</li>
+</ul>
+<br>
+<br>
+<hr>
+<h2 id="4-experiment-实验部分">4 experiment 实验部分</h2>
+<p>这里使用的是 AllenNLP 的 DROP 数据集来进行实验</p>
+<p>DROP 本身是一个融合了实体查找（也就是自然语言推理部分，本身是 bridge 实体的提取和信息的综合）和符号推理（也就是客观推理部分，比如排序，求最大值etc）的数据集，这里选用 DROP 来进行实验</p>
+<p>注意由于这里的推理能力是很有限的（本身只是定义了 10 种类型的 module），原文作者筛选了 20000 个符合相关类型的问题来作测试（也就是集中于讨论 数字类，比较，日期计算 etc 之类的问题）</p>
+<p>此时得到的问题本身可以分为六类：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111705218.png" alt="image-20231023111705218" style="zoom:60%;" />
+<p>实验结果：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111725347.png" alt="image-20231023111725347" style="zoom:60%;" />
+<p>可以看到这里的提升还是比较明显的，同时初始的问题和文段的 embedding 对应的预训练模型对于整体模型效果还是影响很大的（GRU 对应的模型效果非常不行），本身从模型构造的角度来说也能感觉得到它很依赖初始 embedding 的质量（比如不停进行相似度矩阵计算 etc)</p>
+<p>同时问题暴露也比较明显。作者给出了三类较为典型的回答错误的问题：</p>
+<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111748733.png" alt="image-20231023111748733" style="zoom:67%;" />
+<br/>
+<blockquote>
+<p><strong>最后胡说几句：</strong></p>
+</blockquote>
+<p>个人认为还是模块设计本身对整体模型带来巨大限制；1）10个预设置的模块只能帮助模型解决数学类的符号推理问题，对于需要利用逻辑规则等的，更自然语言或人类常识方向的推理，由于其本身的多样性直接预设值模块是根本不可行的；2）LSTM 作为 decoder + 模块本身的输入输出限制 使得模块本身的组合有限（比如不能连着两个 find-num，只能是链状结构不能为树状；<br>
+但是对于类似于数值推理之类的，本身规则类别较少的推理问题或许这是一个可借鉴的思路，预先设计模块 + 把模块 embedding 了作为 vocabulary 来辅助 question parser 这种思路是真的很有意思hhh 一眼看上去会觉得 哇 的那种程度 ...<br>
+还有就是模型太多的细节论文没讲清楚，特别是 question parser 部分和训练部分，正文动不动指向附录但是附录还是啥都没说明白 ... 或者是我没读明白也说不定hhh（有机会还是看看源码吧（</p>
 <br>
 <br>
 <br>
@@ -3175,192 +3368,6 @@ $$</p>
       <tags>
         <tag>NLP</tag>
         <tag>机器阅读理解</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Neural Module Networks + NLP + Reasoning: 可用于文本推理的模块神经网络</title>
-    <url>/2023/10/30/20210706-paper-note-moduleReasoning20/</url>
-    <content><![CDATA[<p>原文写于 20210706，存档如下</p>
-<blockquote>
-<p><strong>Neural Module Networks for Reasoning over Text</strong> ; Nitish Gupta, Kevin Lin, Dan Roth, Sameer Singh &amp; Matt Gardner; University of Pennsylvania, Philadelphia, University of California, Berkeley, University of California, Irvine, Allen Institute for AI</p>
-<p>原文：<span class="exturl" data-url="aHR0cHM6Ly9hcnhpdi5vcmcvcGRmLzE5MTIuMDQ5NzF2Mi5wZGY=">https://arxiv.org/pdf/1912.04971v2.pdf<i class="fa fa-external-link-alt"></i></span></p>
-<p>源码：<span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL25pdGlzaGd1cHRhL25tbi1kcm9w">official，基于 AllenNLP<i class="fa fa-external-link-alt"></i></span> ** <span class="exturl" data-url="aHR0cHM6Ly9naXRodWIuY29tL0NPTVA2MjQ4LVJlcHJvZHVjYWJpbGl0eS1DaGFsbGVuZ2UvQ09NUDYyNDgtUmVwcm9kdWNhYmlsaXR5LUNoYWxsZW5nZS1OTU4tRHJvcC1mb3ItUmVhc29uaW5nLU92ZXItVGV4dA==">pytorch 实现<i class="fa fa-external-link-alt"></i></span></p>
-</blockquote>
-<span id="more"></span>
-<br>
-<br>
-<hr>
-<h2 id="1-introduction">1 introduction</h2>
-<p>本文同理针对需要多跳推理的问题；这里首先解释一下几个概念：</p>
-<ul>
-<li><strong>KBQA</strong>：基于知识图谱的问答(KBQA) = knowledge base question answering，也就是在三元组上进行推理和查找最后得到答案</li>
-<li><strong>机器阅读理解</strong>：多针对自然语言形式的文章，而非已经提取的三元组的形式</li>
-<li><strong>多跳推理问题</strong>：可以直观地理解为需要多次跳转，将不同的信息进行进一步整合才能得到答案的问题（多跳阅读理解也就是基于自然语言形式的文章，同理知识图谱领域也存在多跳推理）。这里还是用 CogQA 的图举个例子：</li>
-</ul>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png" alt="image-20231021084007009" style="zoom: 80%;" />
-<p>这个问题本身问的是导演，但是没有给出电影的名字，首先需要后面的信息去推断是哪一部电影，才能进一步去寻找该电影的导演。也就是说这里问题的解决需要一个中间的推理步骤（也就是得到 //电影名称// 的中间步骤，这里的电影名称也可以称为 bridge entity）才能得到最终的答案</p>
-<p>然而，除去上面此类需要查找中间实体来进行类似于 “多步搜索” 的问题，多跳阅读理解问题同时涉及符号推理问题（例如排序 / 数数问题<br>
-举个例子：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023110700618.png" alt="image-20231023110700618" style="zoom:60%;" />
-<p>这里不仅是需要寻找对应的 bridge entity，不仅是需要得到一条连接初始实体和最后的答案实体的推理链，而是需要进行信息提取 + 排序 再得到最终的答案。</p>
-<p>由此总结，多跳推理问题的解决主要包括以下几个步骤：</p>
-<ul>
-<li><strong>理解复杂问题的结构</strong>：考虑上面的例子，此时问题 = 谁 + 第二季度（限定） + 最长，首先需要模型理解这个问题的结构 → 也就是（先找到第二季度限定）下的所有得分 → 再比较 → 得到最长</li>
-<li><strong>从问题精确提取信息</strong>：还是上面的例子，这里需要模型能够精确提取到 lengths / kickers / filed goal 等词汇，并从文中确实地找到相关信息</li>
-<li><strong>执行符号推理</strong>：上面的问题也就是需要对提取到的数字作排序操作 + 得到最长的 → 对应得到最后的答案</li>
-</ul>
-<p>综上，本文尝试将 <strong>模块化的神经网络 Neural module networks (NMNs; Andreas et al., 2016)</strong> 用于解决多跳推理问题。（实际上 NMNs 已经在 VQA（视觉问答）领域取得了一定的成果（例如 CLEVR），但是针对 nlp 领域的应用还十分有限</p>
-<br>
-<br>
-<hr>
-<h2 id="2-模块神经网络-Neural-Module-Networks">2  模块神经网络 Neural Module Networks</h2>
-<p>先说说所谓的模块神经网络</p>
-<p>还是考虑上面给出的问题：</p>
-<blockquote>
-<p><strong>Who kicked the longest field goal in the second quarter?</strong></p>
-</blockquote>
-<p>按照正常人类的思维，读到问题后需要的步骤为：</p>
-<ul>
-<li>先找出所有的 field goal 的实例</li>
-<li>再找出其中符合限定 in second quarter 的</li>
-<li>找到它们的 lengths（来自于 longest）</li>
-<li>再比较得到其中最长的（比较 / 排序</li>
-<li>找到谁踢的作为最终答案</li>
-</ul>
-<p>而 NMNs 读到上述问题后，会将问题拆解为几个<strong>可执行的模块</strong>，比如上面的问题可以拆解为：$$relocate(find-max-num(filter(find())))$$<br>
-先执行最内部的 find = 找到所有的 field goal 的示例，再 filter（符合 in second quarter 的限定）再 find-max-num 取最大值，再找到是谁踢的（relocate）</p>
-<p>综上，将 NMN 应用于推理问答，需要：</p>
-<ul>
-<li>
-<p>定义 <strong>Modules 模块</strong>，这里可能的模块限定于预先定义好的几种，具体的功能在后面介绍：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023110727182.png" alt="image-20231023110727182" style="zoom:60%;" />
-</li>
-<li>
-<p>得到<strong>上下文表示</strong>：这里采用 预训练模型 + embedding 的形式得到问题和上下文的 embedding，分别用 BERT 和 双向 GRU 两种方式实现</p>
-</li>
-<li>
-<p>实现 <strong>问题分解 Question Parser</strong>：也就是将问题分解为上述定义好的可执行模块，这里同时利用到了 encoder-decoder 和注意力机制</p>
-</li>
-<li>
-<p>训练 <strong>模块执行器</strong>：也就是训练得到每一个模块，以实现将规定各式的输入给定时（比如给定数字，给定文本，给定日期形式的输入），可以得到我想要找到的输出</p>
-</li>
-</ul>
-<br>
-<br>
-<hr>
-<h2 id="3-整体模型">3 整体模型</h2>
-<br>
-<h3 id="3-1-问题分解-question-parser">3.1 问题分解 question parser</h3>
-<p>首先通过双向 GRU 或 BERT 得到问题的 embedding，利用 GRU 的最后一层的 ht 或 BERT 中的 [CLS] 的 embedding 作为输入，也就是说这里的输入应该是整个问题句子的语义信息</p>
-<p>这里选择 LSTM 作为 decoder（见原文附录2，但是 encoder 具体用的是什么好像没有点名，下次读读源码），将我们定义好的 10 种模块作为 vocabulary 来实现问题的分解（具体做法将每一个模块都转化为一个 100 维的 embedding），中间涉及注意力机制的计算是 decoder 和 encoder 的隐藏层之间的</p>
-<p>具体 question parser 的结构原文没有给明，还需要读读源码看。总体的结构是 encoder + decoder 的形式，将 10 种模块转化为 embedding 作为最后的 decoder 部分输出用到的 vocabulary</p>
-<p>注意这里使用 LSTM 还有别的原因，因为定义的 10 个模块本身存在输入和输出的格式限制（比如 find-num 的输出一定要是 N，但是 find-num 的输入一定要是文段 P，此时如果 find-num → 输出 N → 后面再跟着一个 find-num，则此时的分解就是非法的。而 LSTM 存在（将前一个已经生成的模块再作为下一个生成的输入利用）的特点，此时可以利用 LSTM 的这个特性控制不要生成问题的非法分解。</p>
-<br>
-<h3 id="3-1-定义模块-module">3.1 定义模块 module</h3>
-<p>这里共预先定义了 10 种模块，NMN 也就是用这 10 种模块来表示问题，分别训练每一种模块，再同通过按分解顺序依次执行对应的模块得到最后的答案：</p>
-<p>注意这里定义的模块可以分为两种：</p>
-<ul>
-<li>自然语言推理：也就是从文中找到信息的步骤</li>
-<li>符号推理：也就是通过得到的信息来进行客观意义上的推理得到最后的答案（比如计算差值，计数，取最大值，排序等等</li>
-</ul>
-<p>这里两种类型的模块分别定义了五种，绿色部分是 natural language reasoning，黄色部分是 symbolic reasoning</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111119568.png" alt="image-20231023111119568" style="zoom:67%;" />
-<p>这里的 In 和 Out 表示：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111235267.png" alt="image-20231023111235267" style="zoom:67%;" />
-<p>以下分别介绍每一个模块：</p>
-<ul>
-<li>
-<p>$find(Q) \to P$：也就是输入问题，找到和问题相关的语段；具体利用注意力机制：先计算对应文段的各个 token 和问题的各个 token 之间的相似度矩阵，记作 S；对应的 S 的 i，j 位置元素定义为：$$S_{ij} = w_f^T[Q_i. ; P_j. ; Q_i. \circ P_j.]$$这里的 wfT 是待学习参数；对应的 o 是 elementwise 的乘法；对应得到 S 矩阵后通过 softmax 得到文段和问题之间的注意力矩阵 A，通过注意力的方法从给定的上下文文段中得到最后的输出 P</p>
-</li>
-<li>
-<p>$filter(Q,P) \to P$：也就是通过问题中的限定条件来从给定的 P 中筛选出一部分符合的 P 文段；举例就是上面的问题中实现 in second quarter 的限定条件的部分。实际理解也就是 mask 掉一部分 P 中的内容（不符合的就 mask 掉），则此时计算文段 P 的第 j 个 token 对应的 masking score：$$M_j = \sigma(w_{filter}^T[q ; P_j. ; q\circ P_j.])$$这里的小 q 通过问题的 embedding  = Q 来计算：$q = \sum_i Q_i Q_i. \in R^d$，对应的 σ 是 sigmoid 函数，同理 wfT 是可学习参数，最后对应的输出 P 通过下式得到：$$P_{filter} = normalize(M \circ P)$$</p>
-</li>
-<li>
-<p>$relocate(Q,P) \rightarrow P$：也就是依据问题重新定位，举例就是依照上面的例子，找到 longest 的 field score 后需要找到 who kick；首先计算 P 对 P 的注意力矩阵：$$R_{ij} = w_{relocate}^T [(q+P_i.) ; P_j. ; (q+P_i.)\circ P_j.]$$ $$q = \sum_i Q_i Q_i. \in R^d$$得到 R 后经过 softmax，最后的输出通过 $P_{located} = \sum_i P_i R_i.$ 得到</p>
-</li>
-<li>
-<p>$\text{find-num(P)}\to N \text{ / } \text{find-date(P)} \rightarrow D$：同理是计算对应的文段 P 和文段中的数字 / 日期部分之间的相似度矩阵。以数字为例，假设此时文段 P 中存在 $N_{token}$ 个数字，每一个数字也就是一个 token，则此时计算对应的相似度矩阵 $S^{num}$：$$S_{ij} = P_i.^T W_{num} P_{n_j}.$$ 这里的 Pnj 也就是第 j 次提到的数字对应的 token；对 S 作 softmax 后得到 A，并通过 $T = \sum_i P_i A_i.^{num}$ 得到每一个提及对应为答案的概率，再得到最后的输出。注意这里如果两次提及都是相同的数字，需要将两次提及对应的概率相加；比如此时提及为 2234，对应的概率为 0.1 0.4 0.3 0.2，则此时答案为 234 的概率分别为 0.5 0.3 0.2；对应日期同理</p>
-</li>
-<li>
-<p>$count(P) \rightarrow C$：这部分挺复杂的，建议直接看原文部分可能更清楚一些 ... 本质的思想是计算注意力向量中连续相同的多个值的 span 大小，比如如果这里的向量为 0.3 0.3 0.2 0.4，则输出为 2（因为两个相同的 0.3 存在）。首先利用（一个奇怪的初值）[1,2,5,10] 作为权重来得到 $P_{scaled}\in R^{m*4}$，再扔进一个双向 GRU 得到隐藏状态 ht，再通过单层前馈和 sigmoid 得到对应的 $c_v$，也就是 $$c_v = \sum \sigma(FF(countGRU(P_{scaled})))$$这里用到正态假设，认为最后的答案是以 cv 为均值，方差为 0.5 的数，则此时对应计算答案 c：$$p(c) \propto exp(-(c-c_v)^2/2v^2)$$</p>
-</li>
-<li>
-<p>$\text{compare-num-lt(P1, P2)} \rightarrow P$：此时要求输出的 P 是较小的一个。首先将 P1 和 P2 扔进 find-num 的那个模块中，对应得到数字 N1 和 N2。注意这里的 find-num 得到的模块是（多个数字提及）和（其对应的概率）的形式，则此时计算概率：<br>
-$$<br>
-\begin{align}<br>
-p(N_1 &lt; N_2) &amp;= \sum _i \sum _j \mathbb{1} _{N_1^i &lt; N_2^j} {N_1^i N_2^j} \\<br>
-p(N_2 &lt; N_1) &amp;= \sum _i \sum _j \mathbb{1} _{N_2^i &lt; N_1^j} {N_2^i N_1^j}<br>
-\end{align}<br>
-$$</p>
-<p>对应得到最终的输出 Pout：$P_{out} = p(N_1&lt;N_2) * P_1 + p(N_2&lt;N_1)*P_2$​，随着训练不断进行，对应的两个 P 会不断接近边界 0/1，则此时对应的 Pout 也就是 P1 和 P2 二者其一</p>
-</li>
-<li>
-<p>对应的 $\text{compare-num-gt , compare-date-lt, compare-date-gt}$ 和上面的处理方法相似，在此不再赘述</p>
-</li>
-<li>
-<p>$\text{time-diff}(P_1, P_2)$：同理先通过 find-date 得到两个 P 对应的 D1 和 D2，同理这里的 D1 和 D2 是带有概率的日期列表，则计算 D1i 和 D2j 之间的差值，再对应乘上相关的概率，求加权平均。对应的概率计算：$p(t_d) = \sum_{i,j} 1_{(d_i-d_j  = t_d)} D_1^i D_2^j$</p>
-</li>
-<li>
-<p>$\text{find-max-num}(P)$：同理先通过 find-num 提取出数字列表，注意这里实际上是得到了文段中每一个数字提及对应的概率，记作 T，也就是第 j 个提及对应一个概率 Tj；再计算 Tmax，这里是通过抽样的方式实现的，原文比较清楚：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111452907.png" alt="image-20231023111452907" style="zoom:67%;" />
-<p>最后通过 $P_i  = \sum_j T_j^{max} / T_j P_i A_{ij}.$ 计算出我的输出结果 P</p>
-</li>
-<li>
-<p>$span(P) \rightarrow S$：也就是输出两个向量，分别表示每一个 token 是 start 或 end 的概率，训练方式和 count 相似，详细部分见原文的附录部分</p>
-</li>
-</ul>
-<br>
-<h3 id="3-3-模型训练">3.3 模型训练</h3>
-<p>注意到前面的模块是很复杂的，先需要训练问题分解部分，还要再训练模块本身的功能，如果直接利用端到端训练会很难</p>
-<p>这里使用 auxiliary training 的方式来完成模型训练。</p>
-<ul>
-<li>
-<p><strong>模块功能的无监督训练</strong>：针对 find-num / find-date / relocate 三个模块，本身的作用也就是从 P 文段中提取信息，这里希望在数字 / 日期提及周围的 token 能够得到更高的关注，则此时控制窗口大小 W = 10，希望在提及 mention 的窗口范围内的 token 能够有更高的 attention，对应损失函数设置为：<br>
-$$<br>
-H _{loss} ^n = -\sum _{i=1} ^m \log (\sum _{j=0} ^{N _{tokens}} \mathbb{1} _{n_j \in [i\pm W] }A ^{num} _{ij})<br>
-$$<br>
-此时这三个模块对应在一起训练，此时对应的总损失函数 = 三个模块对应的损失函数的加和</p>
-</li>
-<li>
-<p><strong>问题分解的有监督训练</strong>：这里由于本文使用的是 DROP 数据集，并没有任何关于问题分解的标签可用，这里作者直接选取了约 10% 的问题人工手动分解为几个模块来训练 question parser 部分。则此时的训练部分和带 LSTM  的 encoder + decoder 模型相同</p>
-</li>
-<li>
-<p><strong>模型输出的监督学习</strong>：这里存在真实答案所以可以直接进行监督学习。同时考虑到对于（最短的是什么？）类似的问题，对于 find-num 模块，真实答案只是帮助模块确认了是否找到了最小的那个 num，对于其他的 num 的寻找不存在监督作用，长此以往的训练会导致 find-num 就只倾向于找到较小的 num，而导致整体模型的有偏。为了缓解这一问题，这里对约 5% 的可能出现类似情况的问题加入噪音，比如对于 （A 的最短 xxx 是多少） 的问题，我们认为离 A 最近的一个数字本身也应该作为 find-num 的一个输出存在。将这样的噪音加入训练集，和真实答案一同进行模型的监督学习</p>
-</li>
-</ul>
-<br>
-<br>
-<hr>
-<h2 id="4-experiment-实验部分">4 experiment 实验部分</h2>
-<p>这里使用的是 AllenNLP 的 DROP 数据集来进行实验</p>
-<p>DROP 本身是一个融合了实体查找（也就是自然语言推理部分，本身是 bridge 实体的提取和信息的综合）和符号推理（也就是客观推理部分，比如排序，求最大值etc）的数据集，这里选用 DROP 来进行实验</p>
-<p>注意由于这里的推理能力是很有限的（本身只是定义了 10 种类型的 module），原文作者筛选了 20000 个符合相关类型的问题来作测试（也就是集中于讨论 数字类，比较，日期计算 etc 之类的问题）</p>
-<p>此时得到的问题本身可以分为六类：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111705218.png" alt="image-20231023111705218" style="zoom:60%;" />
-<p>实验结果：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111725347.png" alt="image-20231023111725347" style="zoom:60%;" />
-<p>可以看到这里的提升还是比较明显的，同时初始的问题和文段的 embedding 对应的预训练模型对于整体模型效果还是影响很大的（GRU 对应的模型效果非常不行），本身从模型构造的角度来说也能感觉得到它很依赖初始 embedding 的质量（比如不停进行相似度矩阵计算 etc)</p>
-<p>同时问题暴露也比较明显。作者给出了三类较为典型的回答错误的问题：</p>
-<img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231023111748733.png" alt="image-20231023111748733" style="zoom:67%;" />
-<br/>
-<blockquote>
-<p><strong>最后胡说几句：</strong></p>
-</blockquote>
-<p>个人认为还是模块设计本身对整体模型带来巨大限制；1）10个预设置的模块只能帮助模型解决数学类的符号推理问题，对于需要利用逻辑规则等的，更自然语言或人类常识方向的推理，由于其本身的多样性直接预设值模块是根本不可行的；2）LSTM 作为 decoder + 模块本身的输入输出限制 使得模块本身的组合有限（比如不能连着两个 find-num，只能是链状结构不能为树状；<br>
-但是对于类似于数值推理之类的，本身规则类别较少的推理问题或许这是一个可借鉴的思路，预先设计模块 + 把模块 embedding 了作为 vocabulary 来辅助 question parser 这种思路是真的很有意思hhh 一眼看上去会觉得 哇 的那种程度 ...<br>
-还有就是模型太多的细节论文没讲清楚，特别是 question parser 部分和训练部分，正文动不动指向附录但是附录还是啥都没说明白 ... 或者是我没读明白也说不定hhh（有机会还是看看源码吧（</p>
-<br>
-<br>
-<br>
-]]></content>
-      <categories>
-        <category>论文笔记</category>
-        <category>NLP</category>
-        <category>机器推理Reasoning</category>
-      </categories>
-      <tags>
-        <tag>NLP</tag>
-        <tag>机器推理Reasoning</tag>
       </tags>
   </entry>
   <entry>
@@ -3820,6 +3827,30 @@ $$<br>
       <tags>
         <tag>算法基础</tag>
         <tag>模式匹配</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>sanatorium under construction ...</title>
+    <url>/2023/11/03/99999999-test-blog/</url>
+    <content><![CDATA[<div class="hbe hbe-container" id="hexo-blog-encrypt" data-wpm="try again ..." data-whm="OOPS, these decrypted content may changed, but you can still have a look.">
+  <script id="hbeData" type="hbeData" data-hmacdigest="1b01d5d27f077473043e5e63086619e674161a029e29b9851d5bc5b02f6bc651">22064b17c03cb0c0e58c99349b6889d0149df81775e8e48927afb01e139b005a32f4c8aa70b525b9314d0fca302f7a89a792a45688998e84e6371f093d0a897dc00d470805775d129f29083abd86a03b72672b58be5004c4084ca0d7d59c623ed24219006082fef3c507a6b424c954ca1a66e88e54fc76fee346ccf98a3abe1084a0bb1951cc578be3be460ecb8f5ee07c8e929cde2f655cfbb97a5cddd888227cc6be51faf79341bf4ca4f4fccec6643ef1014b4eb7e3f65998d4448c15288da3c121543287516d83df5f3c91b204242d611b83d3ea3263581229c659a176bf4571e0ac79f78c515dd2d2cf6ef34bd6a662ae331bbf2f8ddb90f928bd28fad7ec4f709dbf842d329a18fc2bac1e6a56140ec2073e2040383fef76105c471311de5df664785bd4d69e71edfd689d0ea02a709b8a1448d93d505eae9d73274ae777f5a6d9bdc0f6a9362fab5c11ba1191a67162a7b92de3cdde7724145671bbca7c7f4cbfb9d37aface17a511c22ef158d82acc47fa9f06232db83f6ad0203f94ff5356330569e4bb0b3aa398250a500412beef71badfce9254cc176f1eea794907bf747a8549bf915f27d65cc03de5525c715e97f26f979b03554b3bd8f20b29ac2a3898d7999903e22675231f57bcaa532b781dd087691343f830e99ba08c15a302f06d01f31cb04ab5db8b86552e89965662d8b7064bbf10efca14a73c4a52115e6f4b9ab92a5982bcc30196f482b384d239b4e189fa99cdffae3ca15bfa0738798c33a07d64b6082b71884d4025183cbb8ac48db728f1d151a8668ff6bbad1610cc9d6409f0f70d82ba970fc47f51be4c41fbb0e105f815207aa8eee5c762021c7cecc49ce1327d9d2cb3187dbd29ebcb8e328d27d67ca91d068a34802e12e9f623c78ad7702dd580d0e083f081b477ed78d681bbd36558576bd9161ece0db63884104e8f690d48aa89751bf2d55567622ea65dfb78d727b2a63754d0e68c4abb99d7752d2c81e65c498b55677385236562222c5fad1b34b60d0ecf1d4726ca97807bcf69e93b6f6e756060873222a367388b75439476356dc6fe729de0b4fa66a710321c7f6e3e41c49da7bad742b6215c3a30536baf301077f3feef24b6332e912d0feafceea7c8334422487c1c932806075d131500ebcd522eea8494f2e503e062f61b9eb5878660b452b04cebea15761b2a1241a541e2d936e6aea88a2c1693b3847cf4b64d78faee4c8abc29b40bee77f2a85fd9940660bea41f945ce9f0cb7f118586bad6b0bb3f0b6dfa0afca44c25d6fb069d9ab67cd65c00cd7b301922845b16c105c98f6ea9151de199f9617ed6d27bdd1f8f4e30e39f542b06c63c0673d9e1e2675dd770cfd991443c9967257eeb07095598c575a553db309333ecdd15b19e293196aebfa62a51ac3eee9346c59ffaabb7fa11607bbdac9f638c9553200f77b15baa3452c4c5ab257895807824442c0ba0b30bb0c7198b1f4e62285510927ea78b5b52f720434dc569ecef290c310084ad1b86b1089df9c4b73a0d573e7584ee4be1cfae5bd9fe0e8d709e4bef08cac141a83f5d9d8ff81d349a4cac37d5c924d8e518d17ecfc2093a9beebeb3e3102a3ff5d5da6a19761b2e132c7ea1bb2a9f790d415ae68a2884b1e2ac27dc472f8bdba50761286d38746363c419394cc7708d5524f759e48f96f0f34e80d39c19f9816f7c28de94919cd941f82243fd5e11feaa86d5688aa66e4ede3f942cfe6fcec7aabee364d388c0d897bfbca106af62331c69d109928bb96ad9740f5f14431ec39cfa3e5a60d19c2b0e8739a007da737969c52b7cb86eb121af8c148cf162b8bc0d75376b6ade0643b3cddceefa5d3eabcc6477ca88330a7fe77aa1993ba2f359c8da10ccdbec365a0285a41a1ace9cadd210c30673bf58104c21981cf003173707f0aba0ef0830a6f75704ba1a8a3c2425f65822f240573755d0847a357684730c03ad739d8361fb8ae4cd01a750a7308541c3ef8635f1d3531a49b7d360450197c58989b0b3b9d402b98b5dd5806bbd542a4a5f92e98ec1aba268b524215e471cc720e21fd15547c98f7830bdd857777b9426da57a554bc7ccb5dc8f3f154e96a5ac411a2c73c7f1a2a1a4a866575bf480865dada00e30dab9dd0f02e17cd770087a6723336306caefc5d88d95ebcd1992fb3973b72e19cc11e1258349effe3ba1fa5b54c4d81ef7bab495085477cd79ec7d8c75cda0ee90ec4460773afaba55c983698bc14b6470b4d3434f6d96f5e112eab6887a4a738ce00bbfeed1f0c6b7cdd7b5c9cf8bbbd81e0fb2d193a9d2f63be505bff10c9eab778efe305e8c56cd2d78541a825bff351a04af5f724732522fd19a631a08486520e536713ae00d8f366ad1bba9d74fa8c958e0cb5424913055d81b1daa2e4d38a9537ab72cab0e541ca3080acb7dd87815b38b8e576ea55c737947fc31a8aaf508303a32cc3d0fcfbaf1575f2f0a80f03825b81208aff7c8729df446004c0b9920a05dfef70a570ef5cfc0df61fe3255d0319e0294a089574d0219003b155f1513d28d89a1606471cd0a15994270016f24538e7b6fb577b3e498f92841a7388a9596a22717cab4daa6656fd315b1b43dae6d119bde61ce2db995332f3861dd5d4e013dd71536e28ebf796f493c4e2d5971926c41876783dac1a0b18e4c31c49b11cb47b8ae536b290d37abc539f07e7c6ce350cc8154b32a3c82e9219407771e2e36c10c0a14f4a6065f1181473e2835a8dc9e89fd8991e7935c94fa044e588f65282b356efb0c1579c5697d8f4169fffd4209dc110e41626fcfc595eba309a6bb3701339df27ba62494aa3c5873fa20a1027b9b0cef84b8340eb90d0d00208b0639b9d7fad28f38d0bc3c159185da5316739ac2fe93a49c495a796cc776d8b00a001c665c5c2379a6b562000904dc4d48a8d6081c6f5938e6e8b880a7a91eea3062fb8f50db27d1ddeea0787f593a157341a3ca5e8c166b6b872f798e27b93fb871a13bde657dee867ee43239ff1d45a388094157002242e250dbf9e79103dc80d52867ec8f8db45c5d69b9dc644eb9a8f80b884fe96c570bdc5635a4ff4a9045875658b3ac90d2a35c7871c558e4424948963db65400b7b00533d7093ab3cd56483f6891755206ff68c31be3dce028cd7da6de74d3e54ee9ad518f01d70d6c5d75ecd1013f6e39130d566cd0e1c4f5f35bbdc8a047117bc957969b4e65dfc0158e0a38e073074d98d5a066ed7197c60f0b2be5449f469bd9b8e83f89eae4adb352ba7044f10c25bc8700e751ae5fe22eb536f09222ded83d0714a4b3761758e50745fbeae35054aa8e657e038e619022cf853f8b133cfcc9d7014c12a8f7eb01422b0f9a4b568fc2de9c25414d79a085ee4d1e700dead669dfce18af204deedbf8a647e9228a6717d820f68a4b44de5e79558f9cfc3565f2bc0ac040d2f66b526bdac0c1a72c143c44dc201cc64fb62b6db624baac71d8f1988a43aec87b48ef96ff3ff61c158f889ac95006af503f4f6416f1068ba896e022be8338529b6c2b1cafa1ac064d59b1c88042be4ad1e8eccf2cb9373fb63bfb039d8b1b983afd1305845c90e6924c1f2850eaec610531dc1f7080351192f4ed9fe30e4eaf93dffb2330a9b600c49eed9631ed16462028dfd94324c045434ef49c7aace44b2093c1ae98c76995c591e1a6715ebbb1799543bc01efa95304587271e5d59bd51302bbbd13425127babda48a176866c70cbda7a21166aa96051fd0519a8f4defe57bfbfb4977533c397851f5bca3fc9b6f05aa11ea96ddf2755f0f345458e82294b0eee32caeb861948f4f9a81aaf8c7d2f5144702104182ecb63af1cc96a8f11ba5d990f8761440494d6ca3a9431a0b4feecc4ae9d6d72b61733b63c3fcde34b480ae6f7e7cc850e05f2ae3397eaae6c5e4368924b6a5a2566f3cb06efe77f146fffad20e22af583a78b37c5d0a6074b87e81c49599c0e2cbf14859e304abf34a1d33156167f6edf37ec7bfe382c914585869becf482d534b8d5c98c273822b7f2af43f3d806f82982fc189951247ef9219fa801eb40c470310decaa1416750325a3a1e8555219938719370b7fae2a9203676cc9e27f23a12f9e621a950e748abc64cc9ff4460170f25cf17da9a3ed73a16fe9976e7ae729bc0f1fdf0ed2fcb701ca31e8e943bca9c7bd5083f9b992b19b9d50edaccf13ca31ff636601713b080332a0146784b28efff6a2e8e5987b014371eb3ff7fdd716a2ef0f6bca1c3265eec74eff527cf7c04773f0cc5a1251e5ab7568d94f1f4f7878bf62d159e303cb30a5bb3a6a508863a70f926da686ca17f41bc08778796227be69db58820965b2d389ed1d010e3f57e2551f778777a3fb0a1ac851f96fcef9b47c11f20ef9b658cf998299b1387d6779c51d1d1a8461a9247da9455d13b05c247b6b94529f3e94fd749da629093396434b73365d0e0f2f60aa11ca50560accb4d4d8cc7529167a5d15d786ab94914c5334ceb0b89e84af0c82d4337b0c107034bb2478f9b48662d30d9b758395a424bfada28d8b71f86e6adc40f1a3d267587f0a54d486aca3231871d64f5320b281367c5a0ba55f825003e3c6fdc0f0d00b5487350a81ae69a16765e481f6970270c5010a0269be830b4cd570414cb2c1c0c471b1e5a3e8fce09714a2f1812bacef291ed388757ff1f71f9131c329ad61ee64825b50b03245023f7d9301ff280df2e49fcea3dffaf5d5afcd920180b9d1ecd8bd6e3631423969d53b248c1d770421b983ed002e5b7e7176a035b6c8a719412b9c7a8d9b74139efecd9844aab8f9bc3d2b89bf5988656505ceb952aeb09ceb0bac39bc3b21a1666287f552dce36869f645d73e9975c3f845fd54acd76441ecf3fad620f50f63651088db6efb18d7733a5a4be24ef5c8c32a88304986c1487d5780a47b0c6aeed8eac5b4641006938f641a74ef8751ea3c6f54584070d3c7315bfa2cab7ef154693d3ccc72d80640cce217f77f1d8f53f867ce92f149c7b7875a7818ebc68fa65e4b8634f46097a3852663516a73ef454440a8491bcca9259c55f8fa2d5304427481858c97ef0668226748bb272530fd8e1f8e33ec6fe3a9adb5456a2949d94b8b521be0fcd1803bee169a67b270c07f939ea2dcdebaedac02bbdfee3d50935130e5ff551075710b7f369fdc6770623f444e74ea704509a480763298a9e913edad9861378fa558204f9d017b0a03cae2027c0c713de30cf62aac72a41142ce13eb4929958045b294b1228a3d968685dcaad26e8338810e50bdd1babfa55032e7fabdfbfe69887402de6e8a620b87fa42ae9d264593749ed5f18557f1f86599281bc8ed7dd99feac6a20ec0e4445dee1ee4f969b0d0dc5225506a41f0e6d57d7a269dfeaf5a336c7530b28152efad4fe4e1d3e97c4be4a2e8d64415fcebe88a06567de5b9ec980ab64d327470664ab950dbc4</script>
+  <div class="hbe hbe-content">
+    <div class="hbe hbe-input hbe-input-mytheme">
+      <input class="hbe hbe-input-field hbe-input-field-mytheme" type="password" id="hbePass">
+      <label class="hbe hbe-input-label hbe-input-label-mytheme" for="hbePass">
+        <span class="hbe hbe-input-label-content hbe-input-label-content-mytheme" data-content="password needed here">password needed here</span>
+      </label>
+    </div>
+    <button class="confirm-button" type="button" id="confirmButton">confirm</button>
+  </div>
+</div>
+<script data-pjax src="/lib/hbe.js"></script><link href="/css/hbe.style.css" rel="stylesheet" type="text/css">]]></content>
+      <categories>
+        <category>test_blog</category>
+      </categories>
+      <tags>
+        <tag>疗养院基建</tag>
+        <tag>test_blog</tag>
       </tags>
   </entry>
   <entry>
