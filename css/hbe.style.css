@@ -778,25 +778,12 @@
 
 .hbe-input-label-content-mytheme {
 	color: #8B8C8B;
-	padding: 0.25em 0;
-	-webkit-transition: -webkit-transform 0.25s;
-	transition: transform 0.25s;
-	-webkit-transition-timing-function: ease-in-out;
-	transition-timing-function: ease-in-out;
-}
-
-.hbe-input-label-content-mytheme::after {
-	content: attr(data-content);
-	position: absolute;
-	font-weight: 600;
-	bottom: 100%;
-	left: 0;
-	height: 100%;
-	width: 100%;
-	color: #666666;
-	padding: 0.25em 0;
-	letter-spacing: 1px;
-	font-size: 1em;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Open Sans', sans-serif;
+  text-shadow: 1px 1px 1px rgba(0,0,0,.4);
+  text-align: left;
 }
 
 .hbe-input-field-mytheme:focus + .hbe-input-label-mytheme,
@@ -805,8 +792,7 @@
 	transform: translate3d(0, 0, 0);
 }
 
-.hbe-input-field-mytheme:focus + .hbe-input-label-mytheme .hbe-input-label-content-mytheme,
-.input--filled .hbe-input-label-content-mytheme {
+.hbe-input-field-mytheme:focus + .hbe-input-label-mytheme {
 	-webkit-transform: translate3d(0, 100%, 0);
 	transform: translate3d(0, 100%, 0);
 }
@@ -818,15 +804,15 @@
 }
 
 .confirm-button {
-  width: 80px;
-  height: 30px;
-  background: rgba(255, 255, 255, 0.5); /* W3C */
+  width: 90px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.5);
   border: none;
   border-radius: 5px;
   font-weight: 600;
   font-family: 'Open Sans', sans-serif;
   text-shadow: 1px 1px 1px rgba(0,0,0,.4);
-  font-size: 13px;
+  font-size: 15px;
   text-align: center;
   display: block;
   margin: 0 auto;

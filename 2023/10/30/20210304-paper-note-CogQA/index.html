@@ -164,18 +164,18 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">23</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
           <a href="/categories/">
-        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-count">14</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-count">16</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -344,7 +344,7 @@
 <img src="https://cdn.jsdelivr.net/gh/baijn-nan/blog-image-hosting-2023@main/paper-note/image-20231021084007009.png" alt="image-20231021084007009" style="zoom: 80%;" />
 <p>第一跳通过问题提取到了 quality cafe，第二跳通过 quality cafe 提取到了 old school，则此时 quality cafe 就是 old school 的前序结点。此时关于 old school 的 clues 就是所有 quality cafe 的段落中涉及到了  old school 的句子。注意这里的 clues 是直接输入原句子（raw sentence）的，而没有利用某一个隐藏层的表示之类。（原文提到主要是基于训练效率的考虑)</p>
 <p>也就是说，这里的 结点 x 的 clues 可以简单理解为（我之所以从 x 的上一个结点推出 x 的原因 = 涉及 x 的上一个结点的文本中确实提到了 x 的证据）</p>
-<p>对于一个实体 x 它的 Para[x] 可能是空的（也就是上一个实体确实提到了实体 x，但是实体 x 的更多信息没有了），则此时 Span Extraction 的部分（也就是下一跳实体和候选答案的提取）不能够继续进行，但是仍能够基于前面的部分计算 Semantics Generation 部分。可以认为此时结点 x 不再作延伸（也就是不再有从 x 出发的新的 ans 结点或者实体结点），但是本身 x 自己的初始化表示还是可以完成的。</p>
+<p><input type="checkbox" id="checkbox6" checked="true"><label for="checkbox6">可能是空的（也就是上一个实体确实提到了实体 x，但是实体 x 的更多信息没有了），则此时 Span Extraction 的部分（也就是下一跳实体和候选答案的提取）不能够继续进行，但是仍能够基于前面的部分计算 Semantics Generation 部分。可以认为此时结点 x 不再作延伸（也就是不再有从 x 出发的新的 ans 结点或者实体结点），但是本身 x 自己的初始化表示还是可以完成的。</label></p>
 <br>
 <h4 id="2-1-2-输出">2.1.2 输出</h4>
 <p>再来看系统 1 的输出，主要包括两个部分：</p>
@@ -400,11 +400,11 @@ $$<br>
 answer = \arg{\max} _{\text{answer node x}} {\mathcal{F} (X [x])}<br>
 $$</p>
 <p>也就是从所有构造得到的答案结点中选出通过 MLP 后最大的结点作为最后的答案</p>
-<p>而对于 <strong>alternative question 和 general question</strong>，本质上都是对两个实体 x 和 y 的比较问题，则此时将两个结点的差值作为输入（$X[x] - X[y]$），再通过 FCN（全连接卷积）来作为一个二分类问题处理（两个问题类型对应两个 FCN）</p>
+<p>而对于 <strong>alternative question 和 general question</strong><input type="checkbox" id="checkbox7" checked="true"><label for="checkbox7">- X[y]$），再通过 FCN（全连接卷积）来作为一个二分类问题处理（两个问题类型对应两个 FCN）</label></p>
 <br>
 <br/>
 <h3 id="2-4-模型训练（training）">2.4 模型训练（training）</h3>
-<p>注意到这里的 system1 和 system2 之间是互相辅助的，system1 不断地提取可能的答案和下一跳的实体，从而扩充整个认知图谱（answer nodes 和 next-hop nodes）；而 system2 本身通过认知图谱的构建，利用 clues[x] 来扩充和 x 有关的信息而帮助 system1 下一步的寻找（也就是 system1 在找 clues 的时候要回到 GNN 里看看前序结点）</p>
+<p><input type="checkbox" id="checkbox8" checked="true"><label for="checkbox8">来扩充和 x 有关的信息而帮助 system1 下一步的寻找（也就是 system1 在找 clues 的时候要回到 GNN 里看看前序结点）</label></p>
 <p>最后需要的是利用 GNN 通过推理增强后的 answer nodes 的表示来从多个 clue 得到的 answer nodes 中选择一个来作为最后的 final answer</p>
 <p>整体模型的训练分别针对 system 1 和 system 2 进行：</p>
 <br>
